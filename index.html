@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard TomTicket - Gestão.Online</title>
+<title>Dashboard TomTicket V2 - Gestão.Online</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -16,17 +16,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .loading-spinner{border:5px solid #f3f3f3;border-top:5px solid #F8931D;border-radius:50%;width:50px;height:50px;animation:spin 1s linear infinite;margin:20px auto}
 @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
 .error{background:#f8d7da;border:1px solid #f5c6cb;color:#721c24;padding:20px;margin:20px;border-radius:8px}
-.nav{background:#fff;padding:0 40px;border-bottom:1px solid #e0e0e0;display:flex;gap:5px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-.nav-btn{padding:15px 25px;background:transparent;border:none;border-bottom:3px solid transparent;font-size:14px;font-weight:600;color:#666;cursor:pointer;transition:all .2s}
+.nav{background:#fff;padding:0 40px;border-bottom:1px solid #e0e0e0;display:flex;gap:5px;box-shadow:0 1px 3px rgba(0,0,0,.05);overflow-x:auto}
+.nav-btn{padding:15px 20px;background:transparent;border:none;border-bottom:3px solid transparent;font-size:14px;font-weight:600;color:#666;cursor:pointer;transition:all .2s;white-space:nowrap}
 .nav-btn:hover{color:#F8931D;background:#fef7f0}
 .nav-btn.active{color:#F8931D;border-bottom-color:#F8931D;background:#fef7f0}
 .content{max-width:1600px;margin:0 auto;padding:30px}
 .view{display:none}
 .view.active{display:block}
 .global-filters{background:#fff;border-radius:8px;padding:25px;margin-bottom:25px;box-shadow:0 2px 8px rgba(0,0,0,.08);border-left:4px solid #F8931D}
-.global-filters-title{font-size:16px;font-weight:700;color:#333;margin-bottom:15px;display:flex;align-items:center;gap:8px}
+.global-filters-title{font-size:16px;font-weight:700;color:#333;margin-bottom:15px}
 .section{background:#fff;border-radius:8px;padding:25px;margin-bottom:25px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-.section-title{font-size:18px;font-weight:700;color:#333;margin-bottom:20px;padding-bottom:15px;border-bottom:2px solid #F8931D;display:flex;align-items:center;justify-content:space-between}
+.section-title{font-size:18px;font-weight:700;color:#333;margin-bottom:20px;padding-bottom:15px;border-bottom:2px solid #F8931D}
 .filters-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px}
 .filter-group{display:flex;flex-direction:column;gap:6px}
 .filter-label{font-size:12px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:.5px}
@@ -46,8 +46,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .kpi.info{border-left-color:#2196F3}
 .kpi.info .kpi-value{color:#2196F3}
 .charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(450px,1fr));gap:20px}
-.chart-card{background:#fff;border-radius:8px;padding:25px;box-shadow:0 2px 8px rgba(0,0,0,.08);transition:transform .2s,box-shadow .2s}
-.chart-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.12)}
+.chart-card{background:#fff;border-radius:8px;padding:25px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
 .chart-title{font-size:15px;font-weight:600;color:#333;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
 .chart-container{position:relative;height:350px}
 .btn{padding:10px 20px;background:#F8931D;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;transition:background .2s;font-size:14px}
@@ -56,30 +55,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .btn-secondary:hover{background:#555}
 .btn-small{padding:6px 12px;font-size:12px}
 .footer{background:#fff;padding:20px;text-align:center;font-size:12px;color:#999;margin-top:40px;border-top:1px solid #e0e0e0}
-.alert{background:#fff3cd;border-left:4px solid #ffc107;padding:15px;margin-bottom:20px;border-radius:4px}
-.alert-text{color:#856404;font-size:14px}
+.alert{background:#fff3cd;border-left:4px solid #ffc107;padding:15px;margin-bottom:20px;border-radius:4px;font-size:14px}
 .hidden{display:none!important}
 .audit-btn{background:#2196F3;font-size:12px;padding:6px 12px}
 .audit-btn:hover{background:#1976D2}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:1024px){.two-col{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
 <div class="header">
 <div class="logo">Gestão<span class="logo-orange">.Online</span></div>
-<div class="subtitle">Dashboard TomTicket - Operações • Versão Executiva 1.0</div>
+<div class="subtitle">Dashboard TomTicket - Operações - Versão 2.0</div>
 </div>
 
 <div id="loadingScreen" class="loading">
 <div class="loading-spinner"></div>
 <p>Carregando dados do Google Sheets...</p>
-<p style="font-size:12px;color:#999;margin-top:10px">Conectando ao servidor...</p>
 </div>
 
 <div id="errorScreen" class="error hidden">
-<h3>❌ Erro ao carregar dados</h3>
+<h3>Erro ao carregar dados</h3>
 <p id="errorMessage"></p>
-<p style="margin-top:10px;font-size:12px">Verifique se o Apps Script está publicado corretamente.</p>
 </div>
 
 <div id="mainContent" class="hidden">
@@ -87,14 +85,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <div class="nav">
 <button class="nav-btn active" onclick="showView('dashboard')">Dashboard Geral</button>
 <button class="nav-btn" onclick="showView('analise')">Análise Detalhada</button>
-<button class="nav-btn" onclick="showView('cliente')">Análise de Cliente</button>
-<button class="nav-btn" onclick="showView('digisac')">Histórico Digisac</button>
+<button class="nav-btn" onclick="showView('nivel1')">Cruzamentos L1</button>
+<button class="nav-btn" onclick="showView('nivel2')">Cruzamentos L2</button>
+<button class="nav-btn" onclick="showView('nivel3')">Análises Estratégicas</button>
+<button class="nav-btn" onclick="showView('cliente')">Por Cliente</button>
 </div>
 
 <div class="content">
 
 <div class="global-filters">
-<div class="global-filters-title">📅 Filtro Global de Período</div>
+<div class="global-filters-title">Filtro Global de Período</div>
 <div class="filters-grid">
 <div class="filter-group">
 <label class="filter-label">Data Início</label>
@@ -116,7 +116,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <div id="dashboard" class="view active">
 
 <div class="section">
-<div class="section-title">🔍 Filtros Adicionais</div>
+<div class="section-title">Filtros Adicionais</div>
 <div class="filters-grid">
 <div class="filter-group">
 <label class="filter-label">Tipo</label>
@@ -131,7 +131,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <select class="filter-select" id="filterOrigemDemanda" onchange="applyFilters()"><option value="">Todas</option></select>
 </div>
 <div class="filter-group">
-<label class="filter-label">Origem (Canal)</label>
+<label class="filter-label">Canal de Entrada</label>
 <select class="filter-select" id="filterOrigemCanal" onchange="applyFilters()"><option value="">Todas</option></select>
 </div>
 <div class="filter-group">
@@ -146,52 +146,53 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <div class="charts-grid">
 
 <div class="chart-card">
-<div class="chart-title">📊 Top 10 Funcionalidades <button class="btn audit-btn btn-small" onclick="exportChartData('funcionalidades')">📋 Ver Dados</button></div>
+<div class="chart-title">Top 10 Funcionalidades <button class="btn audit-btn btn-small" onclick="exportChartData('funcionalidades')">Ver Dados</button></div>
 <div class="chart-container"><canvas id="chartFuncionalidades"></canvas></div>
 </div>
 
 <div class="chart-card">
-<div class="chart-title">🔄 Top Atendentes com Reabertura <button class="btn audit-btn btn-small" onclick="exportChartData('reabertura')">📋 Ver Dados</button></div>
+<div class="chart-title">Top Atendentes com Reabertura <button class="btn audit-btn btn-small" onclick="exportChartData('reabertura')">Ver Dados</button></div>
 <div class="chart-container"><canvas id="chartReabertura"></canvas></div>
 </div>
 
 <div class="chart-card">
-<div class="chart-title">📈 Distribuição por Tipo <button class="btn audit-btn btn-small" onclick="exportChartData('tipo')">📋 Ver Dados</button></div>
+<div class="chart-title">Distribuição por Tipo <button class="btn audit-btn btn-small" onclick="exportChartData('tipo')">Ver Dados</button></div>
 <div class="chart-container"><canvas id="chartTipo"></canvas></div>
 </div>
 
 <div class="chart-card">
-<div class="chart-title">📊 Top 10 Categorias <button class="btn audit-btn btn-small" onclick="exportChartData('categorias')">📋 Ver Dados</button></div>
+<div class="chart-title">Top 15 Categorias <button class="btn audit-btn btn-small" onclick="exportChartData('categorias')">Ver Dados</button></div>
 <div class="chart-container"><canvas id="chartCategorias"></canvas></div>
 </div>
 
 <div class="chart-card">
-<div class="chart-title">🎯 Origem da Demanda <button class="btn audit-btn btn-small" onclick="exportChartData('origem_demanda')">📋 Ver Dados</button></div>
+<div class="chart-title">Origem da Demanda <button class="btn audit-btn btn-small" onclick="exportChartData('origem_demanda')">Ver Dados</button></div>
 <div class="chart-container"><canvas id="chartOrigemDemanda"></canvas></div>
 </div>
 
 <div class="chart-card">
-<div class="chart-title">📱 Origem (Canal) <button class="btn audit-btn btn-small" onclick="exportChartData('origem_canal')">📋 Ver Dados</button></div>
+<div class="chart-title">Canal de Entrada <button class="btn audit-btn btn-small" onclick="exportChartData('origem_canal')">Ver Dados</button></div>
 <div class="chart-container"><canvas id="chartOrigemCanal"></canvas></div>
 </div>
 
 <div class="chart-card">
-<div class="chart-title">👥 Volume por Atendente <button class="btn audit-btn btn-small" onclick="exportChartData('atendentes')">📋 Ver Dados</button></div>
+<div class="chart-title">Volume por Atendente <button class="btn audit-btn btn-small" onclick="exportChartData('atendentes')">Ver Dados</button></div>
 <div class="chart-container"><canvas id="chartAtendentes"></canvas></div>
 </div>
 
 <div class="chart-card">
-<div class="chart-title">🏢 Top 20 Clientes (Funil) <button class="btn audit-btn btn-small" onclick="exportChartData('clientes')">📋 Ver Dados</button></div>
+<div class="chart-title">Top 20 Clientes <button class="btn audit-btn btn-small" onclick="exportChartData('clientes')">Ver Dados</button></div>
 <div class="chart-container"><canvas id="chartTopClientes"></canvas></div>
 </div>
 
 </div>
+
 </div>
 
 <div id="analise" class="view">
 
 <div class="section">
-<div class="section-title">📈 Tickets Criados por Período</div>
+<div class="section-title">Tickets Criados por Período</div>
 <div class="filters-grid">
 <div class="filter-group">
 <label class="filter-label">Exibir por</label>
@@ -205,7 +206,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <label class="filter-label">Série</label>
 <select class="filter-select" id="serieCriados">
 <option value="">Nenhuma</option>
-<option value="origem_canal">Origem (Canal)</option>
+<option value="origem_canal">Canal de Entrada</option>
 <option value="tipo">Tipo</option>
 </select>
 </div>
@@ -217,7 +218,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </div>
 
 <div class="section">
-<div class="section-title">✅ Tickets Finalizados por Período</div>
+<div class="section-title">Tickets Finalizados por Período</div>
 <div class="filters-grid">
 <div class="filter-group">
 <label class="filter-label">Exibir por</label>
@@ -231,7 +232,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <label class="filter-label">Série</label>
 <select class="filter-select" id="serieFinalizados">
 <option value="">Nenhuma</option>
-<option value="origem_canal">Origem (Canal)</option>
+<option value="origem_canal">Canal de Entrada</option>
 <option value="tipo">Tipo</option>
 </select>
 </div>
@@ -244,18 +245,130 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 <div class="charts-grid">
 <div class="chart-card">
-<div class="chart-title">🔀 Tipo × Categoria</div>
+<div class="chart-title">Tipo x Categoria <button class="btn audit-btn btn-small" onclick="exportChartData('tipo_categoria')">Ver Dados</button></div>
 <div class="chart-container"><canvas id="chartTipoCategoria"></canvas></div>
+</div>
+
+<div class="chart-card">
+<div class="chart-title">Categoria x Origem Demanda <button class="btn audit-btn btn-small" onclick="exportChartData('cat_origem')">Ver Dados</button></div>
+<div class="chart-container"><canvas id="chartCatOrigem"></canvas></div>
+</div>
+
+<div class="chart-card">
+<div class="chart-title">Top Funcionalidades x Origem <button class="btn audit-btn btn-small" onclick="exportChartData('func_origem')">Ver Dados</button></div>
+<div class="chart-container"><canvas id="chartFuncOrigem"></canvas></div>
+</div>
+
+<div class="chart-card">
+<div class="chart-title">Evolução Mensal por Categoria <button class="btn audit-btn btn-small" onclick="exportChartData('cat_mes')">Ver Dados</button></div>
+<div class="chart-container"><canvas id="chartCatMes"></canvas></div>
+</div>
+</div>
+
+</div>
+
+<div id="nivel1" class="view">
+
+<div class="section">
+<div class="section-title">Cruzamentos Básicos - Visão Executiva</div>
+</div>
+
+<div class="charts-grid">
+<div class="chart-card">
+<div class="chart-title">Tipo x Categoria - Heatmap</div>
+<div class="chart-container"><canvas id="chartL1TipoCat"></canvas></div>
+</div>
+
+<div class="chart-card">
+<div class="chart-title">Tipo x Funcionalidade Top 10</div>
+<div class="chart-container"><canvas id="chartL1TipoFunc"></canvas></div>
+</div>
+
+<div class="chart-card">
+<div class="chart-title">Categoria x Origem Demanda</div>
+<div class="chart-container"><canvas id="chartL1CatOrigem"></canvas></div>
+</div>
+</div>
+
+</div>
+
+<div id="nivel2" class="view">
+
+<div class="section">
+<div class="section-title">Cruzamentos Avançados - Produto/Dev (OURO para Backlog)</div>
+</div>
+
+<div class="charts-grid">
+<div class="chart-card">
+<div class="chart-title">Top 10 Bugs x Funcionalidade</div>
+<div class="chart-container"><canvas id="chartL2BugsFunc"></canvas></div>
+</div>
+
+<div class="chart-card">
+<div class="chart-title">Funcionalidade x Origem Demanda</div>
+<div class="chart-container"><canvas id="chartL2FuncOrigem"></canvas></div>
+</div>
+
+<div class="chart-card">
+<div class="chart-title">Top Clientes x Tipo de Chamado</div>
+<div class="chart-container"><canvas id="chartL2ClienteTipo"></canvas></div>
+</div>
+</div>
+
+</div>
+
+<div id="nivel3" class="view">
+
+<div class="section">
+<div class="section-title">Análises Estratégicas - Diretoria</div>
+
+<div class="two-col" style="margin-bottom:20px">
+<div class="kpi info">
+<div class="kpi-label">Taxa de Falso Bug</div>
+<div class="kpi-value" id="taxaFalsoBug">0%</div>
+<div class="kpi-subtitle">Bugs que não são Defeito Sistêmico</div>
+</div>
+
+<div class="kpi warning">
+<div class="kpi-label">Taxa de Reabertura Geral</div>
+<div class="kpi-value" id="taxaReaberturaGeral">0%</div>
+<div class="kpi-subtitle">Qualidade de resolução</div>
+</div>
+</div>
+
+</div>
+
+<div class="charts-grid">
+<div class="chart-card">
+<div class="chart-title">Análise Falso Bug - Bugs por Origem</div>
+<div class="chart-container"><canvas id="chartFalsoBug"></canvas></div>
+</div>
+
+<div class="chart-card">
+<div class="chart-title">Eficiência por Atendente - Taxa Resolução</div>
+<div class="chart-container"><canvas id="chartEficiencia"></canvas></div>
+</div>
+
+<div class="chart-card">
+<div class="chart-title">Tendência Temporal - Volume de Bugs</div>
+<div class="chart-container"><canvas id="chartTendencia"></canvas></div>
+</div>
+
+<div class="chart-card">
+<div class="chart-title">Top 5 Funcionalidades x Origem</div>
+<div class="chart-container"><canvas id="chartTop5Func"></canvas></div>
 </div>
 </div>
 
 </div>
 
 <div id="cliente" class="view">
+
 <div class="section">
-<div class="section-title">🔍 Buscar Cliente</div>
+<div class="section-title">Análise por Cliente</div>
 <input type="text" class="filter-input" style="width:100%;max-width:500px" id="clientSearch" placeholder="Digite o nome do cliente..." onkeyup="searchClient()">
 </div>
+
 <div id="clientDetails" class="hidden">
 <div style="background:linear-gradient(135deg,#F8931D,#ff6b00);color:#fff;padding:30px;border-radius:8px;margin-bottom:30px">
 <div style="font-size:28px;font-weight:700" id="clientName"></div>
@@ -267,38 +380,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <div class="chart-container"><canvas id="chartClientTipo"></canvas></div>
 </div>
 <div class="chart-card">
-<div class="chart-title">Categorias</div>
+<div class="chart-title">Top Categorias</div>
 <div class="chart-container"><canvas id="chartClientCat"></canvas></div>
 </div>
+<div class="chart-card">
+<div class="chart-title">Distribuição por Origem</div>
+<div class="chart-container"><canvas id="chartClientOrigem"></canvas></div>
 </div>
 </div>
 </div>
 
-<div id="digisac" class="view">
-<div class="alert">
-<div class="alert-text">⚠️ Dados Digisac (Jan-Fev 2026). Classificação estimada automaticamente.</div>
-</div>
-<div class="kpis" id="digisacKpisContainer"></div>
-<div class="charts-grid">
-<div class="chart-card">
-<div class="chart-title">Distribuição por Tipo</div>
-<div class="chart-container"><canvas id="chartDigisacTipo"></canvas></div>
-</div>
-<div class="chart-card">
-<div class="chart-title">Top Categorias</div>
-<div class="chart-container"><canvas id="chartDigisacCategorias"></canvas></div>
-</div>
-<div class="chart-card">
-<div class="chart-title">Volume por Mês</div>
-<div class="chart-container"><canvas id="chartDigisacMes"></canvas></div>
-</div>
-</div>
 </div>
 
 </div>
 
 <div class="footer">
-Gestão.Online | Documento Interno | Rua das Orquídeas, Quadra 28, Lote 01, Sala 303, Jardim Goiás, Goiânia-GO, CEP 74805-460
+Gestão.Online | Documento Interno | Rua das Orquídeas, Quadra 28, Lote 01, Sala 303, Jardim Goiás, Goiânia-GO
 </div>
 
 </div>
@@ -308,30 +405,25 @@ const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyLbh18H
 
 let allData = [];
 let filteredData = [];
-let digisacData = [];
 let charts = {};
 
 async function loadDataFromSheets() {
   try {
     const response = await fetch(GOOGLE_APPS_SCRIPT_URL);
-    if (!response.ok) throw new Error('Erro ao buscar dados do servidor');
+    if (!response.ok) throw new Error('Erro ao buscar dados');
     
     const data = await response.json();
-    
     allData = data.tomticket || [];
-    digisacData = data.digisac || [];
     filteredData = [...allData];
     
     document.getElementById('loadingScreen').classList.add('hidden');
     document.getElementById('mainContent').classList.remove('hidden');
     
     init();
-    
   } catch (error) {
     document.getElementById('loadingScreen').classList.add('hidden');
     document.getElementById('errorScreen').classList.remove('hidden');
     document.getElementById('errorMessage').textContent = error.message;
-    console.error('Erro:', error);
   }
 }
 
@@ -339,7 +431,6 @@ function init() {
   populateFilters();
   updateKPIs();
   createCharts();
-  initDigisac();
 }
 
 function showView(v) {
@@ -349,8 +440,13 @@ function showView(v) {
   event.target.classList.add('active');
   
   if(v === 'analise') {
-    updateChartCriados();
-    updateChartFinalizados();
+    setTimeout(() => {
+      updateChartCriados();
+      updateChartFinalizados();
+    }, 100);
+  }
+  if(v === 'nivel1' || v === 'nivel2' || v === 'nivel3') {
+    setTimeout(() => createCrossCharts(v), 100);
   }
 }
 
@@ -370,11 +466,6 @@ function applyGlobalPeriod() {
   
   updateKPIs();
   updateCharts();
-  
-  if(document.getElementById('analise').classList.contains('active')) {
-    updateChartCriados();
-    updateChartFinalizados();
-  }
 }
 
 function clearGlobalPeriod() {
@@ -436,12 +527,7 @@ function applyFilters() {
 function updateKPIs() {
   const total = filteredData.length;
   const reabertos = filteredData.filter(d => d.reaberto === 'Sim').length;
-  const escalonados = filteredData.filter(d => d.escalonado === 'Sim').length;
-  const inativos = filteredData.filter(d => d.finalizado_inatividade === 'Sim').length;
-  
   const taxaReabertura = total > 0 ? (reabertos / total * 100).toFixed(1) : 0;
-  const taxaEscalonamento = total > 0 ? (escalonados / total * 100).toFixed(1) : 0;
-  const taxaInatividade = total > 0 ? (inativos / total * 100).toFixed(1) : 0;
   
   const topCat = getTopValue(filteredData, 'categoria');
   const topAtend = getTopValue(filteredData, 'atendente');
@@ -456,16 +542,6 @@ function updateKPIs() {
       <div class="kpi-label">Taxa de Reabertura</div>
       <div class="kpi-value">${taxaReabertura}%</div>
       <div class="kpi-subtitle">${reabertos} tickets reabertos</div>
-    </div>
-    <div class="kpi info">
-      <div class="kpi-label">Taxa de Escalonamento</div>
-      <div class="kpi-value">${taxaEscalonamento}%</div>
-      <div class="kpi-subtitle">${escalonados} tickets (histórico)</div>
-    </div>
-    <div class="kpi warning">
-      <div class="kpi-label">Taxa de Inatividade</div>
-      <div class="kpi-value">${taxaInatividade}%</div>
-      <div class="kpi-subtitle">${inativos} tickets inativos</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">Top Categoria</div>
@@ -492,7 +568,9 @@ function createCharts() {
 }
 
 function updateCharts() {
-  Object.values(charts).forEach(c => c.destroy());
+  Object.values(charts).forEach(c => {
+    try { c.destroy(); } catch(e) {}
+  });
   charts = {};
   createCharts();
 }
@@ -502,7 +580,8 @@ function createChartFuncionalidades() {
   const data = countBy(filteredData, 'funcionalidade');
   const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]).slice(0, 10);
   const total = sorted.reduce((acc, s) => acc + s[1], 0);
-  const labels = sorted.map(s => `${s[0]} (${((s[1]/total)*100).toFixed(1)}%)`);
+  const labels = sorted.map(s => s[0]);
+  const colors = genColors(sorted.length);
   
   if(charts.funcionalidades) charts.funcionalidades.destroy();
   charts.funcionalidades = new Chart(ctx, {
@@ -512,13 +591,14 @@ function createChartFuncionalidades() {
       datasets: [{
         label: 'Tickets',
         data: sorted.map(s => s[1]),
-        backgroundColor: '#9C27B0'
+        backgroundColor: colors
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      indexAxis: 'y'
+      indexAxis: 'y',
+      plugins: { legend: { display: false } }
     }
   });
 }
@@ -534,6 +614,7 @@ function createChartReabertura() {
   });
   
   const sorted = Object.entries(reaberturas).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  const colors = genColors(sorted.length);
   
   if(charts.reabertura) charts.reabertura.destroy();
   charts.reabertura = new Chart(ctx, {
@@ -543,13 +624,14 @@ function createChartReabertura() {
       datasets: [{
         label: 'Reaberturas',
         data: sorted.map(s => s[1]),
-        backgroundColor: '#FF5722'
+        backgroundColor: colors
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      indexAxis: 'y'
+      indexAxis: 'y',
+      plugins: { legend: { display: false } }
     }
   });
 }
@@ -557,25 +639,22 @@ function createChartReabertura() {
 function createChartTipo() {
   const ctx = document.getElementById('chartTipo').getContext('2d');
   const data = countBy(filteredData, 'tipo');
-  const total = Object.values(data).reduce((a, b) => a + b, 0);
-  const labels = Object.keys(data).map(k => `${k} (${((data[k]/total)*100).toFixed(1)}%)`);
+  const colors = ['#F8931D', '#2196F3', '#4CAF50', '#FF5722'];
   
   if(charts.tipo) charts.tipo.destroy();
   charts.tipo = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels,
+      labels: Object.keys(data),
       datasets: [{
         data: Object.values(data),
-        backgroundColor: ['#F8931D', '#2196F3', '#4CAF50']
+        backgroundColor: colors
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { display: true, position: 'bottom' }
-      }
+      plugins: { legend: { display: true, position: 'bottom' } }
     }
   });
 }
@@ -583,9 +662,9 @@ function createChartTipo() {
 function createChartCategorias() {
   const ctx = document.getElementById('chartCategorias').getContext('2d');
   const data = countBy(filteredData, 'categoria');
-  const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]).slice(0, 10);
-  const total = sorted.reduce((acc, s) => acc + s[1], 0);
-  const labels = sorted.map(s => `${s[0]} (${((s[1]/total)*100).toFixed(1)}%)`);
+  const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]).slice(0, 15);
+  const labels = sorted.map(s => s[0]);
+  const colors = genColors(sorted.length);
   
   if(charts.categorias) charts.categorias.destroy();
   charts.categorias = new Chart(ctx, {
@@ -595,13 +674,14 @@ function createChartCategorias() {
       datasets: [{
         label: 'Tickets',
         data: sorted.map(s => s[1]),
-        backgroundColor: '#2196F3'
+        backgroundColor: colors
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      indexAxis: 'y'
+      indexAxis: 'y',
+      plugins: { legend: { display: false } }
     }
   });
 }
@@ -609,25 +689,22 @@ function createChartCategorias() {
 function createChartOrigemDemanda() {
   const ctx = document.getElementById('chartOrigemDemanda').getContext('2d');
   const data = countBy(filteredData, 'origem_demanda');
-  const total = Object.values(data).reduce((a, b) => a + b, 0);
-  const labels = Object.keys(data).map(k => `${k} (${((data[k]/total)*100).toFixed(1)}%)`);
+  const colors = ['#F8931D', '#2196F3', '#4CAF50', '#FF9800', '#9C27B0'];
   
   if(charts.origemDemanda) charts.origemDemanda.destroy();
   charts.origemDemanda = new Chart(ctx, {
     type: 'pie',
     data: {
-      labels,
+      labels: Object.keys(data),
       datasets: [{
         data: Object.values(data),
-        backgroundColor: ['#F8931D', '#2196F3', '#4CAF50', '#FF9800', '#9C27B0', '#E91E63']
+        backgroundColor: colors
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { display: true, position: 'bottom' }
-      }
+      plugins: { legend: { position: 'bottom' } }
     }
   });
 }
@@ -635,25 +712,22 @@ function createChartOrigemDemanda() {
 function createChartOrigemCanal() {
   const ctx = document.getElementById('chartOrigemCanal').getContext('2d');
   const data = countBy(filteredData, 'origem_canal');
-  const total = Object.values(data).reduce((a, b) => a + b, 0);
-  const labels = Object.keys(data).map(k => `${k} (${((data[k]/total)*100).toFixed(1)}%)`);
+  const colors = ['#F8931D', '#2196F3', '#4CAF50', '#FF9800'];
   
   if(charts.origemCanal) charts.origemCanal.destroy();
   charts.origemCanal = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels,
+      labels: Object.keys(data),
       datasets: [{
         data: Object.values(data),
-        backgroundColor: ['#9C27B0', '#FF9800', '#4CAF50', '#F8931D']
+        backgroundColor: colors
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { display: true, position: 'bottom' }
-      }
+      plugins: { legend: { position: 'bottom' } }
     }
   });
 }
@@ -661,19 +735,82 @@ function createChartOrigemCanal() {
 function createChartAtendentes() {
   const ctx = document.getElementById('chartAtendentes').getContext('2d');
   const data = countBy(filteredData, 'atendente');
-  const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]).slice(0, 10);
-  const total = sorted.reduce((acc, s) => acc + s[1], 0);
-  const labels = sorted.map(s => `${s[0]} (${((s[1]/total)*100).toFixed(1)}%)`);
+  const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]).slice(0, 15);
+  const colors = genColors(sorted.length);
   
   if(charts.atendentes) charts.atendentes.destroy();
   charts.atendentes = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels,
+      labels: sorted.map(s => s[0]),
       datasets: [{
         label: 'Tickets',
         data: sorted.map(s => s[1]),
-        backgroundColor: '#4CAF50'
+        backgroundColor: colors
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+function createChartTopClientes() {
+  const ctx = document.getElementById('chartTopClientes').getContext('2d');
+  const data = countBy(filteredData, 'organizacao');
+  const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]).slice(0, 20);
+  const colors = genColors(sorted.length);
+  
+  if(charts.topClientes) charts.topClientes.destroy();
+  charts.topClientes = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: sorted.map(s => s[0].substring(0, 20)),
+      datasets: [{
+        label: 'Tickets',
+        data: sorted.map(s => s[1]),
+        backgroundColor: colors
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+function updateChartCriados() {
+  const ctx = document.getElementById('chartCriadosPeriodo').getContext('2d');
+  const exibir = document.getElementById('exibirPorCriados').value;
+  
+  const byPeriod = {};
+  filteredData.forEach(d => {
+    if(d.data_criacao) {
+      const key = exibir === 'dia' ? d.data_criacao : 
+                  exibir === 'mes' ? d.data_criacao.substring(0, 7) :
+                  d.data_criacao.substring(0, 4);
+      byPeriod[key] = (byPeriod[key] || 0) + 1;
+    }
+  });
+  
+  const sorted = Object.entries(byPeriod).sort((a, b) => a[0].localeCompare(b[0]));
+  
+  if(charts.criadosPeriodo) charts.criadosPeriodo.destroy();
+  charts.criadosPeriodo = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: sorted.map(s => s[0]),
+      datasets: [{
+        label: 'Criados',
+        data: sorted.map(s => s[1]),
+        borderColor: '#F8931D',
+        backgroundColor: 'rgba(248,147,29,0.1)',
+        tension: 0.4,
+        fill: true
       }]
     },
     options: {
@@ -683,112 +820,13 @@ function createChartAtendentes() {
   });
 }
 
-function createChartTopClientes() {
-  const ctx = document.getElementById('chartTopClientes').getContext('2d');
-  const data = countBy(filteredData, 'organizacao');
-  const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]).slice(0, 20);
-  
-  if(charts.topClientes) charts.topClientes.destroy();
-  charts.topClientes = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: sorted.map(s => s[0]),
-      datasets: [{
-        label: 'Tickets',
-        data: sorted.map(s => s[1]),
-        backgroundColor: '#9C27B0'
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      indexAxis: 'y'
-    }
-  });
-}
-
-function updateChartCriados() {
-  const ctx = document.getElementById('chartCriadosPeriodo').getContext('2d');
-  const exibir = document.getElementById('exibirPorCriados').value;
-  const serie = document.getElementById('serieCriados').value;
-  
-  if(charts.criadosPeriodo) charts.criadosPeriodo.destroy();
-  
-  if(!serie) {
-    const byPeriod = {};
-    filteredData.forEach(d => {
-      if(d.data_criacao) {
-        const key = exibir === 'dia' ? d.data_criacao : 
-                    exibir === 'mes' ? d.data_criacao.substring(0, 7) :
-                    d.data_criacao.substring(0, 4);
-        byPeriod[key] = (byPeriod[key] || 0) + 1;
-      }
-    });
-    
-    const sorted = Object.entries(byPeriod).sort((a, b) => a[0].localeCompare(b[0]));
-    
-    charts.criadosPeriodo = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: sorted.map(s => s[0]),
-        datasets: [{
-          label: 'Tickets Criados',
-          data: sorted.map(s => s[1]),
-          borderColor: '#F8931D',
-          backgroundColor: 'rgba(248,147,29,0.1)',
-          tension: 0.4,
-          fill: true
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false
-      }
-    });
-  } else {
-    const series = [...new Set(filteredData.map(d => d[serie]).filter(Boolean))];
-    const byPeriod = {};
-    
-    filteredData.forEach(d => {
-      if(d.data_criacao) {
-        const key = exibir === 'dia' ? d.data_criacao : 
-                    exibir === 'mes' ? d.data_criacao.substring(0, 7) :
-                    d.data_criacao.substring(0, 4);
-        if(!byPeriod[key]) byPeriod[key] = {};
-        const serieVal = d[serie] || 'Não especificado';
-        byPeriod[key][serieVal] = (byPeriod[key][serieVal] || 0) + 1;
-      }
-    });
-    
-    const sorted = Object.keys(byPeriod).sort();
-    const colors = ['#F8931D', '#2196F3', '#4CAF50', '#9C27B0', '#FF9800', '#E91E63'];
-    const datasets = series.map((s, i) => ({
-      label: s,
-      data: sorted.map(p => byPeriod[p][s] || 0),
-      borderColor: colors[i % colors.length],
-      backgroundColor: colors[i % colors.length] + '20',
-      tension: 0.4,
-      fill: true
-    }));
-    
-    charts.criadosPeriodo = new Chart(ctx, {
-      type: 'line',
-      data: { labels: sorted, datasets },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false
-      }
-    });
-  }
-}
-
 function updateChartFinalizados() {
   const ctx = document.getElementById('chartFinalizadosPeriodo').getContext('2d');
   const exibir = document.getElementById('exibirPorFinalizados').value;
   
   const byPeriod = {};
   filteredData.forEach(d => {
-    if(d.data_finalizacao) {
+    if(d.data_finalizacao && d.data_finalizacao !== '' && d.data_finalizacao !== '0') {
       const key = exibir === 'dia' ? d.data_finalizacao : 
                   exibir === 'mes' ? d.data_finalizacao.substring(0, 7) :
                   d.data_finalizacao.substring(0, 4);
@@ -804,10 +842,10 @@ function updateChartFinalizados() {
     data: {
       labels: sorted.map(s => s[0]),
       datasets: [{
-        label: 'Tickets Finalizados',
+        label: 'Finalizados',
         data: sorted.map(s => s[1]),
-        borderColor: '#2196F3',
-        backgroundColor: 'rgba(33,150,243,0.1)',
+        borderColor: '#4CAF50',
+        backgroundColor: 'rgba(76,175,80,0.1)',
         tension: 0.4,
         fill: true
       }]
@@ -816,6 +854,239 @@ function updateChartFinalizados() {
       responsive: true,
       maintainAspectRatio: false
     }
+  });
+}
+
+function createCrossCharts(level) {
+  if(level === 'nivel1') {
+    createL1Charts();
+  } else if(level === 'nivel2') {
+    createL2Charts();
+  } else if(level === 'nivel3') {
+    createL3Charts();
+  }
+}
+
+function createL1Charts() {
+  // Tipo x Categoria
+  const ctxTC = document.getElementById('chartL1TipoCat').getContext('2d');
+  const tipoCatData = crossCount(filteredData, 'tipo', 'categoria');
+  const tipos = [...new Set(filteredData.map(d => d.tipo).filter(Boolean))];
+  const cats = [...new Set(filteredData.map(d => d.categoria).filter(Boolean))].sort().slice(0, 10);
+  
+  const datasets = tipos.map((tipo, i) => ({
+    label: tipo,
+    data: cats.map(cat => tipoCatData[`${tipo}|${cat}`] || 0),
+    backgroundColor: `hsla(${i * 60}, 70%, 50%, 0.7)`
+  }));
+  
+  if(charts.l1TipoCat) charts.l1TipoCat.destroy();
+  charts.l1TipoCat = new Chart(ctxTC, {
+    type: 'bar',
+    data: { labels: cats.map(c => c.substring(0, 15)), datasets },
+    options: { responsive: true, maintainAspectRatio: false, stacked: true }
+  });
+  
+  // Tipo x Funcionalidade
+  const ctxTF = document.getElementById('chartL1TipoFunc').getContext('2d');
+  const funcData = countBy(filteredData, 'funcionalidade');
+  const topFuncs = Object.entries(funcData).sort((a,b) => b[1] - a[1]).slice(0, 10);
+  
+  if(charts.l1TipoFunc) charts.l1TipoFunc.destroy();
+  charts.l1TipoFunc = new Chart(ctxTF, {
+    type: 'bar',
+    data: {
+      labels: topFuncs.map(f => f[0].substring(0, 20)),
+      datasets: tipos.map((tipo, i) => ({
+        label: tipo,
+        data: topFuncs.map(f => filteredData.filter(d => d.tipo === tipo && d.funcionalidade === f[0]).length),
+        backgroundColor: `hsla(${i * 60}, 70%, 50%, 0.7)`
+      }))
+    },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+  
+  // Categoria x Origem
+  const ctxCO = document.getElementById('chartL1CatOrigem').getContext('2d');
+  const catOrigemData = crossCount(filteredData, 'categoria', 'origem_demanda');
+  const origens = [...new Set(filteredData.map(d => d.origem_demanda).filter(Boolean))];
+  const topCats = Object.entries(countBy(filteredData, 'categoria')).sort((a,b) => b[1] - a[1]).slice(0, 8).map(c => c[0]);
+  
+  const datasetsCO = origens.map((orig, i) => ({
+    label: orig,
+    data: topCats.map(cat => catOrigemData[`${cat}|${orig}`] || 0),
+    backgroundColor: `hsla(${i * 60}, 70%, 50%, 0.7)`
+  }));
+  
+  if(charts.l1CatOrigem) charts.l1CatOrigem.destroy();
+  charts.l1CatOrigem = new Chart(ctxCO, {
+    type: 'bar',
+    data: { labels: topCats.map(c => c.substring(0, 15)), datasets: datasetsCO },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+}
+
+function createL2Charts() {
+  // Top 10 Bugs x Funcionalidade
+  const ctxBF = document.getElementById('chartL2BugsFunc').getContext('2d');
+  const bugs = filteredData.filter(d => d.tipo && d.tipo.toLowerCase().includes('bug'));
+  const bugFuncData = countBy(bugs, 'funcionalidade');
+  const topBugFuncs = Object.entries(bugFuncData).sort((a,b) => b[1] - a[1]).slice(0, 10);
+  const colors = genColors(topBugFuncs.length);
+  
+  if(charts.l2BugsFunc) charts.l2BugsFunc.destroy();
+  charts.l2BugsFunc = new Chart(ctxBF, {
+    type: 'bar',
+    data: {
+      labels: topBugFuncs.map(b => b[0].substring(0, 20)),
+      datasets: [{
+        label: 'Bugs',
+        data: topBugFuncs.map(b => b[1]),
+        backgroundColor: colors
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } } }
+  });
+  
+  // Funcionalidade x Origem
+  const ctxFO = document.getElementById('chartL2FuncOrigem').getContext('2d');
+  const funcOrigemData = crossCount(filteredData, 'funcionalidade', 'origem_demanda');
+  const topFuncsL2 = Object.entries(countBy(filteredData, 'funcionalidade')).sort((a,b) => b[1] - a[1]).slice(0, 8).map(f => f[0]);
+  const origens2 = [...new Set(filteredData.map(d => d.origem_demanda).filter(Boolean))];
+  
+  const datasetsFO = origens2.map((orig, i) => ({
+    label: orig,
+    data: topFuncsL2.map(func => funcOrigemData[`${func}|${orig}`] || 0),
+    backgroundColor: `hsla(${i * 60}, 70%, 50%, 0.7)`
+  }));
+  
+  if(charts.l2FuncOrigem) charts.l2FuncOrigem.destroy();
+  charts.l2FuncOrigem = new Chart(ctxFO, {
+    type: 'bar',
+    data: { labels: topFuncsL2.map(f => f.substring(0, 15)), datasets: datasetsFO },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+  
+  // Top Clientes x Tipo
+  const ctxCT = document.getElementById('chartL2ClienteTipo').getContext('2d');
+  const clienteData = countBy(filteredData, 'organizacao');
+  const topClientes = Object.entries(clienteData).sort((a,b) => b[1] - a[1]).slice(0, 8).map(c => c[0]);
+  const tiposL2 = [...new Set(filteredData.map(d => d.tipo).filter(Boolean))];
+  
+  const datasetsCT = tiposL2.map((tipo, i) => ({
+    label: tipo,
+    data: topClientes.map(cli => filteredData.filter(d => d.organizacao === cli && d.tipo === tipo).length),
+    backgroundColor: `hsla(${i * 60}, 70%, 50%, 0.7)`
+  }));
+  
+  if(charts.l2ClienteTipo) charts.l2ClienteTipo.destroy();
+  charts.l2ClienteTipo = new Chart(ctxCT, {
+    type: 'bar',
+    data: { labels: topClientes.map(c => c.substring(0, 15)), datasets: datasetsCT },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+}
+
+function createL3Charts() {
+  // Taxa Falso Bug
+  const allBugs = filteredData.filter(d => d.tipo && d.tipo.toLowerCase().includes('bug'));
+  const falsoBugs = allBugs.filter(d => d.origem_demanda && !d.origem_demanda.includes('Defeito Sistêmico'));
+  const taxaFalso = allBugs.length > 0 ? ((falsoBugs.length / allBugs.length) * 100).toFixed(1) : 0;
+  document.getElementById('taxaFalsoBug').textContent = taxaFalso + '%';
+  
+  // Taxa Reabertura
+  const taxaRea = filteredData.length > 0 ? ((filteredData.filter(d => d.reaberto === 'Sim').length / filteredData.length) * 100).toFixed(1) : 0;
+  document.getElementById('taxaReaberturaGeral').textContent = taxaRea + '%';
+  
+  // Falso Bug Chart
+  const ctxFB = document.getElementById('chartFalsoBug').getContext('2d');
+  const bugOrigemData = countBy(allBugs, 'origem_demanda');
+  const colors = ['#FF5722', '#FFC107', '#4CAF50'];
+  
+  if(charts.falsoBug) charts.falsoBug.destroy();
+  charts.falsoBug = new Chart(ctxFB, {
+    type: 'pie',
+    data: {
+      labels: Object.keys(bugOrigemData),
+      datasets: [{
+        data: Object.values(bugOrigemData),
+        backgroundColor: colors
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+  });
+  
+  // Eficiência por Atendente
+  const ctxEf = document.getElementById('chartEficiencia').getContext('2d');
+  const atendentes = [...new Set(filteredData.map(d => d.atendente).filter(Boolean))];
+  const eficienciaData = atendentes.map(a => {
+    const tickets = filteredData.filter(d => d.atendente === a);
+    const resolvidos = tickets.filter(d => d.status && d.status.toLowerCase().includes('fechado')).length;
+    const taxa = tickets.length > 0 ? ((resolvidos / tickets.length) * 100).toFixed(1) : 0;
+    return { atendente: a, taxa: parseFloat(taxa), total: tickets.length };
+  }).sort((a, b) => b.taxa - a.taxa).slice(0, 10);
+  
+  const colors2 = genColors(eficienciaData.length);
+  
+  if(charts.eficiencia) charts.eficiencia.destroy();
+  charts.eficiencia = new Chart(ctxEf, {
+    type: 'bar',
+    data: {
+      labels: eficienciaData.map(e => e.atendente),
+      datasets: [{
+        label: 'Taxa Resolução (%)',
+        data: eficienciaData.map(e => e.taxa),
+        backgroundColor: colors2
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } } }
+  });
+  
+  // Tendência Bugs
+  const ctxTend = document.getElementById('chartTendencia').getContext('2d');
+  const bugsMes = {};
+  allBugs.forEach(d => {
+    if(d.data_criacao) {
+      const mes = d.data_criacao.substring(0, 7);
+      bugsMes[mes] = (bugsMes[mes] || 0) + 1;
+    }
+  });
+  
+  const sortedMes = Object.entries(bugsMes).sort((a, b) => a[0].localeCompare(b[0]));
+  
+  if(charts.tendencia) charts.tendencia.destroy();
+  charts.tendencia = new Chart(ctxTend, {
+    type: 'line',
+    data: {
+      labels: sortedMes.map(m => m[0]),
+      datasets: [{
+        label: 'Volume de Bugs',
+        data: sortedMes.map(m => m[1]),
+        borderColor: '#FF5722',
+        backgroundColor: 'rgba(255,87,34,0.1)',
+        tension: 0.4,
+        fill: true
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+  
+  // Top 5 Funcionalidades x Origem
+  const ctxT5 = document.getElementById('chartTop5Func').getContext('2d');
+  const top5Funcs = Object.entries(countBy(filteredData, 'funcionalidade')).sort((a,b) => b[1] - a[1]).slice(0, 5).map(f => f[0]);
+  const origens3 = [...new Set(filteredData.map(d => d.origem_demanda).filter(Boolean))];
+  
+  const datasetsT5 = origens3.map((orig, i) => ({
+    label: orig,
+    data: top5Funcs.map(func => filteredData.filter(d => d.funcionalidade === func && d.origem_demanda === orig).length),
+    backgroundColor: `hsla(${i * 60}, 70%, 50%, 0.7)`
+  }));
+  
+  if(charts.top5Func) charts.top5Func.destroy();
+  charts.top5Func = new Chart(ctxT5, {
+    type: 'bar',
+    data: { labels: top5Funcs.map(f => f.substring(0, 15)), datasets: datasetsT5 },
+    options: { responsive: true, maintainAspectRatio: false }
   });
 }
 
@@ -865,144 +1136,56 @@ function showClientDetails(name) {
     </div>
   `;
   
+  // Charts
   const ctxTipo = document.getElementById('chartClientTipo').getContext('2d');
   const tipoData = countBy(cData, 'tipo');
-  const totalTipo = Object.values(tipoData).reduce((a, b) => a + b, 0);
-  const tipoLabels = Object.keys(tipoData).map(k => `${k} (${((tipoData[k]/totalTipo)*100).toFixed(1)}%)`);
   
   if(charts.clientTipo) charts.clientTipo.destroy();
   charts.clientTipo = new Chart(ctxTipo, {
     type: 'doughnut',
     data: {
-      labels: tipoLabels,
+      labels: Object.keys(tipoData),
       datasets: [{
         data: Object.values(tipoData),
         backgroundColor: ['#F8931D', '#2196F3', '#4CAF50']
       }]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false
-    }
+    options: { responsive: true, maintainAspectRatio: false }
   });
   
   const ctxCat = document.getElementById('chartClientCat').getContext('2d');
   const catData = countBy(cData, 'categoria');
   const sortedCat = Object.entries(catData).sort((a, b) => b[1] - a[1]).slice(0, 10);
-  const totalCat = sortedCat.reduce((acc, s) => acc + s[1], 0);
-  const catLabels = sortedCat.map(s => `${s[0]} (${((s[1]/totalCat)*100).toFixed(1)}%)`);
+  const colorsCat = genColors(sortedCat.length);
   
   if(charts.clientCat) charts.clientCat.destroy();
   charts.clientCat = new Chart(ctxCat, {
     type: 'bar',
     data: {
-      labels: catLabels,
+      labels: sortedCat.map(s => s[0].substring(0, 20)),
       datasets: [{
         label: 'Tickets',
         data: sortedCat.map(s => s[1]),
-        backgroundColor: '#9C27B0'
+        backgroundColor: colorsCat
       }]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      indexAxis: 'y'
-    }
+    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } } }
   });
-}
-
-function initDigisac() {
-  const dig = digisacData;
-  const total = dig.length;
-  const topCat = getTopValue(dig, 'categoria');
-  const topTipo = getTopValue(dig, 'tipo');
   
-  document.getElementById('digisacKpisContainer').innerHTML = `
-    <div class="kpi">
-      <div class="kpi-label">Total</div>
-      <div class="kpi-value">${total}</div>
-      <div class="kpi-subtitle">Jan-Fev 2026</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-label">Top Categoria</div>
-      <div class="kpi-value" style="font-size:20px">${topCat.value || 'N/A'}</div>
-      <div class="kpi-subtitle">${topCat.count}</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-label">Tipo</div>
-      <div class="kpi-value" style="font-size:20px">${topTipo.value || 'N/A'}</div>
-      <div class="kpi-subtitle">${topTipo.count}</div>
-    </div>
-  `;
+  const ctxOrig = document.getElementById('chartClientOrigem').getContext('2d');
+  const origData = countBy(cData, 'origem_demanda');
   
-  const ctxTipo = document.getElementById('chartDigisacTipo').getContext('2d');
-  const tipoData = countBy(dig, 'tipo');
-  const totalTipo = Object.values(tipoData).reduce((a, b) => a + b, 0);
-  const tipoLabels = Object.keys(tipoData).map(k => `${k} (${((tipoData[k]/totalTipo)*100).toFixed(1)}%)`);
-  
-  new Chart(ctxTipo, {
-    type: 'doughnut',
+  if(charts.clientOrigem) charts.clientOrigem.destroy();
+  charts.clientOrigem = new Chart(ctxOrig, {
+    type: 'pie',
     data: {
-      labels: tipoLabels,
+      labels: Object.keys(origData),
       datasets: [{
-        data: Object.values(tipoData),
-        backgroundColor: ['#F8931D', '#2196F3', '#4CAF50']
+        data: Object.values(origData),
+        backgroundColor: ['#FF5722', '#FFC107', '#4CAF50', '#2196F3']
       }]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false
-    }
-  });
-  
-  const ctxCat = document.getElementById('chartDigisacCategorias').getContext('2d');
-  const catData = countBy(dig, 'categoria');
-  const sortedCat = Object.entries(catData).sort((a, b) => b[1] - a[1]).slice(0, 10);
-  const totalCat = sortedCat.reduce((acc, s) => acc + s[1], 0);
-  const catLabels = sortedCat.map(s => `${s[0]} (${((s[1]/totalCat)*100).toFixed(1)}%)`);
-  
-  new Chart(ctxCat, {
-    type: 'bar',
-    data: {
-      labels: catLabels,
-      datasets: [{
-        label: 'Atendimentos',
-        data: sortedCat.map(s => s[1]),
-        backgroundColor: '#9C27B0'
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      indexAxis: 'y'
-    }
-  });
-  
-  const byMonth = {};
-  dig.forEach(d => {
-    if(d.data_criacao) {
-      const mes = d.data_criacao.substring(0, 7);
-      byMonth[mes] = (byMonth[mes] || 0) + 1;
-    }
-  });
-  
-  const ctxMes = document.getElementById('chartDigisacMes').getContext('2d');
-  const sortedMes = Object.entries(byMonth).sort((a, b) => a[0].localeCompare(b[0]));
-  
-  new Chart(ctxMes, {
-    type: 'bar',
-    data: {
-      labels: sortedMes.map(s => s[0]),
-      datasets: [{
-        label: 'Atendimentos',
-        data: sortedMes.map(s => s[1]),
-        backgroundColor: '#FF9800'
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false
-    }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
   });
 }
 
@@ -1019,30 +1202,9 @@ function exportChartData(chartType) {
       data = filteredData.filter(d => d.reaberto === 'Sim');
       filename = 'auditoria_reabertos.csv';
       break;
-    case 'tipo':
+    default:
       data = filteredData;
-      filename = 'auditoria_tipo.csv';
-      break;
-    case 'categorias':
-      data = filteredData;
-      filename = 'auditoria_categorias.csv';
-      break;
-    case 'origem_demanda':
-      data = filteredData;
-      filename = 'auditoria_origem_demanda.csv';
-      break;
-    case 'origem_canal':
-      data = filteredData;
-      filename = 'auditoria_origem_canal.csv';
-      break;
-    case 'atendentes':
-      data = filteredData;
-      filename = 'auditoria_atendentes.csv';
-      break;
-    case 'clientes':
-      data = filteredData;
-      filename = 'auditoria_clientes.csv';
-      break;
+      filename = 'auditoria_dados.csv';
   }
   
   if(data.length === 0) {
@@ -1076,10 +1238,24 @@ function countBy(arr, key) {
   }, {});
 }
 
+function crossCount(arr, key1, key2) {
+  const result = {};
+  arr.forEach(item => {
+    const k = `${item[key1]}|${item[key2]}`;
+    result[k] = (result[k] || 0) + 1;
+  });
+  return result;
+}
+
 function getTopValue(arr, key) {
   const counts = countBy(arr, key);
   const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
   return sorted.length > 0 ? { value: sorted[0][0], count: sorted[0][1] } : { value: '', count: 0 };
+}
+
+function genColors(count) {
+  const colors = ['#F8931D', '#2196F3', '#4CAF50', '#FF5722', '#9C27B0', '#FFC107', '#00BCD4', '#FF9800'];
+  return Array.from({length: count}, (_, i) => colors[i % colors.length]);
 }
 
 window.addEventListener('DOMContentLoaded', loadDataFromSheets);
