@@ -16,19 +16,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .loading-spinner{border:5px solid #f3f3f3;border-top:5px solid #F8931D;border-radius:50%;width:50px;height:50px;animation:spin 1s linear infinite;margin:20px auto}
 @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
 .error{background:#f8d7da;border:1px solid #f5c6cb;color:#721c24;padding:20px;margin:20px;border-radius:8px}
+.nav{background:#fff;padding:0 40px;border-bottom:1px solid #e0e0e0;display:flex;gap:5px;overflow-x:auto}
+.nav-btn{padding:15px 20px;background:transparent;border:none;border-bottom:3px solid transparent;font-size:14px;font-weight:600;color:#666;cursor:pointer;transition:all .2s;white-space:nowrap}
+.nav-btn:hover{color:#F8931D;background:#fef7f0}
+.nav-btn.active{color:#F8931D;border-bottom-color:#F8931D;background:#fef7f0}
 .content{max-width:1600px;margin:0 auto;padding:30px}
+.view{display:none}
+.view.active{display:block}
 .global-filters{background:#fff;border-radius:8px;padding:25px;margin-bottom:25px;box-shadow:0 2px 8px rgba(0,0,0,.08);border-left:4px solid #F8931D}
 .global-filters-title{font-size:16px;font-weight:700;color:#333;margin-bottom:15px}
 .section{background:#fff;border-radius:8px;padding:25px;margin-bottom:25px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
 .section-title{font-size:18px;font-weight:700;color:#333;margin-bottom:20px;padding-bottom:15px;border-bottom:2px solid #F8931D}
-.filters-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px}
+.filters-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:15px}
 .filter-group{display:flex;flex-direction:column;gap:6px}
 .filter-label{font-size:12px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:.5px}
 .filter-select,.filter-input{padding:10px;border:2px solid #ddd;border-radius:6px;font-size:14px;transition:border-color .2s}
 .filter-select:focus,.filter-input:focus{outline:none;border-color:#F8931D}
 .filter-select{cursor:pointer}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-bottom:30px}
-.kpi{background:linear-gradient(135deg,#fff,#fefefe);border-radius:8px;padding:25px;box-shadow:0 2px 8px rgba(0,0,0,.08);border-left:4px solid #F8931D;transition:transform .2s,box-shadow .2s}
+.kpi{background:linear-gradient(135deg,#fff,#fefefe);border-radius:8px;padding:25px;box-shadow:0 2px 8px rgba(0,0,0,.08);border-left:4px solid #F8931D;cursor:pointer;transition:transform .2s,box-shadow .2s}
 .kpi:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.12)}
 .kpi-label{font-size:12px;font-weight:600;color:#666;text-transform:uppercase;margin-bottom:10px;letter-spacing:.5px}
 .kpi-value{font-size:36px;font-weight:700;color:#F8931D;margin-bottom:5px}
@@ -36,30 +42,41 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .kpi.success{border-left-color:#4CAF50}
 .kpi.success .kpi-value{color:#4CAF50}
 .charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(450px,1fr));gap:20px}
-.chart-card{background:#fff;border-radius:8px;padding:25px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.chart-card{background:#fff;border-radius:8px;padding:25px;box-shadow:0 2px 8px rgba(0,0,0,.08);position:relative}
 .chart-title{font-size:15px;font-weight:600;color:#333;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
 .chart-container{position:relative;height:350px}
 .btn{padding:10px 20px;background:#F8931D;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;transition:background .2s;font-size:14px}
 .btn:hover{background:#ff6b00}
 .btn-secondary{background:#666}
 .btn-secondary:hover{background:#555}
-.btn-small{padding:6px 12px;font-size:12px}
+.btn-small{padding:6px 12px;font-size:12px;margin-left:5px}
+.audit-btn{background:#2196F3}
+.audit-btn:hover{background:#1976D2}
+.expand-btn{background:#9C27B0}
+.expand-btn:hover{background:#7B1FA2}
 .footer{background:#fff;padding:20px;text-align:center;font-size:12px;color:#999;margin-top:40px;border-top:1px solid #e0e0e0}
 .hidden{display:none!important}
-.audit-btn{background:#2196F3;font-size:12px;padding:6px 12px}
-.audit-btn:hover{background:#1976D2}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center}
+.modal.active{display:flex}
+.modal-content{background:#fff;border-radius:8px;padding:30px;max-width:90%;max-height:90%;overflow-y:auto;max-width:600px}
+.modal-close{float:right;font-size:28px;cursor:pointer;color:#999}
+.modal-close:hover{color:#333}
+.data-table{width:100%;border-collapse:collapse;margin-top:15px}
+.data-table th{background:#F8931D;color:#fff;padding:12px;text-align:left;font-weight:600}
+.data-table td{padding:10px 12px;border-bottom:1px solid #ddd}
+.data-table tr:hover{background:#f5f5f5}
 </style>
 </head>
 <body>
 
 <div class="header">
 <div class="logo">Gestão<span class="logo-orange">.Online</span></div>
-<div class="subtitle">Dashboard TomTicket - Operações - Versão 2.0</div>
+<div class="subtitle">Dashboard TomTicket - Operações - Versão Final</div>
 </div>
 
 <div id="loadingScreen" class="loading">
 <div class="loading-spinner"></div>
-<p>Carregando dados do Google Sheets...</p>
+<p>Carregando dados...</p>
 </div>
 
 <div id="errorScreen" class="error hidden">
@@ -68,6 +85,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </div>
 
 <div id="mainContent" class="hidden">
+
+<div class="nav">
+<button class="nav-btn active" onclick="showView('dashboard')">Dashboard Geral</button>
+<button class="nav-btn" onclick="showView('periodo')">Chamados por Período</button>
+<button class="nav-btn" onclick="showView('gap')">Análise GAP</button>
+<button class="nav-btn" onclick="showView('canais')">Análise de Canais</button>
+<button class="nav-btn" onclick="showView('categoria-tipo')">Categoria x Tipo</button>
+<button class="nav-btn" onclick="showView('funcionalidades')">Funcionalidades</button>
+</div>
 
 <div class="content">
 
@@ -90,6 +116,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </div>
 </div>
 </div>
+
+<div id="dashboard" class="view active">
 
 <div class="section">
 <div class="section-title">Filtros Adicionais</div>
@@ -120,45 +148,178 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <div class="kpis" id="kpisContainer"></div>
 
 <div class="charts-grid">
-
 <div class="chart-card">
-<div class="chart-title">Top 10 Funcionalidades <button class="btn audit-btn btn-small" onclick="exportChartData('funcionalidades')">Ver Dados</button></div>
+<div class="chart-title">Top 10 Funcionalidades <button class="btn audit-btn btn-small" onclick="openAudit('funcionalidades')">Dados</button> <button class="btn expand-btn btn-small" onclick="expandChart('chartFuncionalidades')">+</button></div>
 <div class="chart-container"><canvas id="chartFuncionalidades"></canvas></div>
 </div>
 
 <div class="chart-card">
-<div class="chart-title">Top Atendentes com Reabertura <button class="btn audit-btn btn-small" onclick="exportChartData('reabertura')">Ver Dados</button></div>
-<div class="chart-container"><canvas id="chartReabertura"></canvas></div>
-</div>
-
-<div class="chart-card">
-<div class="chart-title">Distribuição por Tipo <button class="btn audit-btn btn-small" onclick="exportChartData('tipo')">Ver Dados</button></div>
+<div class="chart-title">Distribuição por Tipo <button class="btn audit-btn btn-small" onclick="openAudit('tipo')">Dados</button> <button class="btn expand-btn btn-small" onclick="expandChart('chartTipo')">+</button></div>
 <div class="chart-container"><canvas id="chartTipo"></canvas></div>
 </div>
 
 <div class="chart-card">
-<div class="chart-title">Top 15 Categorias <button class="btn audit-btn btn-small" onclick="exportChartData('categorias')">Ver Dados</button></div>
+<div class="chart-title">Top 15 Categorias <button class="btn audit-btn btn-small" onclick="openAudit('categorias')">Dados</button> <button class="btn expand-btn btn-small" onclick="expandChart('chartCategorias')">+</button></div>
 <div class="chart-container"><canvas id="chartCategorias"></canvas></div>
 </div>
 
 <div class="chart-card">
-<div class="chart-title">Origem da Demanda <button class="btn audit-btn btn-small" onclick="exportChartData('origem_demanda')">Ver Dados</button></div>
+<div class="chart-title">Origem da Demanda <button class="btn audit-btn btn-small" onclick="openAudit('origem_demanda')">Dados</button> <button class="btn expand-btn btn-small" onclick="expandChart('chartOrigemDemanda')">+</button></div>
 <div class="chart-container"><canvas id="chartOrigemDemanda"></canvas></div>
 </div>
 
 <div class="chart-card">
-<div class="chart-title">Canal de Entrada <button class="btn audit-btn btn-small" onclick="exportChartData('origem_canal')">Ver Dados</button></div>
+<div class="chart-title">Canal de Entrada <button class="btn audit-btn btn-small" onclick="openAudit('origem_canal')">Dados</button> <button class="btn expand-btn btn-small" onclick="expandChart('chartOrigemCanal')">+</button></div>
 <div class="chart-container"><canvas id="chartOrigemCanal"></canvas></div>
 </div>
 
 <div class="chart-card">
-<div class="chart-title">Volume por Atendente <button class="btn audit-btn btn-small" onclick="exportChartData('atendentes')">Ver Dados</button></div>
+<div class="chart-title">Volume por Atendente <button class="btn audit-btn btn-small" onclick="openAudit('atendentes')">Dados</button> <button class="btn expand-btn btn-small" onclick="expandChart('chartAtendentes')">+</button></div>
 <div class="chart-container"><canvas id="chartAtendentes"></canvas></div>
 </div>
 
 <div class="chart-card">
-<div class="chart-title">Top 20 Clientes <button class="btn audit-btn btn-small" onclick="exportChartData('clientes')">Ver Dados</button></div>
+<div class="chart-title">Top Atendentes com Reabertura <button class="btn audit-btn btn-small" onclick="openAudit('reabertura')">Dados</button> <button class="btn expand-btn btn-small" onclick="expandChart('chartReabertura')">+</button></div>
+<div class="chart-container"><canvas id="chartReabertura"></canvas></div>
+</div>
+
+<div class="chart-card">
+<div class="chart-title">Top 20 Clientes <button class="btn audit-btn btn-small" onclick="openAudit('clientes')">Dados</button> <button class="btn expand-btn btn-small" onclick="expandChart('chartTopClientes')">+</button></div>
 <div class="chart-container"><canvas id="chartTopClientes"></canvas></div>
+</div>
+</div>
+
+</div>
+
+<div id="periodo" class="view">
+
+<div class="section">
+<div class="section-title">Chamados Criados por Período</div>
+<div class="filters-grid">
+<div class="filter-group">
+<label class="filter-label">Exibir por</label>
+<select class="filter-select" id="exibirPor" onchange="updateChartCriados()">
+<option value="dia">Dia</option>
+<option value="mes" selected>Mês</option>
+<option value="ano">Ano</option>
+</select>
+</div>
+<div class="filter-group">
+<label class="filter-label">Série</label>
+<select class="filter-select" id="serieChart" onchange="updateChartCriados()">
+<option value="">Nenhuma</option>
+<option value="tipo">Tipo</option>
+<option value="origem_canal">Canal de Entrada</option>
+<option value="origem_demanda">Origem Demanda</option>
+</select>
+</div>
+<div class="filter-group" style="align-self:end">
+<button class="btn" onclick="updateChartCriados()">Gerar</button>
+<button class="btn audit-btn" onclick="openAudit('periodo')">Dados</button>
+<button class="btn expand-btn" onclick="expandChart('chartCriados')">+</button>
+</div>
+</div>
+<div class="chart-container" style="height:450px;margin-top:20px"><canvas id="chartCriados"></canvas></div>
+</div>
+
+</div>
+
+<div id="gap" class="view">
+
+<div class="section">
+<div class="section-title">Análise de GAP de Conhecimento</div>
+<p style="margin-bottom:20px;color:#666;font-size:14px">GAP de Conhecimento representa 5.3% dos tickets - principal oportunidade de treinamento</p>
+
+<div class="charts-grid">
+<div class="chart-card">
+<div class="chart-title">GAP por Categoria <button class="btn audit-btn btn-small" onclick="openAudit('gap_cat')">Dados</button></div>
+<div class="chart-container"><canvas id="chartGapCategoria"></canvas></div>
+</div>
+
+<div class="chart-card">
+<div class="chart-title">GAP por Funcionalidade <button class="btn audit-btn btn-small" onclick="openAudit('gap_func')">Dados</button></div>
+<div class="chart-container"><canvas id="chartGapFuncionalidade"></canvas></div>
+</div>
+
+<div class="chart-card">
+<div class="chart-title">GAP Evolução Temporal <button class="btn audit-btn btn-small" onclick="openAudit('gap_tempo')">Dados</button></div>
+<div class="chart-container"><canvas id="chartGapTempo"></canvas></div>
+</div>
+</div>
+
+</div>
+
+<div id="canais" class="view">
+
+<div class="section">
+<div class="section-title">Análise de Canais de Entrada</div>
+<p style="margin-bottom:20px;color:#666;font-size:14px">API é 43% dos tickets - investigar se é automático ou cliente</p>
+
+<div class="charts-grid">
+<div class="chart-card">
+<div class="chart-title">Canal x Tipo <button class="btn audit-btn btn-small" onclick="openAudit('canal_tipo')">Dados</button></div>
+<div class="chart-container"><canvas id="chartCanalTipo"></canvas></div>
+</div>
+
+<div class="chart-card">
+<div class="chart-title">Canal x Origem Demanda <button class="btn audit-btn btn-small" onclick="openAudit('canal_origem')">Dados</button></div>
+<div class="chart-container"><canvas id="chartCanalOrigem"></canvas></div>
+</div>
+
+<div class="chart-card">
+<div class="chart-title">Volume por Canal Temporal <button class="btn audit-btn btn-small" onclick="openAudit('canal_tempo')">Dados</button></div>
+<div class="chart-container"><canvas id="chartCanalTempo"></canvas></div>
+</div>
+</div>
+
+</div>
+
+<div id="categoria-tipo" class="view">
+
+<div class="section">
+<div class="section-title">Categoria x Tipo de Ticket</div>
+<p style="margin-bottom:20px;color:#666;font-size:14px">Identifica quais categorias geram mais Dúvidas, Bugs ou Solicitações</p>
+
+<div class="charts-grid">
+<div class="chart-card">
+<div class="chart-title">Top 10 Categorias x Tipo <button class="btn audit-btn btn-small" onclick="openAudit('cat_tipo')">Dados</button></div>
+<div class="chart-container"><canvas id="chartCatTipo"></canvas></div>
+</div>
+
+<div class="chart-card">
+<div class="chart-title">% Bugs por Categoria <button class="btn audit-btn btn-small" onclick="openAudit('bugs_cat')">Dados</button></div>
+<div class="chart-container"><canvas id="chartBugsCat"></canvas></div>
+</div>
+
+<div class="chart-card">
+<div class="chart-title">Taxa de Defeito Sistêmico <button class="btn audit-btn btn-small" onclick="openAudit('defeito')">Dados</button></div>
+<div class="chart-container"><canvas id="chartDefeitoSist"></canvas></div>
+</div>
+</div>
+
+</div>
+
+<div id="funcionalidades" class="view">
+
+<div class="section">
+<div class="section-title">Análise de Funcionalidades Problemáticas</div>
+<p style="margin-bottom:20px;color:#666;font-size:14px">Top 10 funcionalidades que geram mais demanda - priorizar UX/Treinamento</p>
+
+<div class="charts-grid">
+<div class="chart-card">
+<div class="chart-title">Top 10 Funcionalidades <button class="btn audit-btn btn-small" onclick="openAudit('func_top')">Dados</button></div>
+<div class="chart-container"><canvas id="chartFuncTop10"></canvas></div>
+</div>
+
+<div class="chart-card">
+<div class="chart-title">Funcionalidades x Tipo <button class="btn audit-btn btn-small" onclick="openAudit('func_tipo')">Dados</button></div>
+<div class="chart-container"><canvas id="chartFuncTipo"></canvas></div>
+</div>
+
+<div class="chart-card">
+<div class="chart-title">Funcionalidades x Origem Demanda <button class="btn audit-btn btn-small" onclick="openAudit('func_origem')">Dados</button></div>
+<div class="chart-container"><canvas id="chartFuncOrigem"></canvas></div>
+</div>
 </div>
 
 </div>
@@ -169,6 +330,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 Gestão.Online | Documento Interno | Rua das Orquídeas, Quadra 28, Lote 01, Sala 303, Jardim Goiás, Goiânia-GO
 </div>
 
+</div>
+
+<div id="auditModal" class="modal">
+<div class="modal-content">
+<span class="modal-close" onclick="closeAudit()">&times;</span>
+<h2 id="auditTitle">Auditoria de Dados</h2>
+<div id="auditContent"></div>
+</div>
+</div>
+
+<div id="expandModal" class="modal" onclick="closeExpand(event)">
+<div class="modal-content" style="max-width:95%;max-height:95%;background:transparent;box-shadow:none" onclick="event.stopPropagation()">
+<span class="modal-close" style="color:#fff;font-size:40px" onclick="closeExpand()">&times;</span>
+<div style="background:#fff;padding:30px;border-radius:8px;margin-top:10px">
+<div id="expandContent"></div>
+</div>
+</div>
 </div>
 
 <script>
@@ -202,6 +380,29 @@ function init() {
   populateFilters();
   updateKPIs();
   createCharts();
+}
+
+function showView(v) {
+  document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(e => e.classList.remove('active'));
+  document.getElementById(v).classList.add('active');
+  event.target.classList.add('active');
+  
+  if(v === 'periodo') {
+    setTimeout(() => updateChartCriados(), 100);
+  }
+  if(v === 'gap') {
+    setTimeout(() => createGAPCharts(), 100);
+  }
+  if(v === 'canais') {
+    setTimeout(() => createCanaisCharts(), 100);
+  }
+  if(v === 'categoria-tipo') {
+    setTimeout(() => createCatTipoCharts(), 100);
+  }
+  if(v === 'funcionalidades') {
+    setTimeout(() => createFuncCharts(), 100);
+  }
 }
 
 function applyGlobalPeriod() {
@@ -290,34 +491,33 @@ function updateKPIs() {
     <div class="kpi">
       <div class="kpi-label">Total de Tickets</div>
       <div class="kpi-value">${total}</div>
-      <div class="kpi-subtitle">Período selecionado</div>
     </div>
     <div class="kpi success">
       <div class="kpi-label">Taxa de Reabertura</div>
       <div class="kpi-value">${taxaReabertura}%</div>
-      <div class="kpi-subtitle">${reabertos} tickets reabertos</div>
+      <div class="kpi-subtitle">${reabertos} reabertos</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">Top Categoria</div>
-      <div class="kpi-value" style="font-size:20px">${topCat.value || 'N/A'}</div>
-      <div class="kpi-subtitle">${topCat.count} tickets</div>
+      <div class="kpi-value" style="font-size:24px">${topCat.value || 'N/A'}</div>
+      <div class="kpi-subtitle">${topCat.count}</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">Atendente Principal</div>
-      <div class="kpi-value" style="font-size:20px">${topAtend.value || 'N/A'}</div>
-      <div class="kpi-subtitle">${topAtend.count} tickets</div>
+      <div class="kpi-value" style="font-size:24px">${topAtend.value || 'N/A'}</div>
+      <div class="kpi-subtitle">${topAtend.count}</div>
     </div>
   `;
 }
 
 function createCharts() {
   createChartFuncionalidades();
-  createChartReabertura();
   createChartTipo();
   createChartCategorias();
   createChartOrigemDemanda();
   createChartOrigemCanal();
   createChartAtendentes();
+  createChartReabertura();
   createChartTopClientes();
 }
 
@@ -341,40 +541,6 @@ function createChartFuncionalidades() {
     data: {
       labels: sorted.map(s => s[0]),
       datasets: [{
-        label: 'Tickets',
-        data: sorted.map(s => s[1]),
-        backgroundColor: colors
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      indexAxis: 'y',
-      plugins: { legend: { display: false } }
-    }
-  });
-}
-
-function createChartReabertura() {
-  const ctx = document.getElementById('chartReabertura').getContext('2d');
-  
-  const reaberturas = {};
-  filteredData.forEach(d => {
-    if(d.reaberto === 'Sim' && d.atendente) {
-      reaberturas[d.atendente] = (reaberturas[d.atendente] || 0) + 1;
-    }
-  });
-  
-  const sorted = Object.entries(reaberturas).sort((a, b) => b[1] - a[1]).slice(0, 10);
-  const colors = genColors(sorted.length);
-  
-  if(charts.reabertura) charts.reabertura.destroy();
-  charts.reabertura = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: sorted.map(s => s[0]),
-      datasets: [{
-        label: 'Reaberturas',
         data: sorted.map(s => s[1]),
         backgroundColor: colors
       }]
@@ -406,7 +572,7 @@ function createChartTipo() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: true, position: 'bottom' } }
+      plugins: { legend: { position: 'bottom' } }
     }
   });
 }
@@ -421,9 +587,8 @@ function createChartCategorias() {
   charts.categorias = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: sorted.map(s => s[0]),
+      labels: sorted.map(s => s[0].substring(0, 20)),
       datasets: [{
-        label: 'Tickets',
         data: sorted.map(s => s[1]),
         backgroundColor: colors
       }]
@@ -495,7 +660,6 @@ function createChartAtendentes() {
     data: {
       labels: sorted.map(s => s[0]),
       datasets: [{
-        label: 'Tickets',
         data: sorted.map(s => s[1]),
         backgroundColor: colors
       }]
@@ -503,6 +667,37 @@ function createChartAtendentes() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+function createChartReabertura() {
+  const ctx = document.getElementById('chartReabertura').getContext('2d');
+  const reaberturas = {};
+  filteredData.forEach(d => {
+    if(d.reaberto === 'Sim' && d.atendente) {
+      reaberturas[d.atendente] = (reaberturas[d.atendente] || 0) + 1;
+    }
+  });
+  
+  const sorted = Object.entries(reaberturas).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  const colors = genColors(sorted.length);
+  
+  if(charts.reabertura) charts.reabertura.destroy();
+  charts.reabertura = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: sorted.map(s => s[0]),
+      datasets: [{
+        data: sorted.map(s => s[1]),
+        backgroundColor: colors
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
       plugins: { legend: { display: false } }
     }
   });
@@ -518,9 +713,8 @@ function createChartTopClientes() {
   charts.topClientes = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: sorted.map(s => s[0]),
+      labels: sorted.map(s => s[0].substring(0, 15)),
       datasets: [{
-        label: 'Tickets',
         data: sorted.map(s => s[1]),
         backgroundColor: colors
       }]
@@ -529,53 +723,451 @@ function createChartTopClientes() {
       responsive: true,
       maintainAspectRatio: false,
       indexAxis: 'y',
-      plugins: { 
-        legend: { display: false },
-        datalabels: { display: false }
-      }
+      plugins: { legend: { display: false } }
     }
   });
 }
 
-function exportChartData(chartType) {
-  let data = [];
-  let filename = '';
+function updateChartCriados() {
+  const ctx = document.getElementById('chartCriados').getContext('2d');
+  const exibir = document.getElementById('exibirPor').value;
+  const serie = document.getElementById('serieChart').value;
   
-  switch(chartType) {
+  const byPeriod = {};
+  filteredData.forEach(d => {
+    if(d.data_criacao) {
+      const key = exibir === 'dia' ? d.data_criacao : 
+                  exibir === 'mes' ? d.data_criacao.substring(0, 7) :
+                  d.data_criacao.substring(0, 4);
+      if(!byPeriod[key]) byPeriod[key] = {};
+      if(serie) {
+        const serieVal = d[serie] || 'N/A';
+        byPeriod[key][serieVal] = (byPeriod[key][serieVal] || 0) + 1;
+      } else {
+        byPeriod[key]['total'] = (byPeriod[key]['total'] || 0) + 1;
+      }
+    }
+  });
+  
+  const sorted = Object.keys(byPeriod).sort();
+  const colors = ['#F8931D', '#2196F3', '#4CAF50', '#FF5722', '#9C27B0'];
+  
+  let datasets;
+  if(!serie) {
+    datasets = [{
+      label: 'Criados',
+      data: sorted.map(p => byPeriod[p]['total'] || 0),
+      borderColor: '#F8931D',
+      backgroundColor: 'rgba(248,147,29,0.1)',
+      tension: 0.4,
+      fill: true
+    }];
+  } else {
+    const series = [...new Set(Object.values(byPeriod).flatMap(p => Object.keys(p)))];
+    datasets = series.map((s, i) => ({
+      label: s,
+      data: sorted.map(p => byPeriod[p][s] || 0),
+      borderColor: colors[i % colors.length],
+      backgroundColor: colors[i % colors.length] + '20',
+      tension: 0.4
+    }));
+  }
+  
+  if(charts.criadosPeriodo) charts.criadosPeriodo.destroy();
+  charts.criadosPeriodo = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: sorted,
+      datasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+}
+
+function createGAPCharts() {
+  const gapData = filteredData.filter(d => d.origem_demanda === 'GAP de Conhecimento');
+  
+  // GAP por Categoria
+  const ctxCat = document.getElementById('chartGapCategoria').getContext('2d');
+  const catData = countBy(gapData, 'categoria');
+  const sortedCat = Object.entries(catData).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  const colorsCat = genColors(sortedCat.length);
+  
+  if(charts.gapCategoria) charts.gapCategoria.destroy();
+  charts.gapCategoria = new Chart(ctxCat, {
+    type: 'bar',
+    data: {
+      labels: sortedCat.map(s => s[0].substring(0, 20)),
+      datasets: [{
+        data: sortedCat.map(s => s[1]),
+        backgroundColor: colorsCat
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } } }
+  });
+  
+  // GAP por Funcionalidade
+  const ctxFunc = document.getElementById('chartGapFuncionalidade').getContext('2d');
+  const funcData = countBy(gapData, 'funcionalidade');
+  const sortedFunc = Object.entries(funcData).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  const colorsFunc = genColors(sortedFunc.length);
+  
+  if(charts.gapFuncionalidade) charts.gapFuncionalidade.destroy();
+  charts.gapFuncionalidade = new Chart(ctxFunc, {
+    type: 'bar',
+    data: {
+      labels: sortedFunc.map(s => s[0].substring(0, 20)),
+      datasets: [{
+        data: sortedFunc.map(s => s[1]),
+        backgroundColor: colorsFunc
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } } }
+  });
+  
+  // GAP Temporal
+  const ctxTempo = document.getElementById('chartGapTempo').getContext('2d');
+  const byMes = {};
+  gapData.forEach(d => {
+    if(d.data_criacao) {
+      const mes = d.data_criacao.substring(0, 7);
+      byMes[mes] = (byMes[mes] || 0) + 1;
+    }
+  });
+  
+  const sortedMes = Object.entries(byMes).sort((a, b) => a[0].localeCompare(b[0]));
+  
+  if(charts.gapTempo) charts.gapTempo.destroy();
+  charts.gapTempo = new Chart(ctxTempo, {
+    type: 'line',
+    data: {
+      labels: sortedMes.map(m => m[0]),
+      datasets: [{
+        label: 'GAP Conhecimento',
+        data: sortedMes.map(m => m[1]),
+        borderColor: '#FF9800',
+        backgroundColor: 'rgba(255,152,0,0.1)',
+        tension: 0.4,
+        fill: true
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+}
+
+function createCanaisCharts() {
+  // Canal x Tipo
+  const ctxCanalTipo = document.getElementById('chartCanalTipo').getContext('2d');
+  const canais = [...new Set(filteredData.map(d => d.origem_canal).filter(Boolean))];
+  const tipos = [...new Set(filteredData.map(d => d.tipo).filter(Boolean))];
+  const colorsCT = genColors(tipos.length);
+  
+  const datasetsCT = tipos.map((tipo, i) => ({
+    label: tipo,
+    data: canais.map(c => filteredData.filter(d => d.origem_canal === c && d.tipo === tipo).length),
+    backgroundColor: colorsCT[i]
+  }));
+  
+  if(charts.canalTipo) charts.canalTipo.destroy();
+  charts.canalTipo = new Chart(ctxCanalTipo, {
+    type: 'bar',
+    data: {
+      labels: canais,
+      datasets: datasetsCT
+    },
+    options: { responsive: true, maintainAspectRatio: false, stacked: true }
+  });
+  
+  // Canal x Origem Demanda
+  const ctxCanalOrig = document.getElementById('chartCanalOrigem').getContext('2d');
+  const origs = [...new Set(filteredData.map(d => d.origem_demanda).filter(Boolean))];
+  const colorsCD = genColors(origs.length);
+  
+  const datasetsCO = origs.map((orig, i) => ({
+    label: orig,
+    data: canais.map(c => filteredData.filter(d => d.origem_canal === c && d.origem_demanda === orig).length),
+    backgroundColor: colorsCD[i]
+  }));
+  
+  if(charts.canalOrigem) charts.canalOrigem.destroy();
+  charts.canalOrigem = new Chart(ctxCanalOrig, {
+    type: 'bar',
+    data: {
+      labels: canais,
+      datasets: datasetsCO
+    },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+  
+  // Canal Temporal
+  const ctxCanalTempo = document.getElementById('chartCanalTempo').getContext('2d');
+  const byMesCanal = {};
+  filteredData.forEach(d => {
+    if(d.data_criacao && d.origem_canal) {
+      const mes = d.data_criacao.substring(0, 7);
+      if(!byMesCanal[mes]) byMesCanal[mes] = {};
+      byMesCanal[mes][d.origem_canal] = (byMesCanal[mes][d.origem_canal] || 0) + 1;
+    }
+  });
+  
+  const sortedMes = Object.keys(byMesCanal).sort();
+  const datasetsCtempo = canais.map((canal, i) => ({
+    label: canal,
+    data: sortedMes.map(m => byMesCanal[m][canal] || 0),
+    borderColor: genColors(canais.length)[i],
+    tension: 0.4
+  }));
+  
+  if(charts.canalTempo) charts.canalTempo.destroy();
+  charts.canalTempo = new Chart(ctxCanalTempo, {
+    type: 'line',
+    data: {
+      labels: sortedMes,
+      datasets: datasetsCtempo
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+  });
+}
+
+function createCatTipoCharts() {
+  const cats = [...new Set(filteredData.map(d => d.categoria).filter(Boolean))].sort();
+  const topCats = cats.slice(0, 10);
+  const tipos = [...new Set(filteredData.map(d => d.tipo).filter(Boolean))];
+  const colorsT = genColors(tipos.length);
+  
+  // Categoria x Tipo
+  const ctxCatTipo = document.getElementById('chartCatTipo').getContext('2d');
+  const datasetsCT = tipos.map((tipo, i) => ({
+    label: tipo,
+    data: topCats.map(cat => filteredData.filter(d => d.categoria === cat && d.tipo === tipo).length),
+    backgroundColor: colorsT[i]
+  }));
+  
+  if(charts.catTipo) charts.catTipo.destroy();
+  charts.catTipo = new Chart(ctxCatTipo, {
+    type: 'bar',
+    data: {
+      labels: topCats.map(c => c.substring(0, 15)),
+      datasets: datasetsCT
+    },
+    options: { responsive: true, maintainAspectRatio: false, stacked: true }
+  });
+  
+  // % Bugs por Categoria
+  const ctxBugsCat = document.getElementById('chartBugsCat').getContext('2d');
+  const bugsByCat = topCats.map(cat => {
+    const total = filteredData.filter(d => d.categoria === cat).length;
+    const bugs = filteredData.filter(d => d.categoria === cat && d.tipo && d.tipo.toLowerCase().includes('bug')).length;
+    return total > 0 ? (bugs / total * 100).toFixed(1) : 0;
+  });
+  
+  if(charts.bugsCat) charts.bugsCat.destroy();
+  charts.bugsCat = new Chart(ctxBugsCat, {
+    type: 'bar',
+    data: {
+      labels: topCats.map(c => c.substring(0, 15)),
+      datasets: [{
+        label: '% Bugs',
+        data: bugsByCat,
+        backgroundColor: '#FF5722'
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } } }
+  });
+  
+  // Defeito Sistêmico
+  const ctxDefeitoSist = document.getElementById('chartDefeitoSist').getContext('2d');
+  const defeitoByCat = topCats.map(cat => {
+    const total = filteredData.filter(d => d.categoria === cat).length;
+    const defeito = filteredData.filter(d => d.categoria === cat && d.origem_demanda === 'Defeito Sistêmico').length;
+    return total > 0 ? (defeito / total * 100).toFixed(1) : 0;
+  });
+  
+  if(charts.defeitoSist) charts.defeitoSist.destroy();
+  charts.defeitoSist = new Chart(ctxDefeitoSist, {
+    type: 'bar',
+    data: {
+      labels: topCats.map(c => c.substring(0, 15)),
+      datasets: [{
+        label: '% Defeito Sistêmico',
+        data: defeitoByCat,
+        backgroundColor: '#9C27B0'
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } } }
+  });
+}
+
+function createFuncCharts() {
+  const funcs = [...new Set(filteredData.map(d => d.funcionalidade).filter(Boolean))];
+  const topFuncs = Object.entries(countBy(filteredData, 'funcionalidade')).sort((a, b) => b[1] - a[1]).slice(0, 10).map(f => f[0]);
+  const tipos = [...new Set(filteredData.map(d => d.tipo).filter(Boolean))];
+  const colorsF = genColors(topFuncs.length);
+  const colorsT = genColors(tipos.length);
+  
+  // Top 10 Funcionalidades
+  const ctxFuncTop = document.getElementById('chartFuncTop10').getContext('2d');
+  const funcTopData = topFuncs.map(f => filteredData.filter(d => d.funcionalidade === f).length);
+  
+  if(charts.funcTop10) charts.funcTop10.destroy();
+  charts.funcTop10 = new Chart(ctxFuncTop, {
+    type: 'bar',
+    data: {
+      labels: topFuncs.map(f => f.substring(0, 20)),
+      datasets: [{
+        data: funcTopData,
+        backgroundColor: colorsF
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } } }
+  });
+  
+  // Funcionalidades x Tipo
+  const ctxFuncTipo = document.getElementById('chartFuncTipo').getContext('2d');
+  const datasetsFT = tipos.map((tipo, i) => ({
+    label: tipo,
+    data: topFuncs.map(f => filteredData.filter(d => d.funcionalidade === f && d.tipo === tipo).length),
+    backgroundColor: colorsT[i]
+  }));
+  
+  if(charts.funcTipo) charts.funcTipo.destroy();
+  charts.funcTipo = new Chart(ctxFuncTipo, {
+    type: 'bar',
+    data: {
+      labels: topFuncs.map(f => f.substring(0, 15)),
+      datasets: datasetsFT
+    },
+    options: { responsive: true, maintainAspectRatio: false, stacked: true }
+  });
+  
+  // Funcionalidades x Origem Demanda
+  const ctxFuncOrig = document.getElementById('chartFuncOrigem').getContext('2d');
+  const origs = [...new Set(filteredData.map(d => d.origem_demanda).filter(Boolean))];
+  const colorsO = genColors(origs.length);
+  
+  const datasetsFO = origs.map((orig, i) => ({
+    label: orig,
+    data: topFuncs.map(f => filteredData.filter(d => d.funcionalidade === f && d.origem_demanda === orig).length),
+    backgroundColor: colorsO[i]
+  }));
+  
+  if(charts.funcOrigem) charts.funcOrigem.destroy();
+  charts.funcOrigem = new Chart(ctxFuncOrig, {
+    type: 'bar',
+    data: {
+      labels: topFuncs.map(f => f.substring(0, 15)),
+      datasets: datasetsFO
+    },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+}
+
+function openAudit(type) {
+  let data = [];
+  let title = '';
+  
+  switch(type) {
     case 'funcionalidades':
       data = filteredData.filter(d => d.funcionalidade);
-      filename = 'auditoria_funcionalidades.csv';
+      title = 'Top 10 Funcionalidades';
+      break;
+    case 'tipo':
+      data = filteredData;
+      title = 'Distribuição por Tipo';
+      break;
+    case 'categorias':
+      data = filteredData;
+      title = 'Top 15 Categorias';
+      break;
+    case 'origem_demanda':
+      data = filteredData;
+      title = 'Origem da Demanda';
+      break;
+    case 'origem_canal':
+      data = filteredData;
+      title = 'Canal de Entrada';
+      break;
+    case 'atendentes':
+      data = filteredData;
+      title = 'Volume por Atendente';
       break;
     case 'reabertura':
       data = filteredData.filter(d => d.reaberto === 'Sim');
-      filename = 'auditoria_reabertos.csv';
+      title = 'Atendentes com Reabertura';
+      break;
+    case 'clientes':
+      data = filteredData;
+      title = 'Top 20 Clientes';
+      break;
+    case 'periodo':
+      data = filteredData;
+      title = 'Chamados por Período';
       break;
     default:
       data = filteredData;
-      filename = 'auditoria_dados.csv';
+      title = 'Auditoria';
   }
   
-  if(data.length === 0) {
-    alert('Sem dados para exportar!');
-    return;
-  }
+  const html = `
+    <h3>${title}</h3>
+    <p>Total de registros: <strong>${data.length}</strong></p>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Protocolo</th>
+          <th>Assunto</th>
+          <th>Categoria</th>
+          <th>Tipo</th>
+          <th>Atendente</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.slice(0, 20).map(d => `
+          <tr>
+            <td>${d.protocolo}</td>
+            <td>${d.assunto}</td>
+            <td>${d.categoria}</td>
+            <td>${d.tipo}</td>
+            <td>${d.atendente}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    <p style="margin-top:15px;color:#999;font-size:12px">Mostrando 20 primeiros de ${data.length} registros</p>
+  `;
   
-  const headers = Object.keys(data[0]);
-  let csv = headers.join(',') + '\n';
+  document.getElementById('auditTitle').textContent = title;
+  document.getElementById('auditContent').innerHTML = html;
+  document.getElementById('auditModal').classList.add('active');
+}
+
+function closeAudit() {
+  document.getElementById('auditModal').classList.remove('active');
+}
+
+function expandChart(chartId) {
+  const canvas = document.getElementById(chartId);
+  const container = canvas.parentElement;
+  const html = container.outerHTML;
   
-  data.forEach(row => {
-    const values = headers.map(h => {
-      const val = row[h] || '';
-      return `"${String(val).replace(/"/g, '""')}"`;
-    });
-    csv += values.join(',') + '\n';
-  });
+  document.getElementById('expandContent').innerHTML = html;
+  document.getElementById('expandModal').classList.add('active');
   
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = filename;
-  link.click();
+  setTimeout(() => {
+    const expandCanvas = document.getElementById('expandModal').querySelector('canvas');
+    if(expandCanvas) {
+      expandCanvas.style.height = '600px';
+    }
+  }, 100);
+}
+
+function closeExpand(e) {
+  if(e && e.target !== document.getElementById('expandModal')) return;
+  document.getElementById('expandModal').classList.remove('active');
 }
 
 function countBy(arr, key) {
@@ -593,7 +1185,7 @@ function getTopValue(arr, key) {
 }
 
 function genColors(count) {
-  const colors = ['#F8931D', '#2196F3', '#4CAF50', '#FF5722', '#9C27B0', '#FFC107', '#00BCD4', '#FF9800', '#E91E63', '#009688', '#673AB7', '#3F51B5', '#2196F3', '#00BCD4', '#009688', '#4CAF50', '#8BC34A', '#CDDC39', '#FFC107', '#FF9800'];
+  const colors = ['#F8931D', '#2196F3', '#4CAF50', '#FF5722', '#9C27B0', '#FFC107', '#00BCD4', '#FF9800', '#E91E63', '#009688', '#673AB7', '#3F51B5', '#00BCD4', '#009688', '#4CAF50', '#8BC34A', '#CDDC39', '#FFC107', '#FF9800'];
   return Array.from({length: count}, (_, i) => colors[i % colors.length]);
 }
 
