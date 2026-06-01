@@ -88,24 +88,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 <div class="nav">
 <button class="nav-btn active" onclick="showView('dashboard')">Dashboard Geral</button>
-<button class="nav-btn" onclick="showView('gap')">Análise de GAP</button>
-<button class="nav-btn" onclick="showView('canais')">Análise de Canais</button>
-<button class="nav-btn" onclick="showView('categoria-tipo')">Categoria x Tipo</button>
-<button class="nav-btn" onclick="showView('funcionalidades')">Funcionalidade Problema</button>
-<button class="nav-btn" onclick="showView('tendencia')">Tendência Temporal</button>
-<button class="nav-btn" onclick="showView('cliente')">Análise do Cliente</button>
+<button class="nav-btn" onclick="showView('qualidade')">Qualidade & Origem</button>
+<button class="nav-btn" onclick="showView('produto')">Produto & Funcionalidades</button>
+<button class="nav-btn" onclick="showView('tendencia')">Tendencia Temporal</button>
+<button class="nav-btn" onclick="showView('cliente')">Analise do Cliente</button>
+<button class="nav-btn" onclick="showView('digisac')">Digisac</button>
 </div>
 
 <div class="content">
-
-<div class="global-filters">
-<div class="global-filters-title">Filtro Global de Período</div>
-<div class="filters-grid">
-<div class="filter-group"><label class="filter-label">Data Início</label><input type="date" class="filter-input" id="globalDataInicio"></div>
-<div class="filter-group"><label class="filter-label">Data Fim</label><input type="date" class="filter-input" id="globalDataFim"></div>
-<div class="filter-group" style="align-self:end"><button class="btn" onclick="applyGlobalPeriod()">Aplicar Período</button><button class="btn btn-secondary" onclick="clearGlobalPeriod()">Limpar</button></div>
-</div>
-</div>
 
 <div id="dashboard" class="view active">
 
@@ -133,43 +123,93 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </div>
 </div>
 
-<div id="gap" class="view">
-<div class="section"><div class="section-title">Análise de GAP de Conhecimento</div><p style="margin-bottom:20px;color:#666;font-size:14px">GAP de Conhecimento é a principal oportunidade de treinamento</p>
-<div class="charts-grid">
-<div class="chart-card"><div class="chart-title">GAP por Categoria <button class="btn expand-btn btn-small" onclick="expandChart('chartGapCat')">Expandir</button></div><div class="chart-container"><canvas id="chartGapCat" class="clickable-canvas"></canvas></div></div>
-<div class="chart-card"><div class="chart-title">GAP por Funcionalidade <button class="btn expand-btn btn-small" onclick="expandChart('chartGapFunc')">Expandir</button></div><div class="chart-container"><canvas id="chartGapFunc" class="clickable-canvas"></canvas></div></div>
-<div class="chart-card"><div class="chart-title">GAP Evolução Temporal <button class="btn expand-btn btn-small" onclick="expandChart('chartGapTempo')">Expandir</button></div><div class="chart-container"><canvas id="chartGapTempo" class="clickable-canvas"></canvas></div></div>
+<div id="qualidade" class="view">
+
+<div class="section">
+<div class="section-title">Filtros</div>
+<div class="filters-grid">
+<div class="filter-group"><label class="filter-label">Data Inicio</label><input type="date" class="filter-input" id="qualDataInicio"></div>
+<div class="filter-group"><label class="filter-label">Data Fim</label><input type="date" class="filter-input" id="qualDataFim"></div>
+<div class="filter-group"><label class="filter-label">Categoria</label><select class="filter-select" id="qualCategoria"><option value="">Todas</option></select></div>
+<div class="filter-group" style="align-self:end">
+  <button class="btn" onclick="applyQualidadeFilters()">Aplicar</button>
+  <button class="btn btn-secondary" onclick="clearQualidadeFilters()">Limpar</button>
 </div>
 </div>
 </div>
 
-<div id="canais" class="view">
-<div class="section"><div class="section-title">Análise de Canais de Entrada</div>
+<div class="kpis" id="kpisQualidadeContainer"></div>
+
 <div class="charts-grid">
-<div class="chart-card"><div class="chart-title">Canal x Tipo <button class="btn expand-btn btn-small" onclick="expandChart('chartCanalTipo')">Expandir</button></div><div class="chart-container"><canvas id="chartCanalTipo" class="clickable-canvas"></canvas></div></div>
-<div class="chart-card"><div class="chart-title">Canal x Origem Demanda <button class="btn expand-btn btn-small" onclick="expandChart('chartCanalOrigem')">Expandir</button></div><div class="chart-container"><canvas id="chartCanalOrigem" class="clickable-canvas"></canvas></div></div>
-<div class="chart-card"><div class="chart-title">Volume por Canal Temporal <button class="btn expand-btn btn-small" onclick="expandChart('chartCanalTempo')">Expandir</button></div><div class="chart-container"><canvas id="chartCanalTempo" class="clickable-canvas"></canvas></div></div>
+
+<div class="chart-card">
+  <div class="chart-title">Por que os chamados acontecem? <button class="btn expand-btn btn-small" onclick="expandChart('chartQualOrigem')">Expandir</button></div>
+  <div class="chart-container"><canvas id="chartQualOrigem" class="clickable-canvas"></canvas></div>
+</div>
+
+<div class="chart-card">
+  <div class="chart-title" style="flex-direction:column;align-items:flex-start;gap:4px">
+    <span>Falso Bug <span style="font-size:12px;font-weight:400;color:#666">— bugs percebidos que nao sao bugs reais</span></span>
+    <button class="btn expand-btn btn-small" onclick="expandChart('chartFalsoBug')">Expandir</button>
+  </div>
+  <div class="chart-container"><canvas id="chartFalsoBug" class="clickable-canvas"></canvas></div>
+</div>
+
+<div class="chart-card">
+  <div class="chart-title">Onde esta o GAP de conhecimento? <button class="btn expand-btn btn-small" onclick="expandChart('chartQualGapCat')">Expandir</button></div>
+  <div class="chart-container"><canvas id="chartQualGapCat" class="clickable-canvas"></canvas></div>
+</div>
+
+<div class="chart-card">
+  <div class="chart-title">Tendencia das origens por mes <button class="btn expand-btn btn-small" onclick="expandChart('chartQualTendOrigem')">Expandir</button></div>
+  <div class="chart-container"><canvas id="chartQualTendOrigem" class="clickable-canvas"></canvas></div>
+</div>
+
+</div>
+</div>
+
+<div id="produto" class="view">
+
+<div class="section">
+<div class="section-title">Filtros</div>
+<div class="filters-grid">
+<div class="filter-group"><label class="filter-label">Data Inicio</label><input type="date" class="filter-input" id="prodDataInicio"></div>
+<div class="filter-group"><label class="filter-label">Data Fim</label><input type="date" class="filter-input" id="prodDataFim"></div>
+<div class="filter-group"><label class="filter-label">Tipo de Ticket</label><select class="filter-select" id="prodTipo"><option value="">Todos</option></select></div>
+<div class="filter-group" style="align-self:end">
+  <button class="btn" onclick="applyProdutoFilters()">Aplicar</button>
+  <button class="btn btn-secondary" onclick="clearProdutoFilters()">Limpar</button>
 </div>
 </div>
 </div>
 
-<div id="categoria-tipo" class="view">
-<div class="section"><div class="section-title">Categoria x Tipo de Ticket</div>
+<div class="kpis" id="kpisProdutoContainer"></div>
+
 <div class="charts-grid">
-<div class="chart-card"><div class="chart-title">Top 10 Categorias x Tipo <button class="btn expand-btn btn-small" onclick="expandChart('chartCatTipo')">Expandir</button></div><div class="chart-container"><canvas id="chartCatTipo" class="clickable-canvas"></canvas></div></div>
-<div class="chart-card"><div class="chart-title">Percentual de Bugs por Categoria <button class="btn expand-btn btn-small" onclick="expandChart('chartBugsCat')">Expandir</button></div><div class="chart-container"><canvas id="chartBugsCat" class="clickable-canvas"></canvas></div></div>
-<div class="chart-card"><div class="chart-title">Taxa de Defeito Sistêmico <button class="btn expand-btn btn-small" onclick="expandChart('chartDefeitoSist')">Expandir</button></div><div class="chart-container"><canvas id="chartDefeitoSist" class="clickable-canvas"></canvas></div></div>
-</div>
-</div>
+
+<div class="chart-card">
+  <div class="chart-title" style="flex-direction:column;align-items:flex-start;gap:4px">
+    <span>Top 10 Funcionalidades com causa real <span style="font-size:12px;font-weight:400;color:#666">— clique para ver lista</span></span>
+    <button class="btn expand-btn btn-small" onclick="expandChart('chartProdFuncOrigem')">Expandir</button>
+  </div>
+  <div style="position:relative;height:400px;"><canvas id="chartProdFuncOrigem" class="clickable-canvas"></canvas></div>
 </div>
 
-<div id="funcionalidades" class="view">
-<div class="section"><div class="section-title">Funcionalidades Problemáticas</div>
-<div class="charts-grid">
-<div class="chart-card"><div class="chart-title">Top 10 Funcionalidades <button class="btn expand-btn btn-small" onclick="expandChart('chartFuncTop')">Expandir</button></div><div class="chart-container"><canvas id="chartFuncTop" class="clickable-canvas"></canvas></div></div>
-<div class="chart-card"><div class="chart-title">Funcionalidades x Tipo de Ticket <button class="btn expand-btn btn-small" onclick="expandChart('chartFuncTipo')">Expandir</button></div><div class="chart-container"><canvas id="chartFuncTipo" class="clickable-canvas"></canvas></div></div>
-<div class="chart-card"><div class="chart-title">Funcionalidades x Origem Demanda <button class="btn expand-btn btn-small" onclick="expandChart('chartFuncOrigem')">Expandir</button></div><div class="chart-container"><canvas id="chartFuncOrigem" class="clickable-canvas"></canvas></div></div>
+<div class="chart-card">
+  <div class="chart-title">Qual modulo precisa de atencao? <button class="btn expand-btn btn-small" onclick="expandChart('chartProdCatTipo')">Expandir</button></div>
+  <div class="chart-container"><canvas id="chartProdCatTipo" class="clickable-canvas"></canvas></div>
 </div>
+
+<div class="chart-card">
+  <div class="chart-title">Onde investir: Dev, UX ou Treinamento? <button class="btn expand-btn btn-small" onclick="expandChart('chartProdDecisao')">Expandir</button></div>
+  <div class="chart-container"><canvas id="chartProdDecisao" class="clickable-canvas"></canvas></div>
+</div>
+
+<div class="chart-card">
+  <div class="chart-title">Evolucao por categoria (mensal) <button class="btn expand-btn btn-small" onclick="expandChart('chartProdEvolCat')">Expandir</button></div>
+  <div class="chart-container"><canvas id="chartProdEvolCat" class="clickable-canvas"></canvas></div>
+</div>
+
 </div>
 </div>
 
@@ -288,8 +328,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 </div>
 
+<div id="digisac" class="view">
+<div class="section" style="text-align:center;padding:60px 20px;">
+  <div style="font-size:48px;margin-bottom:20px">&#128203;</div>
+  <div style="font-size:22px;font-weight:700;color:#333;margin-bottom:12px">Dashboard Digisac</div>
+  <div style="font-size:15px;color:#666;max-width:500px;margin:0 auto;line-height:1.6">
+    Conecte a planilha do Digisac para visualizar metricas de tempo de atendimento, FCR e volume de conversas.<br><br>
+    <span style="color:#F8931D;font-weight:600">Aguardando URL do Apps Script do Digisac.</span>
+  </div>
+  <div style="margin-top:30px;background:#fff8f0;border:2px dashed #F8931D;border-radius:8px;padding:20px;display:inline-block;text-align:left;min-width:400px">
+    <div style="font-size:13px;font-weight:600;color:#666;margin-bottom:8px">PARA ATIVAR:</div>
+    <div style="font-family:monospace;font-size:13px;color:#333">const DIGISAC_URL = 'SUA_URL_AQUI';</div>
+    <div style="font-size:12px;color:#999;margin-top:8px">Linha 3 do script — substitua e pronto.</div>
+  </div>
+</div>
+</div>
+
+
+</div>
+
 <div class="footer">
-Gestão.Online | Documento Interno | Rua das Orquídeas, Quadra 28, Lote 01, Sala 303, Jardim Goiás, Goiânia-GO
+Gestao.Online | Documento Interno | Rua das Orquideas, Quadra 28, Lote 01, Sala 303, Jardim Goias, Goiania-GO
 </div>
 
 </div>
@@ -326,7 +385,7 @@ function normalizarDados(d){return{protocolo:d['Protocolo'],assunto:d['Assunto']
 
 function extrairFuncionalidade(d){const c=['Funcionalidades (AR Virtual) (Finalização - Chamado Externo)','Funcionalidades (Agendamentos/Atividades) (Finalização - Chamado Externo)','Funcionalidades (Comercial) (Finalização - Chamado Externo)','Funcionalidades (Controle de Unidades) (Finalização - Chamado Externo)','Funcionalidades (Financeiro) (Finalização - Chamado Externo)','Funcionalidades (Fiscal) (Finalização - Chamado Externo)','Funcionalidades (GOpag) (Finalização - Chamado Externo)','Funcionalidades (Gestão de Indicadores) (Finalização - Chamado Externo)','Funcionalidades (Loja Virtual) (Finalização - Chamado Externo)','Funcionalidades (Marketplace/Apps) (Finalização - Chamado Externo)','Funcionalidades (Marketplace/Utilidades) (Finalização - Chamado Externo)','Funcionalidades (Módulo de Indicador) (Finalização - Chamado Externo)','Funcionalidades (Pametrizações) (Finalização - Chamado Externo)','Funcionalidades (Parceiros) (Finalização - Chamado Externo)','Funcionalidades (Portais) (Finalização - Chamado Externo)','Funcionalidades (Produtos e Serviços) (Finalização - Chamado Externo)','Funcionalidades (Relatórios Exportados e Formatados) (Finalização - Chamado Externo)','Funcionalidades (Soluti) (Finalização - Chamado Externo)','Funcionalidades (Unidades/Lojas) (Finalização - Chamado Externo)','Funcionalidades (Usuários e Vendedores) (Finalização - Chamado Externo)'];for(let col of c){if(d[col])return d[col];}return d['Categoria']||'N/A';}
 
-function init(){populateFilters();initTendenciaFilters();updateKPIs();createCharts();}
+function init(){populateFilters();initTendenciaFilters();initQualidadeFilters();initProdutoFilters();updateKPIs();createCharts();createQualidadeCharts();createProdutoCharts();}
 
 function showView(v){document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));document.querySelectorAll('.nav-btn').forEach(e=>e.classList.remove('active'));document.getElementById(v).classList.add('active');event.target.classList.add('active');}
 
@@ -506,6 +565,419 @@ document.getElementById('heatDataFim').value='';
 createHeatmap(allData);
 }
 
+
+
+function createHeatmap(data){
+const dias=['Domingo','Segunda','Terca','Quarta','Quinta','Sexta','Sabado'];
+const horas=Array.from({length:24},(_,i)=>i);
+const matrix={};
+dias.forEach(d=>{matrix[d]={};horas.forEach(h=>{matrix[d][h]=0;});});
+data.forEach(d=>{
+  if(d.dataCriacao){
+    const parts=d.dataCriacao.split(' ');
+    const dt=new Date(parts[0]+'T'+(parts[1]||'00:00:00'));
+    if(!isNaN(dt)){
+      const dia=dias[dt.getDay()];
+      const hora=dt.getHours();
+      matrix[dia][hora]++;
+    }
+  }
+});
+let maxVal=0;
+dias.forEach(d=>horas.forEach(h=>{if(matrix[d][h]>maxVal)maxVal=matrix[d][h];}));
+if(maxVal===0)maxVal=1;
+const cellW=38,cellH=34,labelW=90,headerH=30,paddingTop=10;
+const svgW=labelW+cellW*24+20;
+const svgH=paddingTop+headerH+cellH*7+50;
+let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 ${svgW} ${svgH}" style="font-family:-apple-system,sans-serif">`;
+horas.forEach(h=>{
+  const x=labelW+h*cellW+cellW/2;
+  svg+=`<text x="${x}" y="${paddingTop+18}" text-anchor="middle" font-size="11" fill="#666">${String(h).padStart(2,'0')}</text>`;
+});
+dias.forEach((dia,di)=>{
+  const y=paddingTop+headerH+di*cellH;
+  svg+=`<text x="${labelW-8}" y="${y+cellH/2+4}" text-anchor="end" font-size="11" fill="#444">${dia}</text>`;
+  horas.forEach(h=>{
+    const val=matrix[dia][h];
+    const intensity=val/maxVal;
+    const r=Math.round(235-(235-24)*intensity);
+    const g=Math.round(245-(245-103)*intensity);
+    const b=Math.round(255-(255-150)*intensity*0.3);
+    const color=val===0?'#f5f5f5':`rgb(${r},${g},${b})`;
+    const x=labelW+h*cellW;
+    svg+=`<rect x="${x+1}" y="${y+1}" width="${cellW-2}" height="${cellH-2}" rx="3" fill="${color}" stroke="#e0e0e0" stroke-width="0.5"/>`;
+    if(val>0){
+      const textColor=intensity>0.5?'#fff':'#333';
+      svg+=`<text x="${x+cellW/2}" y="${y+cellH/2+4}" text-anchor="middle" font-size="10" font-weight="${intensity>0.3?'600':'400'}" fill="${textColor}">${val}</text>`;
+    }
+  });
+});
+const legendX=labelW;
+const legendY=svgH-14;
+svg+=`<text x="${legendX}" y="${legendY}" font-size="10" fill="#999">Menor volume</text>`;
+[0,0.25,0.5,0.75,1].forEach((t,i)=>{
+  const r=Math.round(235-(235-24)*t);
+  const g=Math.round(245-(245-103)*t);
+  const b=Math.round(255-(255-150)*t*0.3);
+  const lx=legendX+110+i*18;
+  svg+=`<rect x="${lx}" y="${legendY-10}" width="16" height="10" rx="2" fill="${t===0?'#f5f5f5':`rgb(${r},${g},${b})`}"/>`;
+});
+svg+=`<text x="${legendX+210}" y="${legendY}" font-size="10" fill="#999">Maior volume</text>`;
+svg+=`</svg>`;
+const container=document.getElementById('heatmapContainer');
+if(container) container.innerHTML=svg;
+window._heatmapSVG=svg;
+}
+
+function expandHeatmap(){
+const svg=window._heatmapSVG;
+if(!svg){alert('Heatmap ainda nao carregado.');return;}
+const container=document.getElementById('expandContent');
+container.innerHTML=`<div style="font-size:18px;font-weight:700;color:#333;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #F8931D;">Mapa de Calor - Dia da Semana x Hora</div><div style="overflow-x:auto;">${svg}</div>`;
+document.getElementById('expandModal').classList.add('active');
+}
+
+function createTopClientesChart(data){
+const byCliente={};
+data.forEach(d=>{if(d.organizacao)byCliente[d.organizacao]=(byCliente[d.organizacao]||0)+1;});
+const sorted=Object.entries(byCliente).sort((a,b)=>b[1]-a[1]).slice(0,20);
+const ctx=document.getElementById('chartTopClientes');
+if(!ctx)return;
+if(charts.topClientes)charts.topClientes.destroy();
+const colors=sorted.map((_,i)=>{
+  const t=i/Math.max(19,1);
+  return `hsl(${28-t*20},${90-t*30}%,${55+t*15}%)`;
+});
+charts.topClientes=new Chart(ctx.getContext('2d'),{
+  type:'bar',
+  data:{
+    labels:sorted.map(s=>s[0].length>25?s[0].substring(0,25)+'...':s[0]),
+    datasets:[{data:sorted.map(s=>s[1]),backgroundColor:colors}]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    indexAxis:'y',
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.x} chamados`}}},
+    scales:{y:{ticks:{font:{size:11}}},x:{ticks:{maxTicksLimit:8}}}
+  }
+});
+charts['chartTopClientes']=charts.topClientes;
+}
+
+
+function initQualidadeFilters(){
+const cats=[...new Set(allData.map(d=>d.categoria).filter(Boolean))].sort();
+document.getElementById('qualCategoria').innerHTML='<option value="">Todas</option>'+cats.map(x=>`<option value="${x}">${x}</option>`).join('');
+}
+
+function getQualidadeBase(){
+let base=allData;
+const ini=document.getElementById('qualDataInicio').value;
+const fim=document.getElementById('qualDataFim').value;
+const cat=document.getElementById('qualCategoria').value;
+if(ini&&fim) base=base.filter(d=>{const dt=d.dataCriacao?d.dataCriacao.split(' ')[0]:'';return dt>=ini&&dt<=fim;});
+if(cat) base=base.filter(d=>d.categoria===cat);
+return base;
+}
+
+function applyQualidadeFilters(){createQualidadeCharts();}
+
+function clearQualidadeFilters(){
+document.getElementById('qualDataInicio').value='';
+document.getElementById('qualDataFim').value='';
+document.getElementById('qualCategoria').value='';
+createQualidadeCharts();
+}
+
+function createQualidadeCharts(){
+const base=getQualidadeBase();
+const tot=base.length;
+
+// KPIs
+const falsoBug=base.filter(d=>d.tipo&&d.tipo.toLowerCase().includes('incidente')&&d.origemDemanda&&!d.origemDemanda.toLowerCase().includes('defeito'));
+const defReal=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('defeito'));
+const gap=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('gap'));
+const pctFalso=tot>0?Math.round(falsoBug.length/Math.max(base.filter(d=>d.tipo&&d.tipo.toLowerCase().includes('incidente')).length,1)*100):0;
+
+document.getElementById('kpisQualidadeContainer').innerHTML=`
+<div class="kpi"><div class="kpi-label">Total Analisado</div><div class="kpi-value">${tot}</div></div>
+<div class="kpi" style="border-left-color:#E74C3C"><div class="kpi-label">Falso Bug %</div><div class="kpi-value" style="color:#E74C3C">${pctFalso}%</div><div class="kpi-subtitle">${falsoBug.length} de ${base.filter(d=>d.tipo&&d.tipo.toLowerCase().includes('incidente')).length} bugs</div></div>
+<div class="kpi" style="border-left-color:#9B59B6"><div class="kpi-label">Defeito Real</div><div class="kpi-value" style="color:#9B59B6">${defReal.length}</div><div class="kpi-subtitle">${tot>0?Math.round(defReal.length/tot*100):0}% do total</div></div>
+<div class="kpi" style="border-left-color:#FF9800"><div class="kpi-label">GAP Conhecimento</div><div class="kpi-value" style="color:#FF9800">${gap.length}</div><div class="kpi-subtitle">${tot>0?Math.round(gap.length/tot*100):0}% do total</div></div>
+`;
+
+// Grafico 1: Por que os chamados acontecem (pizza origens)
+const origemData=countBy(base,'origemDemanda');
+const ctxO=document.getElementById('chartQualOrigem');
+if(ctxO){
+  if(charts.qualOrigem)charts.qualOrigem.destroy();
+  const labels=Object.keys(origemData);
+  const vals=Object.values(origemData);
+  charts.qualOrigem=new Chart(ctxO.getContext('2d'),{
+    type:'doughnut',
+    data:{labels,datasets:[{data:vals,backgroundColor:['#9B59B6','#FF9800','#E74C3C','#3498DB','#2ECC71']}]},
+    options:{responsive:true,maintainAspectRatio:true,
+      onClick:(e,el)=>{if(el.length>0){const l=labels[el[0].index];openDrilldownCustom(base.filter(d=>d.origemDemanda===l),`Origem: ${l}`);}},
+      plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}}
+  });
+  charts['chartQualOrigem']=charts.qualOrigem;
+}
+
+// Grafico 2: Falso Bug - barras horizontais por categoria
+const bugsTotal=base.filter(d=>d.tipo&&d.tipo.toLowerCase().includes('incidente'));
+const bugsFalsosByCat={};
+const bugsRealsByCat={};
+bugsTotal.forEach(d=>{
+  const cat=d.categoria||'Sem categoria';
+  if(!bugsFalsosByCat[cat])bugsFalsosByCat[cat]=0;
+  if(!bugsRealsByCat[cat])bugsRealsByCat[cat]=0;
+  if(d.origemDemanda&&d.origemDemanda.toLowerCase().includes('defeito')) bugsRealsByCat[cat]++;
+  else bugsFalsosByCat[cat]++;
+});
+const topCatsBug=Object.entries(bugsTotal.reduce((a,d)=>{const c=d.categoria||'Sem cat';a[c]=(a[c]||0)+1;return a;},{})).sort((a,b)=>b[1]-a[1]).slice(0,8).map(x=>x[0]);
+const ctxFB=document.getElementById('chartFalsoBug');
+if(ctxFB){
+  if(charts.falsoBug)charts.falsoBug.destroy();
+  charts.falsoBug=new Chart(ctxFB.getContext('2d'),{
+    type:'bar',
+    data:{
+      labels:topCatsBug.map(c=>c.length>18?c.substring(0,18)+'...':c),
+      datasets:[
+        {label:'Falso Bug (nao e defeito)',data:topCatsBug.map(c=>bugsFalsosByCat[c]||0),backgroundColor:'#E74C3C'},
+        {label:'Bug Real (defeito confirmado)',data:topCatsBug.map(c=>bugsRealsByCat[c]||0),backgroundColor:'#9B59B6'}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      onClick:(e,el)=>{if(el.length>0){const cat=topCatsBug[el[0].index];const isFalso=el[0].datasetIndex===0;openDrilldownCustom(bugsTotal.filter(d=>d.categoria===cat&&(isFalso?(d.origemDemanda&&!d.origemDemanda.toLowerCase().includes('defeito')):(d.origemDemanda&&d.origemDemanda.toLowerCase().includes('defeito')))),`${isFalso?'Falso Bug':'Bug Real'} - ${cat}`);}},
+      plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
+      scales:{y:{ticks:{font:{size:11}}},x:{stacked:false}}
+    }
+  });
+  charts['chartFalsoBug']=charts.falsoBug;
+}
+
+// Grafico 3: GAP por categoria
+const gapData=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('gap'));
+const gapByCat=countBy(gapData,'categoria');
+const sortedGapCat=Object.entries(gapByCat).sort((a,b)=>b[1]-a[1]).slice(0,10);
+const ctxGC=document.getElementById('chartQualGapCat');
+if(ctxGC){
+  if(charts.qualGapCat)charts.qualGapCat.destroy();
+  charts.qualGapCat=new Chart(ctxGC.getContext('2d'),{
+    type:'bar',
+    data:{labels:sortedGapCat.map(s=>s[0].length>18?s[0].substring(0,18)+'...':s[0]),datasets:[{data:sortedGapCat.map(s=>s[1]),backgroundColor:'#FF9800'}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      onClick:(e,el)=>{if(el.length>0){const cat=sortedGapCat[el[0].index][0];openDrilldownCustom(gapData.filter(d=>d.categoria===cat),`GAP - ${cat}`);}},
+      plugins:{legend:{display:false}},
+      scales:{y:{ticks:{font:{size:11}}}}
+    }
+  });
+  charts['chartQualGapCat']=charts.qualGapCat;
+}
+
+// Grafico 4: Tendencia origens por mes
+const origens=[...new Set(base.map(d=>d.origemDemanda).filter(Boolean))];
+const meses=[...new Set(base.map(d=>d.dataCriacao?d.dataCriacao.split(' ')[0].substring(0,7):null).filter(Boolean))].sort();
+const CORES=['#9B59B6','#FF9800','#E74C3C','#3498DB','#2ECC71'];
+const datasetsTO=origens.map((orig,i)=>{
+  const byMes={};
+  base.filter(d=>d.origemDemanda===orig).forEach(d=>{
+    if(d.dataCriacao){const m=d.dataCriacao.split(' ')[0].substring(0,7);byMes[m]=(byMes[m]||0)+1;}
+  });
+  return {label:orig,data:meses.map(m=>byMes[m]||0),borderColor:CORES[i%CORES.length],backgroundColor:'transparent',tension:0.4,borderWidth:2,pointRadius:4};
+});
+const ctxTO=document.getElementById('chartQualTendOrigem');
+if(ctxTO){
+  if(charts.qualTendOrigem)charts.qualTendOrigem.destroy();
+  charts.qualTendOrigem=new Chart(ctxTO.getContext('2d'),{
+    type:'line',
+    data:{labels:meses,datasets:datasetsTO},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
+      scales:{x:{ticks:{font:{size:10}}}}
+    }
+  });
+  charts['chartQualTendOrigem']=charts.qualTendOrigem;
+}
+}
+
+
+function initProdutoFilters(){
+const tipos=[...new Set(allData.map(d=>d.tipo).filter(Boolean))];
+document.getElementById('prodTipo').innerHTML='<option value="">Todos</option>'+tipos.map(x=>`<option value="${x}">${x}</option>`).join('');
+}
+
+function getProdutoBase(){
+let base=allData;
+const ini=document.getElementById('prodDataInicio').value;
+const fim=document.getElementById('prodDataFim').value;
+const tipo=document.getElementById('prodTipo').value;
+if(ini&&fim) base=base.filter(d=>{const dt=d.dataCriacao?d.dataCriacao.split(' ')[0]:'';return dt>=ini&&dt<=fim;});
+if(tipo) base=base.filter(d=>d.tipo===tipo);
+return base;
+}
+
+function applyProdutoFilters(){createProdutoCharts();}
+
+function clearProdutoFilters(){
+document.getElementById('prodDataInicio').value='';
+document.getElementById('prodDataFim').value='';
+document.getElementById('prodTipo').value='';
+createProdutoCharts();
+}
+
+function createProdutoCharts(){
+const base=getProdutoBase();
+const tot=base.length;
+
+// KPIs
+const topFunc=getTopValue(base,'funcionalidade');
+const topCat=getTopValue(base,'categoria');
+const bugReal=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('defeito')).length;
+const pctBugReal=tot>0?Math.round(bugReal/tot*100):0;
+
+document.getElementById('kpisProdutoContainer').innerHTML=`
+<div class="kpi"><div class="kpi-label">Total de Tickets</div><div class="kpi-value">${tot}</div></div>
+<div class="kpi" style="border-left-color:#E74C3C"><div class="kpi-label">Top Funcionalidade</div><div class="kpi-value" style="font-size:18px;color:#E74C3C">${topFunc.value||'N/A'}</div><div class="kpi-subtitle">${topFunc.count} chamados</div></div>
+<div class="kpi" style="border-left-color:#3498DB"><div class="kpi-label">Top Categoria</div><div class="kpi-value" style="font-size:18px;color:#3498DB">${topCat.value||'N/A'}</div><div class="kpi-subtitle">${topCat.count} chamados</div></div>
+<div class="kpi" style="border-left-color:#9B59B6"><div class="kpi-label">Bug Real Confirmado</div><div class="kpi-value" style="color:#9B59B6">${pctBugReal}%</div><div class="kpi-subtitle">${bugReal} tickets</div></div>
+`;
+
+// Grafico 1: Top funcs empilhado por origem
+const topFuncs=Object.entries(countBy(base,'funcionalidade')).sort((a,b)=>b[1]-a[1]).slice(0,10).map(f=>f[0]);
+const origens=[...new Set(base.map(d=>d.origemDemanda).filter(Boolean))];
+const CORES_O=['#E74C3C','#FF9800','#9B59B6','#3498DB','#2ECC71'];
+const datasetsFO=origens.map((orig,i)=>({
+  label:orig,
+  data:topFuncs.map(f=>base.filter(d=>d.funcionalidade===f&&d.origemDemanda===orig).length),
+  backgroundColor:CORES_O[i%CORES_O.length]
+}));
+const ctxFO=document.getElementById('chartProdFuncOrigem');
+if(ctxFO){
+  if(charts.prodFuncOrigem)charts.prodFuncOrigem.destroy();
+  charts.prodFuncOrigem=new Chart(ctxFO.getContext('2d'),{
+    type:'bar',
+    data:{labels:topFuncs.map(f=>f.length>20?f.substring(0,20)+'...':f),datasets:datasetsFO},
+    options:{
+      responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      onClick:(e,el)=>{if(el.length>0){const func=topFuncs[el[0].index];openDrilldownCustom(base.filter(d=>d.funcionalidade===func),`Funcionalidade: ${func}`);}},
+      plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
+      scales:{x:{stacked:true},y:{stacked:true,ticks:{font:{size:11}}}}
+    }
+  });
+  charts['chartProdFuncOrigem']=charts.prodFuncOrigem;
+}
+
+// Grafico 2: Top categorias x tipo (stacked)
+const topCats=Object.entries(countBy(base,'categoria')).sort((a,b)=>b[1]-a[1]).slice(0,10).map(c=>c[0]);
+const tipos=[...new Set(base.map(d=>d.tipo).filter(Boolean))];
+const CORES_T=['#FF6B6B','#4ECDC4','#45B7D1'];
+const datasetsCT=tipos.map((t,i)=>({
+  label:t,
+  data:topCats.map(c=>base.filter(d=>d.categoria===c&&d.tipo===t).length),
+  backgroundColor:CORES_T[i%CORES_T.length]
+}));
+const ctxCT=document.getElementById('chartProdCatTipo');
+if(ctxCT){
+  if(charts.prodCatTipo)charts.prodCatTipo.destroy();
+  charts.prodCatTipo=new Chart(ctxCT.getContext('2d'),{
+    type:'bar',
+    data:{labels:topCats.map(c=>c.length>15?c.substring(0,15)+'...':c),datasets:datasetsCT},
+    options:{
+      responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      onClick:(e,el)=>{if(el.length>0){const cat=topCats[el[0].index];openDrilldownCustom(base.filter(d=>d.categoria===cat),`Categoria: ${cat}`);}},
+      plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
+      scales:{x:{stacked:true},y:{stacked:true,ticks:{font:{size:11}}}}
+    }
+  });
+  charts['chartProdCatTipo']=charts.prodCatTipo;
+}
+
+// Grafico 3: Onde investir - barra horizontal Dev vs UX vs Treinamento
+const devCount=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('defeito')).length;
+const uxCount=base.filter(d=>d.tipo&&d.tipo.toLowerCase().includes('incidente')&&d.origemDemanda&&!d.origemDemanda.toLowerCase().includes('defeito')).length;
+const trainCount=base.filter(d=>d.origemDemanda&&(d.origemDemanda.toLowerCase().includes('gap')||d.origemDemanda.toLowerCase().includes('comportamento'))).length;
+const extCount=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('depend')).length;
+const decisaoData=[
+  {label:'Investir em Dev (bug real)',val:devCount,color:'#9B59B6'},
+  {label:'Investir em UX (falso bug)',val:uxCount,color:'#E74C3C'},
+  {label:'Investir em Treinamento (GAP)',val:trainCount,color:'#FF9800'},
+  {label:'Dependencia Externa',val:extCount,color:'#3498DB'}
+];
+const ctxD=document.getElementById('chartProdDecisao');
+if(ctxD){
+  if(charts.prodDecisao)charts.prodDecisao.destroy();
+  charts.prodDecisao=new Chart(ctxD.getContext('2d'),{
+    type:'bar',
+    data:{
+      labels:decisaoData.map(d=>d.label),
+      datasets:[{data:decisaoData.map(d=>d.val),backgroundColor:decisaoData.map(d=>d.color)}]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      onClick:(e,el)=>{
+        if(el.length>0){
+          const idx=el[0].index;
+          let filtered=base;
+          if(idx===0)filtered=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('defeito'));
+          else if(idx===1)filtered=base.filter(d=>d.tipo&&d.tipo.toLowerCase().includes('incidente')&&d.origemDemanda&&!d.origemDemanda.toLowerCase().includes('defeito'));
+          else if(idx===2)filtered=base.filter(d=>d.origemDemanda&&(d.origemDemanda.toLowerCase().includes('gap')||d.origemDemanda.toLowerCase().includes('comportamento')));
+          else filtered=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('depend'));
+          openDrilldownCustom(filtered,decisaoData[idx].label);
+        }
+      },
+      plugins:{legend:{display:false}},
+      scales:{y:{ticks:{font:{size:11}}}}
+    }
+  });
+  charts['chartProdDecisao']=charts.prodDecisao;
+}
+
+// Grafico 4: Evolucao categorias por mes (top 5)
+const top5Cats=Object.entries(countBy(base,'categoria')).sort((a,b)=>b[1]-a[1]).slice(0,5).map(c=>c[0]);
+const meses=[...new Set(base.map(d=>d.dataCriacao?d.dataCriacao.split(' ')[0].substring(0,7):null).filter(Boolean))].sort();
+const CORES_CAT=['#E74C3C','#3498DB','#2ECC71','#F39C12','#9B59B6'];
+const datasetsEC=top5Cats.map((cat,i)=>{
+  const byMes={};
+  base.filter(d=>d.categoria===cat).forEach(d=>{
+    if(d.dataCriacao){const m=d.dataCriacao.split(' ')[0].substring(0,7);byMes[m]=(byMes[m]||0)+1;}
+  });
+  return {label:cat,data:meses.map(m=>byMes[m]||0),borderColor:CORES_CAT[i],backgroundColor:'transparent',tension:0.4,borderWidth:2,pointRadius:4};
+});
+const ctxEC=document.getElementById('chartProdEvolCat');
+if(ctxEC){
+  if(charts.prodEvolCat)charts.prodEvolCat.destroy();
+  charts.prodEvolCat=new Chart(ctxEC.getContext('2d'),{
+    type:'line',
+    data:{labels:meses,datasets:datasetsEC},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
+      scales:{x:{ticks:{font:{size:10}}}}
+    }
+  });
+  charts['chartProdEvolCat']=charts.prodEvolCat;
+}
+}
+
+
+function openDrilldownCustom(data, title){
+currentAuditData=data;
+document.getElementById('auditTitle').textContent=title;
+document.getElementById('auditSubtitle').textContent=`Total: ${data.length} registros`;
+const tbody=document.getElementById('auditTableBody');
+tbody.innerHTML='';
+data.forEach(d=>{
+  const row=`<tr><td>${d.protocolo||''}</td><td>${d.assunto?d.assunto.substring(0,50):''}</td><td>${d.tipo||''}</td><td>${d.categoria||''}</td><td>${d.funcionalidade||''}</td><td>${d.origemDemanda||''}</td><td>${d.origemCanal||''}</td><td>${d.atendente||''}</td></tr>`;
+  tbody.innerHTML+=row;
+});
+document.getElementById('auditModal').classList.add('active');
+}
 
 function buscarClientes(){
 const s=document.getElementById('clienteSearch').value.toLowerCase();
