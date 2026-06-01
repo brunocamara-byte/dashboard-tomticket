@@ -493,1048 +493,1270 @@ Gestao.Online &nbsp;|&nbsp; Painel Estrategico - Time de Operacoes
 </div>
 </div>
 
-<script>
-const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbx3xVugaFJjgjUk398bijh8QY0QT_EQOHBzJpvAmNG4c8zal8Lp5tQK-k4-rw4e3521/exec';
-let digisacData=[];
+<script>// ================================================================
+// SCRIPT PRINCIPAL - DASHBOARD GESTÃO.ONLINE
+// Versão limpa - sem patches acumulados
+// ================================================================
 
-const PALETA_CORES=[
+const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbx3xVugaFJjgjUk398bijh8QY0QT_EQOHBzJpvAmNG4c8zal8Lp5tQK-k4-rw4e3521/exec';
+
+// ================================================================
+// ESTADO GLOBAL
+// ================================================================
+let allData=[], filteredData=[], digisacData=[];
+let clienteFilteredData=[], clienteSelecionado='';
+let charts={}, currentAuditData=[];
+
+// ================================================================
+// PALETA DE CORES - 14 cores distintas, nunca repete
+// ================================================================
+const PALETA=[
   '#F8931D','#3498DB','#2ECC71','#E74C3C','#9B59B6',
   '#1ABC9C','#E67E22','#2980B9','#27AE60','#C0392B',
   '#8E44AD','#16A085','#D35400','#2471A3'
 ];
-function getCor(i){return PALETA_CORES[i%PALETA_CORES.length];}
-function getPaleta(n){return Array.from({length:n},(_,i)=>getCor(i));}
+function getCor(i){return PALETA[i%PALETA.length];}
+function getPaleta(n){return Array.from({length:Math.max(n,1)},(_,i)=>getCor(i));}
 
-
-let allData=[],filteredData=[],clienteFilteredData=[],charts={},currentAuditData=[],clienteSelecionado='';
-
+// ================================================================
+// CARREGAMENTO DE DADOS
+// ================================================================
 async function loadDataFromSheets(){
-try{
-  // Carregar TomTicket e Digisac em paralelo
-  const [rTT, rDG] = await Promise.all([
-    fetch(APPS_SCRIPT_URL),
-    fetch(APPS_SCRIPT_URL+'?source=digisac')
-  ]);
-  const dTT = await rTT.json();
-  const dDG = await rDG.json();
-  if(dTT.status!=='ok') throw new Error(dTT.message||'Erro TomTicket');
-  allData=(dTT.data||[]).map(normalizarDados);
+  try{
+    const [rTT,rDG]=await Promise.all([
+      fetch(APPS_SCRIPT_URL),
+      fetch(APPS_SCRIPT_URL+'?source=digisac')
+    ]);
+    const dTT=await rTT.json();
+    const dDG=await rDG.json();
+    if(dTT.status!=='ok') throw new Error(dTT.message||'Erro ao carregar TomTicket');
+    allData=(dTT.data||[]).map(normalizarTomTicket);
+    filteredData=[...allData];
+    digisacData=(dDG.status==='ok')?(dDG.data||[]).map(normalizarDigisac):[];
+    document.getElementById('loadingScreen').classList.add('hidden');
+    document.getElementById('mainContent').classList.remove('hidden');
+    init();
+  }catch(e){
+    document.getElementById('loadingScreen').classList.add('hidden');
+    document.getElementById('errorScreen').classList.remove('hidden');
+    document.getElementById('errorMessage').textContent=e.message;
+  }
+}
+
+// ================================================================
+// NORMALIZAÇÃO DOS DADOS
+// ================================================================
+function normalizarTomTicket(d){
+  function extrairFunc(d){
+    const cols=['Funcionalidades (AR Virtual) (Finalizacao - Chamado Externo)',
+      'Funcionalidades (Agendamentos/Atividades) (Finalizacao - Chamado Externo)',
+      'Funcionalidades (Comercial) (Finalizacao - Chamado Externo)',
+      'Funcionalidades (Controle de Unidades) (Finalizacao - Chamado Externo)',
+      'Funcionalidades (Financeiro) (Finalizacao - Chamado Externo)',
+      'Funcionalidades (Fiscal) (Finalizacao - Chamado Externo)',
+      'Funcionalidades (GOpag) (Finalizacao - Chamado Externo)',
+      'Funcionalidades (Marketplace/Apps) (Finalizacao - Chamado Externo)',
+      'Funcionalidades (Marketplace/Utilidades) (Finalizacao - Chamado Externo)',
+      'Funcionalidades (Pametrizacoes) (Finalizacao - Chamado Externo)',
+      'Funcionalidades (Produtos e Servicos) (Finalizacao - Chamado Externo)',
+      'Funcionalidades (Relatorios Exportados e Formatados) (Finalizacao - Chamado Externo)',
+      'Funcionalidades (Usuarios e Vendedores) (Finalizacao - Chamado Externo)'];
+    for(let c of cols){
+      const v=d[c]||d[c.replace(/\(|\)/g,'').trim()];
+      if(v&&v.trim()&&v.trim()!=='') return v.trim();
+    }
+    // Tentar chaves do objeto
+    for(let k of Object.keys(d)){
+      if(k.toLowerCase().includes('funcionalidade')&&d[k]&&d[k].trim()) return d[k].trim();
+    }
+    return 'N/A';
+  }
+  return {
+    protocolo: d['Protocolo']||'',
+    assunto: d['Assunto']||'',
+    tipo: d['Tipo do Ticket (Finalizacao - Chamado Externo)']||d['Tipo Chamado']||'',
+    categoria: d['Categoria']||'',
+    funcionalidade: extrairFunc(d),
+    atendente: d['Atendente']||'',
+    organizacao: d['Organizacao']||d['\u00d3rganiza\u00e7\u00e3o']||d['Organiza\u00e7\u00e3o']||'',
+    dataCriacao: d['Data de Cria\u00e7\u00e3o']||d['Data de Criacao']||'',
+    dataFinalizacao: d['Data de Finaliza\u00e7\u00e3o']||d['Data de Finalizacao']||'',
+    ultimaSituacao: d['\u00daltima Situa\u00e7\u00e3o']||d['Ultima Situacao']||'',
+    reaberto: d['Reaberto']||'',
+    escalonado: d['Escalonado']||'',
+    origemDemanda: d['Origem da Demanda (Finalizacao - Chamado Externo)']||'',
+    origemCanal: d['Origem do Chamado']||'',
+    status: d['Status']||'',
+    tipoChamado: d['Tipo Chamado']||''
+  };
+}
+
+function normalizarDigisac(d){
+  function parseTempo(s){
+    if(!s||!s.trim())return 0;
+    const p=s.trim().split(':');
+    if(p.length===3)return parseInt(p[0])*3600+parseInt(p[1])*60+parseInt(p[2]);
+    return 0;
+  }
+  const tipo=d['Tipo (Receptivo/Ativo)']||'';
+  const tipoLimpo=(tipo==='Receptivo'||tipo==='Ativo')?tipo:'Receptivo';
+  return {
+    protocolo: d['Protocolo']||'',
+    nome: d['Nome']||'',
+    atendente: d['Atendente']||'',
+    tags: d['Tags']||'',
+    departamento: d['Departamento']||'',
+    dataInicio: d['Data de in\u00edcio']||d['Data de inicio']||'',
+    dataEncerramento: d['Data de encerramento']||'',
+    assunto: d['Assunto(s)']||'',
+    tempoTotalSeg: parseTempo(d['Tempo total de atendimento']),
+    primeiroTempoEsperaSeg: parseTempo(d['1\u00ba tempo de espera']),
+    tempoMedioEsperaSeg: parseTempo(d['Tempo m\u00e9dio de espera']),
+    tipo: tipoLimpo
+  };
+}
+
+// ================================================================
+// INIT
+// ================================================================
+function init(){
+  populateFilters();
+  initTendenciaFilters();
+  initQualidadeFilters();
+  initProdutoFilters();
+  initDigisacFilters();
+  updateKPIs();
+  createDashboardCharts();
+  createTendenciaCharts();
+  createQualidadeCharts();
+  createProdutoCharts();
+}
+
+function showView(v){
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el=>el.classList.remove('active'));
+  const el=document.getElementById(v);
+  if(el) el.classList.add('active');
+  const btn=document.querySelector(`[onclick="showView('${v}')"]`);
+  if(btn) btn.classList.add('active');
+}
+
+// ================================================================
+// HELPERS
+// ================================================================
+function countBy(arr,field){
+  const r={};
+  arr.forEach(d=>{const v=d[field]||'';if(v)r[v]=(r[v]||0)+1;});
+  return r;
+}
+function getTopValue(arr,field){
+  const r=countBy(arr,field);
+  const sorted=Object.entries(r).sort((a,b)=>b[1]-a[1]);
+  return sorted.length?{value:sorted[0][0],count:sorted[0][1]}:{value:'N/A',count:0};
+}
+function parseDateStr(s){
+  if(!s)return null;
+  const d=s.split(' ')[0];
+  if(d.includes('-'))return d;
+  if(d.includes('/')){const p=d.split('/');return `${p[2]}-${p[1]}-${p[0]}`;}
+  return d;
+}
+function segsParaHHMM(s){
+  const h=Math.floor(s/3600),m=Math.floor((s%3600)/60);
+  return (h>0?h+'h ':'')+m+'min';
+}
+
+// ================================================================
+// POPULATE FILTERS
+// ================================================================
+function populateFilters(){
+  const tipos=[...new Set(allData.map(d=>d.tipo).filter(Boolean))];
+  const cats=[...new Set(allData.map(d=>d.categoria).filter(Boolean))].sort();
+  const origemD=[...new Set(allData.map(d=>d.origemDemanda).filter(Boolean))].sort();
+  const origemC=[...new Set(allData.map(d=>d.origemCanal).filter(Boolean))].sort();
+  const atends=[...new Set(allData.map(d=>d.atendente).filter(Boolean))].sort();
+
+  function fill(id,arr){
+    const el=document.getElementById(id);
+    if(!el)return;
+    const first=el.options[0]?el.options[0].text:null;
+    el.innerHTML=(first?`<option value="">${first}</option>`:'')+arr.map(x=>`<option value="${x}">${x}</option>`).join('');
+  }
+  fill('filterTipo',tipos);
+  fill('filterCategoria',cats);
+  fill('filterOrigemDemanda',origemD);
+  fill('filterOrigemCanal',origemC);
+  fill('filterAtendente',atends);
+}
+
+// ================================================================
+// DASHBOARD GERAL
+// ================================================================
+function applyFilters(){
+  const ini=document.getElementById('globalDataInicio').value;
+  const fim=document.getElementById('globalDataFim').value;
+  const tipo=document.getElementById('filterTipo').value;
+  const cat=document.getElementById('filterCategoria').value;
+  const origD=document.getElementById('filterOrigemDemanda').value;
+  const origC=document.getElementById('filterOrigemCanal').value;
+  const atend=document.getElementById('filterAtendente').value;
+
+  let base=[...allData];
+  if(ini&&fim) base=base.filter(d=>{const dt=parseDateStr(d.dataCriacao);return dt>=ini&&dt<=fim;});
+  if(tipo) base=base.filter(d=>d.tipo===tipo);
+  if(cat) base=base.filter(d=>d.categoria===cat);
+  if(origD) base=base.filter(d=>d.origemDemanda===origD);
+  if(origC) base=base.filter(d=>d.origemCanal===origC);
+  if(atend) base=base.filter(d=>d.atendente===atend);
+
+  filteredData=base;
+  updateKPIs();
+  updateCharts();
+}
+
+function clearDashFilters(){
+  ['globalDataInicio','globalDataFim','filterTipo','filterCategoria',
+   'filterOrigemDemanda','filterOrigemCanal','filterAtendente'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.value='';
+  });
   filteredData=[...allData];
-  digisacData=(dDG.status==='ok')?(dDG.data||[]).map(normalizarDigisac):[];
-  document.getElementById('loadingScreen').classList.add('hidden');
-  document.getElementById('mainContent').classList.remove('hidden');
-  init();
-}catch(e){
-  document.getElementById('loadingScreen').classList.add('hidden');
-  document.getElementById('errorScreen').classList.remove('hidden');
-  document.getElementById('errorMessage').textContent=e.message;
-}}
+  updateKPIs();
+  updateCharts();
+}
 
-function normalizarDados(d){return{protocolo:d['Protocolo'],assunto:d['Assunto'],tipo:d['Tipo do Ticket (Finalização - Chamado Externo)'],categoria:d['Categoria'],funcionalidade:extrairFuncionalidade(d),atendente:d['Atendente'],organizacao:d['Organização'],dataCriacao:d['Data de Criação'],reaberto:d['Reaberto'],escalonado:d['Escalonado'],origemDemanda:d['Origem da Demanda (Finalização - Chamado Externo)'],origemCanal:d['Origem do Chamado'],status:d['Status'],dataFinalizacao:d['Data de Finalizacao']||d['Data de Finalização']||null,ultimaSituacao:d['Ultima Situacao']||d['Última Situação']||''};}
+function updateKPIs(){
+  const tot=filteredData.length;
+  const reab=filteredData.filter(d=>d.reaberto==='Sim').length;
+  const taxa=tot>0?(reab/tot*100).toFixed(1):0;
+  const topC=getTopValue(filteredData,'categoria');
+  const topA=getTopValue(filteredData,'atendente');
+  const el=document.getElementById('kpisContainer');
+  if(el) el.innerHTML=`
+    <div class="kpi"><div class="kpi-label">Total de Tickets</div><div class="kpi-value">${tot}</div></div>
+    <div class="kpi success"><div class="kpi-label">Taxa de Reabertura</div><div class="kpi-value">${taxa}%</div><div class="kpi-subtitle">${reab} reabertos</div></div>
+    <div class="kpi"><div class="kpi-label">Top Categoria</div><div class="kpi-value" style="font-size:20px">${topC.value}</div><div class="kpi-subtitle">${topC.count}</div></div>
+    <div class="kpi"><div class="kpi-label">Atendente Principal</div><div class="kpi-value" style="font-size:20px">${topA.value}</div><div class="kpi-subtitle">${topA.count}</div></div>`;
+}
 
-function extrairFuncionalidade(d){const c=['Funcionalidades (AR Virtual) (Finalização - Chamado Externo)','Funcionalidades (Agendamentos/Atividades) (Finalização - Chamado Externo)','Funcionalidades (Comercial) (Finalização - Chamado Externo)','Funcionalidades (Controle de Unidades) (Finalização - Chamado Externo)','Funcionalidades (Financeiro) (Finalização - Chamado Externo)','Funcionalidades (Fiscal) (Finalização - Chamado Externo)','Funcionalidades (GOpag) (Finalização - Chamado Externo)','Funcionalidades (Gestão de Indicadores) (Finalização - Chamado Externo)','Funcionalidades (Loja Virtual) (Finalização - Chamado Externo)','Funcionalidades (Marketplace/Apps) (Finalização - Chamado Externo)','Funcionalidades (Marketplace/Utilidades) (Finalização - Chamado Externo)','Funcionalidades (Módulo de Indicador) (Finalização - Chamado Externo)','Funcionalidades (Pametrizações) (Finalização - Chamado Externo)','Funcionalidades (Parceiros) (Finalização - Chamado Externo)','Funcionalidades (Portais) (Finalização - Chamado Externo)','Funcionalidades (Produtos e Serviços) (Finalização - Chamado Externo)','Funcionalidades (Relatórios Exportados e Formatados) (Finalização - Chamado Externo)','Funcionalidades (Soluti) (Finalização - Chamado Externo)','Funcionalidades (Unidades/Lojas) (Finalização - Chamado Externo)','Funcionalidades (Usuários e Vendedores) (Finalização - Chamado Externo)'];for(let col of c){if(d[col])return d[col];}return d['Categoria']||'N/A';}
+function createDashboardCharts(){
+  criarGrafico('chartTipo','tipo','doughnut',filteredData);
+  criarGrafico('chartCategorias','categoria','bar',filteredData,15);
+  criarGrafico('chartFuncionalidades','funcionalidade','bar',filteredData,15);
+  criarGrafico('chartOrigemDemanda','origemDemanda','pie',filteredData);
+  criarGrafico('chartOrigemCanal','origemCanal','doughnut',filteredData);
+  criarGrafico('chartAtendentes','atendente','bar',filteredData,15);
+  criarGrafico('chartReabertura','atendente','line',filteredData.filter(d=>d.reaberto==='Sim'),15);
+}
 
-function init(){populateFilters();initTendenciaFilters();initQualidadeFilters();initProdutoFilters();initDigisacFilters();updateKPIs();createCharts();createQualidadeCharts();createProdutoCharts();}
+function updateCharts(){createDashboardCharts();}
 
-function showView(v){document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));document.querySelectorAll('.nav-btn').forEach(e=>e.classList.remove('active'));document.getElementById(v).classList.add('active');event.target.classList.add('active');}
+function criarGrafico(id,field,type,data,limit){
+  const ctx=document.getElementById(id);
+  if(!ctx)return;
+  if(charts[id]){try{charts[id].destroy();}catch(e){}}
 
-function applyGlobalPeriod(){const i=document.getElementById('globalDataInicio').value,f=document.getElementById('globalDataFim').value;if(!i||!f){alert('Selecione data início e fim');return;}filteredData=allData.filter(d=>{const dt=d.dataCriacao?d.dataCriacao.split(' ')[0]:'';return dt>=i&&dt<=f;});updateKPIs();updateCharts();}
+  let sorted=Object.entries(countBy(data,field)).sort((a,b)=>b[1]-a[1]);
+  if(limit) sorted=sorted.slice(0,limit);
 
-function clearGlobalPeriod(){document.getElementById('globalDataInicio').value='';document.getElementById('globalDataFim').value='';filteredData=[...allData];applyFilters();}
+  const labels=sorted.map(s=>s[0].length>25?s[0].substring(0,25)+'...':s[0]);
+  const values=sorted.map(s=>s[1]);
+  const isPie=type==='doughnut'||type==='pie';
+  const isLine=type==='line';
 
-function populateFilters(){const t=[...new Set(allData.map(d=>d.tipo).filter(Boolean))];document.getElementById('filterTipo').innerHTML='<option value="">Todos</option>'+t.map(x=>`<option value="${x}">${x}</option>`).join('');const c=[...new Set(allData.map(d=>d.categoria).filter(Boolean))].sort();document.getElementById('filterCategoria').innerHTML='<option value="">Todas</option>'+c.map(x=>`<option value="${x}">${x}</option>`).join('');const o=[...new Set(allData.map(d=>d.origemDemanda).filter(Boolean))];document.getElementById('filterOrigemDemanda').innerHTML='<option value="">Todas</option>'+o.map(x=>`<option value="${x}">${x}</option>`).join('');const cn=[...new Set(allData.map(d=>d.origemCanal).filter(Boolean))];document.getElementById('filterOrigemCanal').innerHTML='<option value="">Todas</option>'+cn.map(x=>`<option value="${x}">${x}</option>`).join('');const a=[...new Set(allData.map(d=>d.atendente).filter(Boolean))];document.getElementById('filterAtendente').innerHTML='<option value="">Todos</option>'+a.map(x=>`<option value="${x}">${x}</option>`).join('');}
+  const dataset=isPie?
+    {data:values,backgroundColor:getPaleta(values.length),borderWidth:1}:
+    isLine?{data:values,borderColor:getPaleta(values.length),backgroundColor:getPaleta(values.length).map(c=>c+'33'),tension:0.4,borderWidth:2,pointRadius:4,fill:false}:
+    {data:values,backgroundColor:'#F8931D',borderRadius:3};
 
-function applyFilters(){const t=document.getElementById('filterTipo').value,c=document.getElementById('filterCategoria').value,o=document.getElementById('filterOrigemDemanda').value,cn=document.getElementById('filterOrigemCanal').value,a=document.getElementById('filterAtendente').value;let base=allData;const i=document.getElementById('globalDataInicio').value,f=document.getElementById('globalDataFim').value;if(i&&f){base=base.filter(d=>{const dt=d.dataCriacao?d.dataCriacao.split(' ')[0]:'';return dt>=i&&dt<=f;});}filteredData=base.filter(d=>(!t||d.tipo===t)&&(!c||d.categoria===c)&&(!o||d.origemDemanda===o)&&(!cn||d.origemCanal===cn)&&(!a||d.atendente===a));updateKPIs();updateCharts();}
+  const opts={
+    responsive:true,
+    maintainAspectRatio:isPie,
+    onClick:(e,els)=>{if(els.length>0) openDrilldown(field,sorted[els[0].index][0],data);},
+    plugins:{
+      legend:{display:isPie,position:'bottom',labels:{font:{size:11},boxWidth:12,padding:10}}
+    }
+  };
 
-function updateKPIs(){const tot=filteredData.length,reab=filteredData.filter(d=>d.reaberto==='Sim').length,taxa=tot>0?(reab/tot*100).toFixed(1):0,topC=getTopValue(filteredData,'categoria'),topA=getTopValue(filteredData,'atendente');document.getElementById('kpisContainer').innerHTML=`<div class="kpi"><div class="kpi-label">Total de Tickets</div><div class="kpi-value">${tot}</div></div><div class="kpi success"><div class="kpi-label">Taxa de Reabertura</div><div class="kpi-value">${taxa}%</div><div class="kpi-subtitle">${reab} reabertos</div></div><div class="kpi"><div class="kpi-label">Top Categoria</div><div class="kpi-value" style="font-size:20px">${topC.value||'N/A'}</div><div class="kpi-subtitle">${topC.count}</div></div><div class="kpi"><div class="kpi-label">Atendente Principal</div><div class="kpi-value" style="font-size:20px">${topA.value||'N/A'}</div><div class="kpi-subtitle">${topA.count}</div></div>`;}
+  if(type==='bar'){
+    opts.indexAxis='y';
+    opts.scales={
+      y:{ticks:{font:{size:11},callback:(v,i)=>{const l=labels[i];return l&&l.length>22?l.substring(0,22)+'...':l;}}},
+      x:{ticks:{maxTicksLimit:8}}
+    };
+  }
+  if(isLine){
+    opts.scales={x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:10}}}};
+  }
 
-function createCharts(){criarGraficoComDrilldown('chartTipo','tipo','doughnut',[' #FF9999','#66B2FF','#99FF99']);criarGraficoComDrilldown('chartCategorias','categoria','bar',['#E74C3C','#3498DB','#2ECC71','#F39C12','#9B59B6','#1ABC9C','#E67E22','#95A5A6','#34495E','#C0392B','#16A085','#8E44AD','#2980B9','#D35400','#C0392B']);criarGraficoComDrilldown('chartFuncionalidades','funcionalidade','bar',['#FF6B6B','#4ECDC4','#45B7D1','#FFA07A','#98D8C8','#F7DC6F','#BB8FCE','#85C1E2','#F8B88B','#ABEBC6']);criarGraficoComDrilldown('chartOrigemDemanda','origemDemanda','pie',['#FF6B6B','#4ECDC4','#45B7D1','#FFA07A','#98D8C8']);criarGraficoComDrilldown('chartOrigemCanal','origemCanal','doughnut',['#3498DB','#2ECC71','#F39C12','#E74C3C']);criarGraficoComDrilldown('chartAtendentes','atendente','bar',['#FF7F50','#6495ED','#32CD32','#FFD700','#FF69B4','#00CED1','#FF4500','#9370DB','#20B2AA','#DAA520','#DC143C','#00FA9A','#FF8C00','#1E90FF','#FFB6C1']);criarGraficoComDrilldown('chartReabertura','atendente','line',[],true);createGAPCharts();createCanaisCharts();createCatTipoCharts();createFuncCharts();createTendenciaCharts();}
+  charts[id]=new Chart(ctx.getContext('2d'),{type,data:{labels,datasets:[dataset]},options:opts});
+  charts[id+'_field']=field;
+  charts[id+'_data']=sorted;
+}
 
-function criarGraficoComDrilldown(id,field,type,colors,reabertosOnly=false){const ctx=document.getElementById(id);if(!ctx)return;let data=reabertosOnly?countBy(filteredData.filter(d=>d.reaberto==='Sim'),field):countBy(filteredData,field);let sorted=Object.entries(data).sort((a,b)=>b[1]-a[1]);if(id==='chartCategorias'||id==='chartFuncionalidades')sorted=sorted.slice(0,15);if(id==='chartAtendentes'||id==='chartReabertura')sorted=sorted.slice(0,15);if(charts[id])charts[id].destroy();const labels=sorted.map(s=>s[0].substring(0,25));const values=sorted.map(s=>s[1]);const isDoughnutOrPie=type==='doughnut'||type==='pie';const opts={responsive:true,maintainAspectRatio:isDoughnutOrPie,onClick:(evt,elements)=>{if(elements.length>0){const idx=elements[0].index;const label=labels[idx];openDrilldown(field,label);}},plugins:{legend:{display:isDoughnutOrPie,position:'bottom'}}};if(type==='bar'){opts.indexAxis='y';opts.scales={y:{ticks:{font:{size:11},callback:function(val,idx){const l=this.getLabelForValue(idx);return l&&l.length>22?l.substring(0,22)+'...':l;}}},x:{ticks:{maxTicksLimit:8}}}};opts.layout={padding:{left:0}};const isDough=type==='doughnut'||type==='pie';
-const isLine=type==='line';
-const dataset=isLine?{
-  data:values,
-  borderColor:getPaleta(values.length),
-  backgroundColor:getPaleta(values.length).map(c=>c+'33'),
-  tension:0.4,borderWidth:2,pointRadius:4,fill:false
-}:{data:values,backgroundColor:isDough?getPaleta(values.length):'#F8931D'};charts[id]=new Chart(ctx.getContext('2d'),{type,data:{labels,datasets:[dataset]},options:opts});}
+// ================================================================
+// DRILLDOWN / AUDITORIA
+// ================================================================
+function openDrilldown(field,value,sourceData){
+  const base=sourceData||filteredData;
+  const data=base.filter(d=>d[field]===value);
+  openAuditModal(data,`${value}`);
+}
 
-function openDrilldown(field,value){const data=filteredData.filter(d=>d[field]===value);currentAuditData=data;document.getElementById('auditTitle').textContent=`${field.toUpperCase()} - ${value}`;document.getElementById('auditSubtitle').textContent=`Total: ${data.length} registros`;const tbody=document.getElementById('auditTableBody');tbody.innerHTML='';data.forEach(d=>{const row=`<tr><td>${d.protocolo||''}</td><td>${d.assunto?d.assunto.substring(0,50):''}</td><td>${d.tipo||''}</td><td>${d.categoria||''}</td><td>${d.funcionalidade||''}</td><td>${d.origemDemanda||''}</td><td>${d.origemCanal||''}</td><td>${d.atendente||''}</td></tr>`;tbody.innerHTML+=row;});document.getElementById('auditModal').classList.add('active');}
+function openDrilldownCustom(data,title){
+  openAuditModal(data,title);
+}
 
-function updateCharts(){Object.values(charts).forEach(c=>{try{c.destroy();}catch(e){}});charts={};createCharts();}
+function openAuditModal(data,title){
+  currentAuditData=data;
+  document.getElementById('auditTitle').textContent=title;
+  document.getElementById('auditSubtitle').textContent=`Total: ${data.length} registros`;
+  const tbody=document.getElementById('auditTableBody');
+  tbody.innerHTML=data.map(d=>`
+    <tr>
+      <td>${d.protocolo||''}</td>
+      <td>${d.assunto?d.assunto.substring(0,50):''}</td>
+      <td>${d.tipo||''}</td>
+      <td>${d.categoria||''}</td>
+      <td>${d.funcionalidade||''}</td>
+      <td>${d.origemDemanda||''}</td>
+      <td>${d.origemCanal||''}</td>
+      <td>${d.atendente||''}</td>
+    </tr>`).join('');
+  document.getElementById('auditModal').classList.add('active');
+}
 
-function createGAPCharts(){const gapData=filteredData.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('gap'));const catData=countBy(gapData,'categoria');const sortedCat=Object.entries(catData).sort((a,b)=>b[1]-a[1]).slice(0,10);const colorsCat=['#E74C3C','#3498DB','#2ECC71','#F39C12','#9B59B6','#1ABC9C','#E67E22','#95A5A6','#34495E','#C0392B'];const ctxCat=document.getElementById('chartGapCat');if(ctxCat){if(charts.gapCat)charts.gapCat.destroy();charts.gapCat=new Chart(ctxCat.getContext('2d'),{type:'bar',data:{labels:sortedCat.map(s=>s[0].substring(0,20)),datasets:[{data:sortedCat.map(s=>s[1]),backgroundColor:colorsCat}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}}}});charts['chartGapCat']=charts.gapCat;}const funcData=countBy(gapData,'funcionalidade');const sortedFunc=Object.entries(funcData).sort((a,b)=>b[1]-a[1]).slice(0,10);const colorsFunc=['#FF7F50','#6495ED','#32CD32','#FFD700','#FF69B4','#00CED1','#FF4500','#9370DB','#20B2AA','#DAA520'];const ctxFunc=document.getElementById('chartGapFunc');if(ctxFunc){if(charts.gapFunc)charts.gapFunc.destroy();charts.gapFunc=new Chart(ctxFunc.getContext('2d'),{type:'bar',data:{labels:sortedFunc.map(s=>s[0].substring(0,20)),datasets:[{data:sortedFunc.map(s=>s[1]),backgroundColor:colorsFunc}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}}}});charts['chartGapFunc']=charts.gapFunc;}const byMes={};gapData.forEach(d=>{if(d.dataCriacao){const m=d.dataCriacao.split(' ')[0].substring(0,7);byMes[m]=(byMes[m]||0)+1;}});const sortedMes=Object.entries(byMes).sort((a,b)=>a[0].localeCompare(b[0]));const ctxTempo=document.getElementById('chartGapTempo');if(ctxTempo){if(charts.gapTempo)charts.gapTempo.destroy();charts.gapTempo=new Chart(ctxTempo.getContext('2d'),{type:'line',data:{labels:sortedMes.map(m=>m[0]),datasets:[{label:'GAP',data:sortedMes.map(m=>m[1]),borderColor:'#FF9800',backgroundColor:'rgba(255,152,0,0.1)',tension:0.4,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});charts['chartGapTempo']=charts.gapTempo;}}
+function closeAudit(){document.getElementById('auditModal').classList.remove('active');}
 
-function createCanaisCharts(){const canais=[...new Set(filteredData.map(d=>d.origemCanal).filter(Boolean))];const tipos=[...new Set(filteredData.map(d=>d.tipo).filter(Boolean))];const colorsCT=['#FF6B6B','#4ECDC4','#45B7D1'];const datasetsCT=tipos.map((t,i)=>({label:t,data:canais.map(c=>filteredData.filter(d=>d.origemCanal===c&&d.tipo===t).length),backgroundColor:colorsCT[i%colorsCT.length]}));const ctxCT=document.getElementById('chartCanalTipo');if(ctxCT){if(charts.canalTipo)charts.canalTipo.destroy();charts.canalTipo=new Chart(ctxCT.getContext('2d'),{type:'bar',data:{labels:canais,datasets:datasetsCT},options:{responsive:true,maintainAspectRatio:false,stacked:true,plugins:{legend:{position:'bottom'}}}});charts['chartCanalTipo']=charts.canalTipo;}const origs=[...new Set(filteredData.map(d=>d.origemDemanda).filter(Boolean))];const colorsCO=['#E74C3C','#3498DB','#2ECC71','#F39C12','#9B59B6'];const datasetsCO=origs.map((o,i)=>({label:o,data:canais.map(c=>filteredData.filter(d=>d.origemCanal===c&&d.origemDemanda===o).length),backgroundColor:colorsCO[i%colorsCO.length]}));const ctxCO=document.getElementById('chartCanalOrigem');if(ctxCO){if(charts.canalOrigem)charts.canalOrigem.destroy();charts.canalOrigem=new Chart(ctxCO.getContext('2d'),{type:'bar',data:{labels:canais,datasets:datasetsCO},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});charts['chartCanalOrigem']=charts.canalOrigem;}const byMesCanal={};filteredData.forEach(d=>{if(d.dataCriacao&&d.origemCanal){const m=d.dataCriacao.split(' ')[0].substring(0,7);if(!byMesCanal[m])byMesCanal[m]={};byMesCanal[m][d.origemCanal]=(byMesCanal[m][d.origemCanal]||0)+1;}});const sortedMes=Object.keys(byMesCanal).sort();const datasetsCtempo=canais.map((c,i)=>({label:c,data:sortedMes.map(m=>byMesCanal[m][c]||0),borderColor:['#FF6B6B','#4ECDC4','#45B7D1','#FFA07A'][i%4],tension:0.4}));const ctxCtempo=document.getElementById('chartCanalTempo');if(ctxCtempo){if(charts.canalTempo)charts.canalTempo.destroy();charts.canalTempo=new Chart(ctxCtempo.getContext('2d'),{type:'line',data:{labels:sortedMes,datasets:datasetsCtempo},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});charts['chartCanalTempo']=charts.canalTempo;}}
+function exportToCSV(){
+  const h=['Protocolo','Assunto','Tipo','Categoria','Funcionalidade','Origem','Canal','Atendente'];
+  const rows=currentAuditData.map(d=>[d.protocolo,d.assunto,d.tipo,d.categoria,d.funcionalidade,d.origemDemanda,d.origemCanal,d.atendente].map(v=>`"${(v||'').replace(/"/g,'""')}"`).join(','));
+  const csv=h.join(',')+'\n'+rows.join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const link=document.createElement('a');
+  link.href=URL.createObjectURL(blob);
+  link.download='auditoria.csv';
+  link.click();
+}
 
-function createCatTipoCharts(){const cats=[...new Set(filteredData.map(d=>d.categoria).filter(Boolean))].sort();const topCats=cats.slice(0,10);const tipos=[...new Set(filteredData.map(d=>d.tipo).filter(Boolean))];const colorsT=['#FF6B6B','#4ECDC4','#45B7D1'];const datasetsCT=tipos.map((t,i)=>({label:t,data:topCats.map(c=>filteredData.filter(d=>d.categoria===c&&d.tipo===t).length),backgroundColor:colorsT[i%colorsT.length]}));const ctxCT=document.getElementById('chartCatTipo');if(ctxCT){if(charts.catTipo)charts.catTipo.destroy();charts.catTipo=new Chart(ctxCT.getContext('2d'),{type:'bar',data:{labels:topCats.map(c=>c.substring(0,15)),datasets:datasetsCT},options:{responsive:true,maintainAspectRatio:false,stacked:true,plugins:{legend:{position:'bottom'}}}});charts['chartCatTipo']=charts.catTipo;}const bugsByCat=topCats.map(c=>{const tot=filteredData.filter(d=>d.categoria===c).length;const bugs=filteredData.filter(d=>d.categoria===c&&d.tipo&&d.tipo.toLowerCase().includes('incidente')).length;return tot>0?(bugs/tot*100).toFixed(1):0;});const ctxB=document.getElementById('chartBugsCat');if(ctxB){if(charts.bugsCat)charts.bugsCat.destroy();charts.bugsCat=new Chart(ctxB.getContext('2d'),{type:'bar',data:{labels:topCats.map(c=>c.substring(0,15)),datasets:[{label:'% Incidente/Bug',data:bugsByCat,backgroundColor:'#E74C3C'}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}}}});charts['chartBugsCat']=charts.bugsCat;}const defeitoByCat=topCats.map(c=>{const tot=filteredData.filter(d=>d.categoria===c).length;const def=filteredData.filter(d=>d.categoria===c&&d.origemDemanda&&d.origemDemanda.toLowerCase().includes('defeito')).length;return tot>0?(def/tot*100).toFixed(1):0;});const ctxD=document.getElementById('chartDefeitoSist');if(ctxD){if(charts.defeitoSist)charts.defeitoSist.destroy();charts.defeitoSist=new Chart(ctxD.getContext('2d'),{type:'bar',data:{labels:topCats.map(c=>c.substring(0,15)),datasets:[{label:'% Defeito Sistêmico',data:defeitoByCat,backgroundColor:'#9B59B6'}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}}}});charts['chartDefeitoSist']=charts.defeitoSist;}}
+function exportToXLSX(){
+  const h=['Protocolo','Assunto','Tipo','Categoria','Funcionalidade','Origem','Canal','Atendente'];
+  let csv=h.join('\t')+'\n';
+  currentAuditData.forEach(d=>{
+    csv+=[d.protocolo,d.assunto,d.tipo,d.categoria,d.funcionalidade,d.origemDemanda,d.origemCanal,d.atendente].join('\t')+'\n';
+  });
+  const bom=new Uint8Array([0xEF,0xBB,0xBF]);
+  const enc=new TextEncoder().encode(csv);
+  const merged=new Uint8Array(bom.length+enc.length);
+  merged.set(bom);merged.set(enc,bom.length);
+  const blob=new Blob([merged],{type:'application/vnd.ms-excel'});
+  const link=document.createElement('a');
+  link.href=URL.createObjectURL(blob);
+  link.download='auditoria.xls';
+  link.click();
+}
 
-function createFuncCharts(){const topFuncs=Object.entries(countBy(filteredData,'funcionalidade')).sort((a,b)=>b[1]-a[1]).slice(0,10).map(f=>f[0]);const tipos=[...new Set(filteredData.map(d=>d.tipo).filter(Boolean))];const colorsF=['#FF7F50','#6495ED','#32CD32','#FFD700','#FF69B4','#00CED1','#FF4500','#9370DB','#20B2AA','#DAA520'];const colorsT=['#FF6B6B','#4ECDC4','#45B7D1'];const funcTopData=topFuncs.map(f=>filteredData.filter(d=>d.funcionalidade===f).length);const ctxFT=document.getElementById('chartFuncTop');if(ctxFT){if(charts.funcTop)charts.funcTop.destroy();charts.funcTop=new Chart(ctxFT.getContext('2d'),{type:'bar',data:{labels:topFuncs.map(f=>f.substring(0,20)),datasets:[{data:funcTopData,backgroundColor:colorsF}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}}}});charts['chartFuncTop']=charts.funcTop;}const datasetsFT=tipos.map((t,i)=>({label:t,data:topFuncs.map(f=>filteredData.filter(d=>d.funcionalidade===f&&d.tipo===t).length),backgroundColor:colorsT[i%colorsT.length]}));const ctxFTT=document.getElementById('chartFuncTipo');if(ctxFTT){if(charts.funcTipo)charts.funcTipo.destroy();charts.funcTipo=new Chart(ctxFTT.getContext('2d'),{type:'bar',data:{labels:topFuncs.map(f=>f.substring(0,15)),datasets:datasetsFT},options:{responsive:true,maintainAspectRatio:false,stacked:true,plugins:{legend:{position:'bottom'}}}});charts['chartFuncTipo']=charts.funcTipo;}const origs=[...new Set(filteredData.map(d=>d.origemDemanda).filter(Boolean))];const colorsO=['#E74C3C','#3498DB','#2ECC71','#F39C12','#9B59B6'];const datasetsFO=origs.map((o,i)=>({label:o,data:topFuncs.map(f=>filteredData.filter(d=>d.funcionalidade===f&&d.origemDemanda===o).length),backgroundColor:colorsO[i%colorsO.length]}));const ctxFO=document.getElementById('chartFuncOrigem');if(ctxFO){if(charts.funcOrigem)charts.funcOrigem.destroy();charts.funcOrigem=new Chart(ctxFO.getContext('2d'),{type:'bar',data:{labels:topFuncs.map(f=>f.substring(0,15)),datasets:datasetsFO},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});charts['chartFuncOrigem']=charts.funcOrigem;}}
+// ================================================================
+// EXPAND CHART
+// ================================================================
+function expandChart(id){
+  const canvas=document.getElementById(id);
+  if(!canvas)return;
+  const container=canvas.closest('.chart-card')||canvas.closest('[style]');
+  const titleEl=container?container.querySelector('.chart-title'):null;
+  const title=titleEl?titleEl.childNodes[0].textContent.trim():id;
+  const original=charts[id];
+  if(!original){alert('Grafico ainda nao carregado.');return;}
+  const cfg=original.config;
+  const expandContent=document.getElementById('expandContent');
+  expandContent.innerHTML=`
+    <div style="font-size:18px;font-weight:700;color:#333;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #F8931D;">${title}</div>
+    <div style="position:relative;width:100%;height:70vh;"><canvas id="expandCanvas"></canvas></div>`;
+  document.getElementById('expandModal').classList.add('active');
+  setTimeout(()=>{
+    const ctx=document.getElementById('expandCanvas');
+    if(!ctx)return;
+    if(window._expandChart){try{window._expandChart.destroy();}catch(e){}}
+    window._expandChart=new Chart(ctx.getContext('2d'),{
+      type:cfg.type,
+      data:JSON.parse(JSON.stringify(cfg.data)),
+      options:{...JSON.parse(JSON.stringify(cfg.options)),responsive:true,maintainAspectRatio:false}
+    });
+  },50);
+}
 
+function closeExpand(){
+  document.getElementById('expandModal').classList.remove('active');
+  if(window._expandChart){try{window._expandChart.destroy();}catch(e){}}
+}
+
+// ================================================================
+// TENDENCIA TEMPORAL
+// ================================================================
 function initTendenciaFilters(){
-const origens=[...new Set(allData.map(d=>d.origemCanal).filter(Boolean))].sort();
-document.getElementById('tendOrigem').innerHTML='<option value="">Todas</option>'+origens.map(x=>`<option value="${x}">${x}</option>`).join('');
-const atend=[...new Set(allData.map(d=>d.atendente).filter(Boolean))].sort();
-document.getElementById('tendAtendente').innerHTML='<option value="">Todos</option>'+atend.map(x=>`<option value="${x}">${x}</option>`).join('');
-onTendExibirPorChange();
+  const origens=[...new Set(allData.map(d=>d.origemCanal).filter(Boolean))].sort();
+  const atends=[...new Set(allData.map(d=>d.atendente).filter(Boolean))].sort();
+  const elO=document.getElementById('tendOrigem');
+  const elA=document.getElementById('tendAtendente');
+  if(elO) elO.innerHTML='<option value="">Todas</option>'+origens.map(x=>`<option value="${x}">${x}</option>`).join('');
+  if(elA) elA.innerHTML='<option value="">Todos</option>'+atends.map(x=>`<option value="${x}">${x}</option>`).join('');
+  onTendExibirPorChange();
+  createTendenciaCharts();
 }
 
 function onTendExibirPorChange(){
-const por=document.getElementById('tendExibirPor').value;
-const isDia=por==='dia';
-document.getElementById('tendFiltrosDia').classList.toggle('hidden',!isDia);
-document.getElementById('tendFiltrosDia2').classList.toggle('hidden',!isDia);
-document.getElementById('tendFiltrosMesIni').classList.toggle('hidden',isDia);
-document.getElementById('tendFiltrosMesFim').classList.toggle('hidden',isDia);
+  const por=document.getElementById('tendExibirPor').value;
+  const dia=por==='dia';
+  ['tendFiltrosDia','tendFiltrosDia2'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.classList.toggle('hidden',!dia);
+  });
+  ['tendFiltrosMesIni','tendFiltrosMesFim'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.classList.toggle('hidden',dia);
+  });
 }
 
-function getTendenciaData(){
-const por=document.getElementById('tendExibirPor').value;
-const orig=document.getElementById('tendOrigem').value;
-const atend=document.getElementById('tendAtendente').value;
-let base=allData;
-if(por==='dia'){
-  const ini=document.getElementById('tendDataInicio').value;
-  const fim=document.getElementById('tendDataFim').value;
-  if(ini&&fim) base=base.filter(d=>{const dt=d.dataCriacao?d.dataCriacao.split(' ')[0]:'';return dt>=ini&&dt<=fim;});
-} else {
-  const mesIni=document.getElementById('tendMesInicio').value;
-  const mesFim=document.getElementById('tendMesFim').value;
-  if(mesIni&&mesFim) base=base.filter(d=>{const dt=d.dataCriacao?d.dataCriacao.split(' ')[0].substring(0,7):'';return dt>=mesIni&&dt<=mesFim;});
-}
-if(orig) base=base.filter(d=>d.origemCanal===orig);
-if(atend) base=base.filter(d=>d.atendente===atend);
-return {base,por};
+function getTendenciaBase(){
+  const por=document.getElementById('tendExibirPor').value;
+  const orig=document.getElementById('tendOrigem').value;
+  const atend=document.getElementById('tendAtendente').value;
+  let base=[...allData];
+
+  if(por==='dia'){
+    const ini=document.getElementById('tendDataInicio').value;
+    const fim=document.getElementById('tendDataFim').value;
+    if(ini&&fim) base=base.filter(d=>{const dt=parseDateStr(d.dataCriacao);return dt&&dt>=ini&&dt<=fim;});
+  } else {
+    const ini=document.getElementById('tendMesInicio').value;
+    const fim=document.getElementById('tendMesFim').value;
+    if(ini&&fim) base=base.filter(d=>{const dt=parseDateStr(d.dataCriacao);return dt&&dt.substring(0,7)>=ini&&dt.substring(0,7)<=fim;});
+  }
+  if(orig) base=base.filter(d=>d.origemCanal===orig);
+  if(atend) base=base.filter(d=>d.atendente===atend);
+  return {base,por};
 }
 
 function applyTendenciaFilters(){createTendenciaCharts();}
 
-function clearDashFilters(){
-document.getElementById('globalDataInicio').value='';
-document.getElementById('globalDataFim').value='';
-document.getElementById('filterTipo').value='';
-document.getElementById('filterCategoria').value='';
-document.getElementById('filterOrigemDemanda').value='';
-document.getElementById('filterOrigemCanal').value='';
-document.getElementById('filterAtendente').value='';
-filteredData=[...allData];
-updateKPIs();
-updateCharts();
-}
-
 function clearTendenciaFilters(){
-document.getElementById('tendDataInicio').value='';
-document.getElementById('tendDataFim').value='';
-document.getElementById('tendMesInicio').value='';
-document.getElementById('tendMesFim').value='';
-document.getElementById('tendOrigem').value='';
-document.getElementById('tendAtendente').value='';
-document.getElementById('tendExibirPor').value='mes';
-onTendExibirPorChange();
-createTendenciaCharts();
+  ['tendDataInicio','tendDataFim','tendMesInicio','tendMesFim'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+  document.getElementById('tendOrigem').value='';
+  document.getElementById('tendAtendente').value='';
+  document.getElementById('tendExibirPor').value='mes';
+  onTendExibirPorChange();
+  createTendenciaCharts();
 }
 
 function createTendenciaCharts(){
-const {base,por}=getTendenciaData();
-// Grafico principal: multiplas linhas por origemCanal
-const origens=[...new Set(base.map(d=>d.origemCanal).filter(Boolean))].sort();
-const CORES=getPaleta(origens.length+1);
-const allKeys=[...new Set(base.map(d=>{
-  if(!d.dataCriacao)return null;
-  const dt=d.dataCriacao.split(' ')[0];
-  return por==='dia'?dt:dt.substring(0,7);
-}).filter(Boolean))].sort();
+  const {base,por}=getTendenciaBase();
 
-const datasets=origens.map((orig,i)=>{
-  const byKey={};
-  base.filter(d=>d.origemCanal===orig).forEach(d=>{
-    if(!d.dataCriacao)return;
-    const dt=d.dataCriacao.split(' ')[0];
-    const key=por==='dia'?dt:dt.substring(0,7);
-    byKey[key]=(byKey[key]||0)+1;
+  // Grafico de linhas por origem
+  const origens=[...new Set(base.map(d=>d.origemCanal).filter(Boolean))].sort();
+  const cores=getPaleta(origens.length);
+
+  const allKeys=[...new Set(base.map(d=>{
+    const dt=parseDateStr(d.dataCriacao);
+    return dt?(por==='dia'?dt:dt.substring(0,7)):null;
+  }).filter(Boolean))].sort();
+
+  const datasets=origens.map((orig,i)=>{
+    const byKey={};
+    base.filter(d=>d.origemCanal===orig).forEach(d=>{
+      const dt=parseDateStr(d.dataCriacao);
+      if(!dt)return;
+      const key=por==='dia'?dt:dt.substring(0,7);
+      byKey[key]=(byKey[key]||0)+1;
+    });
+    return {
+      label:orig,
+      data:allKeys.map(k=>byKey[k]||0),
+      borderColor:cores[i],
+      backgroundColor:'transparent',
+      tension:0.4,borderWidth:2,
+      pointRadius:por==='dia'?3:5,
+      pointHoverRadius:6
+    };
   });
-  return {
-    label:orig,
-    data:allKeys.map(k=>byKey[k]||0),
-    borderColor:CORES[i%CORES.length],
-    backgroundColor:'transparent',
-    tension:0.4,
-    borderWidth:2,
-    pointRadius:por==='dia'?3:5,
-    pointHoverRadius:6
-  };
-});
 
-
-
-const ctxT=document.getElementById('chartTendencia');
-if(ctxT){
-  if(charts.tendencia)charts.tendencia.destroy();
-  charts.tendencia=new Chart(ctxT.getContext('2d'),{
-    type:'line',
-    data:{labels:allKeys,datasets},
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      interaction:{mode:'index',intersect:false},
-      plugins:{
-        legend:{
-          display:true,position:'bottom',
-          labels:{boxWidth:12,padding:10,font:{size:11}}
-        },
-        tooltip:{mode:'index',intersect:false}
-      },
-      scales:{
-        x:{ticks:{maxTicksLimit:por==='dia'?20:12,maxRotation:45,font:{size:10}}},
-        y:{ticks:{font:{size:11}}}
+  const ctxT=document.getElementById('chartTendencia');
+  if(ctxT){
+    if(charts.tendencia)try{charts.tendencia.destroy();}catch(e){}
+    charts.tendencia=new Chart(ctxT.getContext('2d'),{
+      type:'line',
+      data:{labels:allKeys,datasets},
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        interaction:{mode:'index',intersect:false},
+        plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:12,padding:10,font:{size:11}}}},
+        scales:{
+          x:{ticks:{maxTicksLimit:por==='dia'?20:12,maxRotation:45,font:{size:10}}},
+          y:{ticks:{font:{size:11}}}
+        }
       }
-    }
-  });
-  charts['chartTendencia']=charts.tendencia;
+    });
+    charts['chartTendencia']=charts.tendencia;
+  }
+
+  // Heatmap
+  createHeatmap(getHeatmapBase());
+
+  // Top 20 clientes
+  createTopClientesChart(base);
 }
 
-// Heatmap usa filtro proprio
-const heatBase=getHeatmapData();
-createHeatmap(heatBase);
-
-// Top 20 clientes
-createTopClientesChart(base);
+function getHeatmapBase(){
+  let base=[...allData];
+  const ini=document.getElementById('heatDataInicio').value;
+  const fim=document.getElementById('heatDataFim').value;
+  if(ini&&fim) base=base.filter(d=>{const dt=parseDateStr(d.dataCriacao);return dt&&dt>=ini&&dt<=fim;});
+  return base;
 }
 
-function getHeatmapData(){
-let base=allData;
-const ini=document.getElementById('heatDataInicio').value;
-const fim=document.getElementById('heatDataFim').value;
-if(ini&&fim) base=base.filter(d=>{const dt=d.dataCriacao?d.dataCriacao.split(' ')[0]:'';return dt>=ini&&dt<=fim;});
-return base;
-}
-
-function applyHeatmapFilter(){createHeatmap(getHeatmapData());}
+function applyHeatmapFilter(){createHeatmap(getHeatmapBase());}
 function clearHeatmapFilter(){
-document.getElementById('heatDataInicio').value='';
-document.getElementById('heatDataFim').value='';
-createHeatmap(allData);
+  document.getElementById('heatDataInicio').value='';
+  document.getElementById('heatDataFim').value='';
+  createHeatmap(allData);
 }
-
-
 
 function createHeatmap(data){
-const dias=['Domingo','Segunda','Terca','Quarta','Quinta','Sexta','Sabado'];
-const horas=Array.from({length:24},(_,i)=>i);
-const matrix={};
-dias.forEach(d=>{matrix[d]={};horas.forEach(h=>{matrix[d][h]=0;});});
-data.forEach(d=>{
-  if(d.dataCriacao){
-    const parts=d.dataCriacao.split(' ');
-    const dt=new Date(parts[0]+'T'+(parts[1]||'00:00:00'));
-    if(!isNaN(dt)){
-      const dia=dias[dt.getDay()];
-      const hora=dt.getHours();
-      matrix[dia][hora]++;
-    }
-  }
-});
-let maxVal=0;
-dias.forEach(d=>horas.forEach(h=>{if(matrix[d][h]>maxVal)maxVal=matrix[d][h];}));
-if(maxVal===0)maxVal=1;
-const cellW=38,cellH=34,labelW=90,headerH=30,paddingTop=10;
-const svgW=labelW+cellW*24+20;
-const svgH=paddingTop+headerH+cellH*7+50;
-let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 ${svgW} ${svgH}" style="font-family:-apple-system,sans-serif">`;
-horas.forEach(h=>{
-  const x=labelW+h*cellW+cellW/2;
-  svg+=`<text x="${x}" y="${paddingTop+18}" text-anchor="middle" font-size="11" fill="#666">${String(h).padStart(2,'0')}</text>`;
-});
-dias.forEach((dia,di)=>{
-  const y=paddingTop+headerH+di*cellH;
-  svg+=`<text x="${labelW-8}" y="${y+cellH/2+4}" text-anchor="end" font-size="11" fill="#444">${dia}</text>`;
-  horas.forEach(h=>{
-    const val=matrix[dia][h];
-    const intensity=val/maxVal;
-    const r=Math.round(235-(235-24)*intensity);
-    const g=Math.round(245-(245-103)*intensity);
-    const b=Math.round(255-(255-150)*intensity*0.3);
-    const color=val===0?'#f5f5f5':`rgb(${r},${g},${b})`;
-    const x=labelW+h*cellW;
-    svg+=`<rect x="${x+1}" y="${y+1}" width="${cellW-2}" height="${cellH-2}" rx="3" fill="${color}" stroke="#e0e0e0" stroke-width="0.5"/>`;
-    if(val>0){
-      const textColor=intensity>0.5?'#fff':'#333';
-      svg+=`<text x="${x+cellW/2}" y="${y+cellH/2+4}" text-anchor="middle" font-size="10" font-weight="${intensity>0.3?'600':'400'}" fill="${textColor}">${val}</text>`;
-    }
+  const dias=['Domingo','Segunda','Terca','Quarta','Quinta','Sexta','Sabado'];
+  const horas=Array.from({length:24},(_,i)=>i);
+  const matrix={};
+  dias.forEach(d=>{matrix[d]={};horas.forEach(h=>{matrix[d][h]=0;});});
+  data.forEach(d=>{
+    if(!d.dataCriacao)return;
+    const p=d.dataCriacao.split(' ');
+    const dt=new Date(p[0].includes('-')?d.dataCriacao:p[0].split('/').reverse().join('-')+'T'+(p[1]||'00:00:00'));
+    if(!isNaN(dt)){matrix[dias[dt.getDay()]][dt.getHours()]++;}
   });
-});
-const legendX=labelW;
-const legendY=svgH-14;
-svg+=`<text x="${legendX}" y="${legendY}" font-size="10" fill="#999">Menor volume</text>`;
-[0,0.25,0.5,0.75,1].forEach((t,i)=>{
-  const r=Math.round(235-(235-24)*t);
-  const g=Math.round(245-(245-103)*t);
-  const b=Math.round(255-(255-150)*t*0.3);
-  const lx=legendX+110+i*18;
-  svg+=`<rect x="${lx}" y="${legendY-10}" width="16" height="10" rx="2" fill="${t===0?'#f5f5f5':`rgb(${r},${g},${b})`}"/>`;
-});
-svg+=`<text x="${legendX+210}" y="${legendY}" font-size="10" fill="#999">Maior volume</text>`;
-svg+=`</svg>`;
-const container=document.getElementById('heatmapContainer');
-if(container) container.innerHTML=svg;
-window._heatmapSVG=svg;
+  let maxVal=0;
+  dias.forEach(d=>horas.forEach(h=>{if(matrix[d][h]>maxVal)maxVal=matrix[d][h];}));
+  if(maxVal===0)maxVal=1;
+  const cW=38,cH=34,lW=90,hH=30,pT=10;
+  const svgW=lW+cW*24+20;
+  const svgH=pT+hH+cH*7+50;
+  let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 ${svgW} ${svgH}" style="font-family:-apple-system,sans-serif">`;
+  horas.forEach(h=>{
+    svg+=`<text x="${lW+h*cW+cW/2}" y="${pT+18}" text-anchor="middle" font-size="11" fill="#666">${String(h).padStart(2,'0')}</text>`;
+  });
+  dias.forEach((dia,di)=>{
+    const y=pT+hH+di*cH;
+    svg+=`<text x="${lW-8}" y="${y+cH/2+4}" text-anchor="end" font-size="11" fill="#444">${dia}</text>`;
+    horas.forEach(h=>{
+      const val=matrix[dia][h];
+      const t=val/maxVal;
+      const r=Math.round(235-(235-24)*t);
+      const g=Math.round(245-(245-103)*t);
+      const b=Math.round(255-(255-150)*t*0.3);
+      const color=val===0?'#f5f5f5':`rgb(${r},${g},${b})`;
+      const x=lW+h*cW;
+      svg+=`<rect x="${x+1}" y="${y+1}" width="${cW-2}" height="${cH-2}" rx="3" fill="${color}" stroke="#e0e0e0" stroke-width="0.5"/>`;
+      if(val>0){
+        svg+=`<text x="${x+cW/2}" y="${y+cH/2+4}" text-anchor="middle" font-size="10" font-weight="${t>0.3?'600':'400'}" fill="${t>0.5?'#fff':'#333'}">${val}</text>`;
+      }
+    });
+  });
+  const lX=lW,lY=svgH-14;
+  svg+=`<text x="${lX}" y="${lY}" font-size="10" fill="#999">Menor volume</text>`;
+  [0,0.25,0.5,0.75,1].forEach((t,i)=>{
+    const r=Math.round(235-(235-24)*t),g=Math.round(245-(245-103)*t),b=Math.round(255-(255-150)*t*0.3);
+    svg+=`<rect x="${lX+110+i*18}" y="${lY-10}" width="16" height="10" rx="2" fill="${t===0?'#f5f5f5':`rgb(${r},${g},${b})`}"/>`;
+  });
+  svg+=`<text x="${lX+210}" y="${lY}" font-size="10" fill="#999">Maior volume</text></svg>`;
+  const container=document.getElementById('heatmapContainer');
+  if(container) container.innerHTML=svg;
+  window._heatmapSVG=svg;
 }
 
 function expandHeatmap(){
-const svg=window._heatmapSVG;
-if(!svg){alert('Heatmap ainda nao carregado.');return;}
-const container=document.getElementById('expandContent');
-container.innerHTML=`<div style="font-size:18px;font-weight:700;color:#333;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #F8931D;">Mapa de Calor - Dia da Semana x Hora</div><div style="overflow-x:auto;">${svg}</div>`;
-document.getElementById('expandModal').classList.add('active');
+  const svg=window._heatmapSVG;
+  if(!svg){alert('Heatmap ainda nao carregado.');return;}
+  document.getElementById('expandContent').innerHTML=`
+    <div style="font-size:18px;font-weight:700;color:#333;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #F8931D;">Mapa de Calor - Dia da Semana x Hora</div>
+    <div style="overflow-x:auto;">${svg}</div>`;
+  document.getElementById('expandModal').classList.add('active');
 }
 
-function createTopClientesChart(data){
-const byCliente={};
-data.forEach(d=>{if(d.organizacao)byCliente[d.organizacao]=(byCliente[d.organizacao]||0)+1;});
-const sorted=Object.entries(byCliente).sort((a,b)=>b[1]-a[1]).slice(0,20);
-const ctx=document.getElementById('chartTopClientes');
-if(!ctx)return;
-if(charts.topClientes)charts.topClientes.destroy();
-const colors=sorted.map((_,i)=>{
-  const t=i/Math.max(19,1);
-  return `hsl(${28-t*20},${90-t*30}%,${55+t*15}%)`;
-});
-charts.topClientes=new Chart(ctx.getContext('2d'),{
-  type:'bar',
-  data:{
-    labels:sorted.map(s=>s[0].length>25?s[0].substring(0,25)+'...':s[0]),
-    datasets:[{data:sorted.map(s=>s[1]),backgroundColor:colors}]
-  },
-  options:{
-    responsive:true,maintainAspectRatio:false,
-    indexAxis:'y',
-    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.x} chamados`}}},
-    scales:{y:{ticks:{font:{size:11}}},x:{ticks:{maxTicksLimit:8}}}
-  }
-});
-charts['chartTopClientes']=charts.topClientes;
+function createTopClientesChart(base){
+  const byCliente={};
+  base.forEach(d=>{if(d.organizacao)byCliente[d.organizacao]=(byCliente[d.organizacao]||0)+1;});
+  const sorted=Object.entries(byCliente).sort((a,b)=>b[1]-a[1]).slice(0,20);
+  const ctx=document.getElementById('chartTopClientes');
+  if(!ctx)return;
+  if(charts.topClientes)try{charts.topClientes.destroy();}catch(e){}
+  const media=sorted.length?sorted.reduce((s,x)=>s+x[1],0)/sorted.length:0;
+  charts.topClientes=new Chart(ctx.getContext('2d'),{
+    type:'bar',
+    data:{
+      labels:sorted.map(s=>s[0].length>28?s[0].substring(0,28)+'...':s[0]),
+      datasets:[{
+        data:sorted.map(s=>s[1]),
+        backgroundColor:sorted.map(s=>s[1]>media?'#E74C3C':'#F8931D'),
+        borderRadius:3
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:c=>`${c.parsed.x} chamados${c.parsed.x>media?' (acima da media)':''}`}}
+      },
+      scales:{y:{ticks:{font:{size:11}}},x:{ticks:{maxTicksLimit:8}}}
+    }
+  });
+  charts['chartTopClientes']=charts.topClientes;
 }
 
-
+// ================================================================
+// QUALIDADE & ORIGEM
+// ================================================================
 function initQualidadeFilters(){
-const cats=[...new Set(allData.map(d=>d.categoria).filter(Boolean))].sort();
-document.getElementById('qualCategoria').innerHTML='<option value="">Todas</option>'+cats.map(x=>`<option value="${x}">${x}</option>`).join('');
+  const cats=[...new Set(allData.map(d=>d.categoria).filter(Boolean))].sort();
+  const el=document.getElementById('qualCategoria');
+  if(el) el.innerHTML='<option value="">Todas</option>'+cats.map(x=>`<option value="${x}">${x}</option>`).join('');
+  createQualidadeCharts();
 }
 
 function getQualidadeBase(){
-let base=allData;
-const ini=document.getElementById('qualDataInicio').value;
-const fim=document.getElementById('qualDataFim').value;
-const cat=document.getElementById('qualCategoria').value;
-if(ini&&fim) base=base.filter(d=>{const dt=d.dataCriacao?d.dataCriacao.split(' ')[0]:'';return dt>=ini&&dt<=fim;});
-if(cat) base=base.filter(d=>d.categoria===cat);
-return base;
+  let base=[...allData];
+  const ini=document.getElementById('qualDataInicio').value;
+  const fim=document.getElementById('qualDataFim').value;
+  const cat=document.getElementById('qualCategoria').value;
+  if(ini&&fim) base=base.filter(d=>{const dt=parseDateStr(d.dataCriacao);return dt&&dt>=ini&&dt<=fim;});
+  if(cat) base=base.filter(d=>d.categoria===cat);
+  return base;
 }
 
 function applyQualidadeFilters(){createQualidadeCharts();}
 
 function clearQualidadeFilters(){
-document.getElementById('qualDataInicio').value='';
-document.getElementById('qualDataFim').value='';
-document.getElementById('qualCategoria').value='';
-createQualidadeCharts();
+  ['qualDataInicio','qualDataFim'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('qualCategoria').value='';
+  createQualidadeCharts();
 }
 
 function createQualidadeCharts(){
-const base=getQualidadeBase();
-const tot=base.length;
+  const base=getQualidadeBase();
+  const tot=base.length;
+  const bugs=base.filter(d=>d.tipo&&d.tipo.toLowerCase().includes('incidente'));
+  const falsoBug=bugs.filter(d=>!d.origemDemanda||!d.origemDemanda.toLowerCase().includes('defeito'));
+  const defReal=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('defeito'));
+  const gap=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('gap'));
+  const pctFalso=bugs.length>0?Math.round(falsoBug.length/bugs.length*100):0;
 
-// KPIs
-const falsoBug=base.filter(d=>d.tipo&&d.tipo.toLowerCase().includes('incidente')&&d.origemDemanda&&!d.origemDemanda.toLowerCase().includes('defeito'));
-const defReal=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('defeito'));
-const gap=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('gap'));
-const pctFalso=tot>0?Math.round(falsoBug.length/Math.max(base.filter(d=>d.tipo&&d.tipo.toLowerCase().includes('incidente')).length,1)*100):0;
+  const el=document.getElementById('kpisQualidadeContainer');
+  if(el) el.innerHTML=`
+    <div class="kpi"><div class="kpi-label">Total Analisado</div><div class="kpi-value">${tot}</div></div>
+    <div class="kpi" style="border-left-color:#E74C3C"><div class="kpi-label">Falso Bug %</div><div class="kpi-value" style="color:#E74C3C">${pctFalso}%</div><div class="kpi-subtitle">${falsoBug.length} de ${bugs.length} bugs</div></div>
+    <div class="kpi" style="border-left-color:#9B59B6"><div class="kpi-label">Defeito Real</div><div class="kpi-value" style="color:#9B59B6">${defReal.length}</div><div class="kpi-subtitle">${tot>0?Math.round(defReal.length/tot*100):0}% do total</div></div>
+    <div class="kpi" style="border-left-color:#FF9800"><div class="kpi-label">GAP Conhecimento</div><div class="kpi-value" style="color:#FF9800">${gap.length}</div><div class="kpi-subtitle">${tot>0?Math.round(gap.length/tot*100):0}% do total</div></div>`;
 
-document.getElementById('kpisQualidadeContainer').innerHTML=`
-<div class="kpi"><div class="kpi-label">Total Analisado</div><div class="kpi-value">${tot}</div></div>
-<div class="kpi" style="border-left-color:#E74C3C"><div class="kpi-label">Falso Bug %</div><div class="kpi-value" style="color:#E74C3C">${pctFalso}%</div><div class="kpi-subtitle">${falsoBug.length} de ${base.filter(d=>d.tipo&&d.tipo.toLowerCase().includes('incidente')).length} bugs</div></div>
-<div class="kpi" style="border-left-color:#9B59B6"><div class="kpi-label">Defeito Real</div><div class="kpi-value" style="color:#9B59B6">${defReal.length}</div><div class="kpi-subtitle">${tot>0?Math.round(defReal.length/tot*100):0}% do total</div></div>
-<div class="kpi" style="border-left-color:#FF9800"><div class="kpi-label">GAP Conhecimento</div><div class="kpi-value" style="color:#FF9800">${gap.length}</div><div class="kpi-subtitle">${tot>0?Math.round(gap.length/tot*100):0}% do total</div></div>
-`;
+  // G1: Por que chamados acontecem
+  const origemData=countBy(base,'origemDemanda');
+  criarGraficoSimples('chartQualOrigem','doughnut',
+    Object.keys(origemData),Object.values(origemData),
+    (i)=>openDrilldownCustom(base.filter(d=>d.origemDemanda===Object.keys(origemData)[i]),Object.keys(origemData)[i]));
 
-// Grafico 1: Por que os chamados acontecem (pizza origens)
-const origemData=countBy(base,'origemDemanda');
-const ctxO=document.getElementById('chartQualOrigem');
-if(ctxO){
-  if(charts.qualOrigem)charts.qualOrigem.destroy();
-  const labels=Object.keys(origemData);
-  const vals=Object.values(origemData);
-  charts.qualOrigem=new Chart(ctxO.getContext('2d'),{
-    type:'doughnut',
-    data:{labels,datasets:[{data:vals,backgroundColor:getPaleta(vals.length)}]},
-    options:{responsive:true,maintainAspectRatio:true,
-      onClick:(e,el)=>{if(el.length>0){const l=labels[el[0].index];openDrilldownCustom(base.filter(d=>d.origemDemanda===l),`Origem: ${l}`);}},
-      plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}}
-  });
-  charts['chartQualOrigem']=charts.qualOrigem;
+  // G2: Falso Bug por categoria
+  const topCatsBug=Object.entries(countBy(bugs,'categoria')).sort((a,b)=>b[1]-a[1]).slice(0,8).map(x=>x[0]);
+  const ctxFB=document.getElementById('chartFalsoBug');
+  if(ctxFB){
+    if(charts.falsoBug)try{charts.falsoBug.destroy();}catch(e){}
+    charts.falsoBug=new Chart(ctxFB.getContext('2d'),{
+      type:'bar',
+      data:{
+        labels:topCatsBug.map(c=>c.length>18?c.substring(0,18)+'...':c),
+        datasets:[
+          {label:'Falso Bug',data:topCatsBug.map(c=>bugs.filter(d=>d.categoria===c&&(!d.origemDemanda||!d.origemDemanda.toLowerCase().includes('defeito'))).length),backgroundColor:'#E74C3C'},
+          {label:'Bug Real',data:topCatsBug.map(c=>bugs.filter(d=>d.categoria===c&&d.origemDemanda&&d.origemDemanda.toLowerCase().includes('defeito')).length),backgroundColor:'#9B59B6'}
+        ]
+      },
+      options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+        onClick:(e,els)=>{if(els.length>0){const cat=topCatsBug[els[0].index];openDrilldownCustom(bugs.filter(d=>d.categoria===cat),`Bugs - ${cat}`);}},
+        plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
+        scales:{y:{ticks:{font:{size:11}}},x:{stacked:false}}}
+    });
+    charts['chartFalsoBug']=charts.falsoBug;
+  }
+
+  // G3: GAP por categoria
+  const gapByCat=Object.entries(countBy(gap,'categoria')).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const ctxGC=document.getElementById('chartQualGapCat');
+  if(ctxGC){
+    if(charts.qualGapCat)try{charts.qualGapCat.destroy();}catch(e){}
+    charts.qualGapCat=new Chart(ctxGC.getContext('2d'),{
+      type:'bar',
+      data:{labels:gapByCat.map(s=>s[0].length>18?s[0].substring(0,18)+'...':s[0]),datasets:[{data:gapByCat.map(s=>s[1]),backgroundColor:'#FF9800',borderRadius:3}]},
+      options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+        onClick:(e,els)=>{if(els.length>0) openDrilldownCustom(gap.filter(d=>d.categoria===gapByCat[els[0].index][0]),`GAP - ${gapByCat[els[0].index][0]}`);},
+        plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11}}}}}
+    });
+    charts['chartQualGapCat']=charts.qualGapCat;
+  }
+
+  // G4: Tendencia origens por mes
+  const origens=[...new Set(base.map(d=>d.origemDemanda).filter(Boolean))];
+  const cores=getPaleta(origens.length);
+  const meses=[...new Set(base.map(d=>{const dt=parseDateStr(d.dataCriacao);return dt?dt.substring(0,7):null;}).filter(Boolean))].sort();
+  const ctxTO=document.getElementById('chartQualTendOrigem');
+  if(ctxTO){
+    if(charts.qualTendOrigem)try{charts.qualTendOrigem.destroy();}catch(e){}
+    charts.qualTendOrigem=new Chart(ctxTO.getContext('2d'),{
+      type:'line',
+      data:{labels:meses,datasets:origens.map((orig,i)=>{
+        const byMes={};
+        base.filter(d=>d.origemDemanda===orig).forEach(d=>{const dt=parseDateStr(d.dataCriacao);if(dt){const m=dt.substring(0,7);byMes[m]=(byMes[m]||0)+1;}});
+        return {label:orig,data:meses.map(m=>byMes[m]||0),borderColor:cores[i],backgroundColor:'transparent',tension:0.4,borderWidth:2,pointRadius:4};
+      })},
+      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+        plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
+        scales:{x:{ticks:{font:{size:10}}}}}
+    });
+    charts['chartQualTendOrigem']=charts.qualTendOrigem;
+  }
 }
 
-// Grafico 2: Falso Bug - barras horizontais por categoria
-const bugsTotal=base.filter(d=>d.tipo&&d.tipo.toLowerCase().includes('incidente'));
-const bugsFalsosByCat={};
-const bugsRealsByCat={};
-bugsTotal.forEach(d=>{
-  const cat=d.categoria||'Sem categoria';
-  if(!bugsFalsosByCat[cat])bugsFalsosByCat[cat]=0;
-  if(!bugsRealsByCat[cat])bugsRealsByCat[cat]=0;
-  if(d.origemDemanda&&d.origemDemanda.toLowerCase().includes('defeito')) bugsRealsByCat[cat]++;
-  else bugsFalsosByCat[cat]++;
-});
-const topCatsBug=Object.entries(bugsTotal.reduce((a,d)=>{const c=d.categoria||'Sem cat';a[c]=(a[c]||0)+1;return a;},{})).sort((a,b)=>b[1]-a[1]).slice(0,8).map(x=>x[0]);
-const ctxFB=document.getElementById('chartFalsoBug');
-if(ctxFB){
-  if(charts.falsoBug)charts.falsoBug.destroy();
-  charts.falsoBug=new Chart(ctxFB.getContext('2d'),{
-    type:'bar',
-    data:{
-      labels:topCatsBug.map(c=>c.length>18?c.substring(0,18)+'...':c),
-      datasets:[
-        {label:'Falso Bug (nao e defeito)',data:topCatsBug.map(c=>bugsFalsosByCat[c]||0),backgroundColor:'#E74C3C'},
-        {label:'Bug Real (defeito confirmado)',data:topCatsBug.map(c=>bugsRealsByCat[c]||0),backgroundColor:'#9B59B6'}
-      ]
-    },
+function criarGraficoSimples(id,type,labels,values,onClickFn){
+  const ctx=document.getElementById(id);
+  if(!ctx)return;
+  if(charts[id])try{charts[id].destroy();}catch(e){}
+  const isPie=type==='doughnut'||type==='pie';
+  charts[id]=new Chart(ctx.getContext('2d'),{
+    type,
+    data:{labels,datasets:[{data:values,backgroundColor:getPaleta(values.length),borderWidth:1}]},
     options:{
-      responsive:true,maintainAspectRatio:false,indexAxis:'y',
-      onClick:(e,el)=>{if(el.length>0){const cat=topCatsBug[el[0].index];const isFalso=el[0].datasetIndex===0;openDrilldownCustom(bugsTotal.filter(d=>d.categoria===cat&&(isFalso?(d.origemDemanda&&!d.origemDemanda.toLowerCase().includes('defeito')):(d.origemDemanda&&d.origemDemanda.toLowerCase().includes('defeito')))),`${isFalso?'Falso Bug':'Bug Real'} - ${cat}`);}},
-      plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
-      scales:{y:{ticks:{font:{size:11}}},x:{stacked:false}}
+      responsive:true,maintainAspectRatio:isPie,
+      onClick:(e,els)=>{if(els.length>0&&onClickFn) onClickFn(els[0].index);},
+      plugins:{legend:{display:isPie,position:'bottom',labels:{font:{size:11},boxWidth:12,padding:10}}}
     }
   });
-  charts['chartFalsoBug']=charts.falsoBug;
 }
 
-// Grafico 3: GAP por categoria
-const gapData=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('gap'));
-const gapByCat=countBy(gapData,'categoria');
-const sortedGapCat=Object.entries(gapByCat).sort((a,b)=>b[1]-a[1]).slice(0,10);
-const ctxGC=document.getElementById('chartQualGapCat');
-if(ctxGC){
-  if(charts.qualGapCat)charts.qualGapCat.destroy();
-  charts.qualGapCat=new Chart(ctxGC.getContext('2d'),{
-    type:'bar',
-    data:{labels:sortedGapCat.map(s=>s[0].length>18?s[0].substring(0,18)+'...':s[0]),datasets:[{data:sortedGapCat.map(s=>s[1]),backgroundColor:'#FF9800'}]},
-    options:{
-      responsive:true,maintainAspectRatio:false,indexAxis:'y',
-      onClick:(e,el)=>{if(el.length>0){const cat=sortedGapCat[el[0].index][0];openDrilldownCustom(gapData.filter(d=>d.categoria===cat),`GAP - ${cat}`);}},
-      plugins:{legend:{display:false}},
-      scales:{y:{ticks:{font:{size:11}}}}
-    }
-  });
-  charts['chartQualGapCat']=charts.qualGapCat;
-}
-
-// Grafico 4: Tendencia origens por mes
-const origens=[...new Set(base.map(d=>d.origemDemanda).filter(Boolean))];
-const meses=[...new Set(base.map(d=>d.dataCriacao?d.dataCriacao.split(' ')[0].substring(0,7):null).filter(Boolean))].sort();
-const CORES=getPaleta(origens.length);
-const datasetsTO=origens.map((orig,i)=>{
-  const byMes={};
-  base.filter(d=>d.origemDemanda===orig).forEach(d=>{
-    if(d.dataCriacao){const m=d.dataCriacao.split(' ')[0].substring(0,7);byMes[m]=(byMes[m]||0)+1;}
-  });
-  return {label:orig,data:meses.map(m=>byMes[m]||0),borderColor:CORES[i%CORES.length],backgroundColor:'transparent',tension:0.4,borderWidth:2,pointRadius:4};
-});
-const ctxTO=document.getElementById('chartQualTendOrigem');
-if(ctxTO){
-  if(charts.qualTendOrigem)charts.qualTendOrigem.destroy();
-  charts.qualTendOrigem=new Chart(ctxTO.getContext('2d'),{
-    type:'line',
-    data:{labels:meses,datasets:datasetsTO},
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      interaction:{mode:'index',intersect:false},
-      plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
-      scales:{x:{ticks:{font:{size:10}}}}
-    }
-  });
-  charts['chartQualTendOrigem']=charts.qualTendOrigem;
-}
-}
-
-
+// ================================================================
+// PRODUTO & FUNCIONALIDADES
+// ================================================================
 function initProdutoFilters(){
-const tipos=[...new Set(allData.map(d=>d.tipo).filter(Boolean))];
-document.getElementById('prodTipo').innerHTML='<option value="">Todos</option>'+tipos.map(x=>`<option value="${x}">${x}</option>`).join('');
+  const tipos=[...new Set(allData.map(d=>d.tipo).filter(Boolean))];
+  const el=document.getElementById('prodTipo');
+  if(el) el.innerHTML='<option value="">Todos</option>'+tipos.map(x=>`<option value="${x}">${x}</option>`).join('');
+  createProdutoCharts();
 }
 
 function getProdutoBase(){
-let base=allData;
-const ini=document.getElementById('prodDataInicio').value;
-const fim=document.getElementById('prodDataFim').value;
-const tipo=document.getElementById('prodTipo').value;
-if(ini&&fim) base=base.filter(d=>{const dt=d.dataCriacao?d.dataCriacao.split(' ')[0]:'';return dt>=ini&&dt<=fim;});
-if(tipo) base=base.filter(d=>d.tipo===tipo);
-return base;
+  let base=[...allData];
+  const ini=document.getElementById('prodDataInicio').value;
+  const fim=document.getElementById('prodDataFim').value;
+  const tipo=document.getElementById('prodTipo').value;
+  if(ini&&fim) base=base.filter(d=>{const dt=parseDateStr(d.dataCriacao);return dt&&dt>=ini&&dt<=fim;});
+  if(tipo) base=base.filter(d=>d.tipo===tipo);
+  return base;
 }
 
 function applyProdutoFilters(){createProdutoCharts();}
 
 function clearProdutoFilters(){
-document.getElementById('prodDataInicio').value='';
-document.getElementById('prodDataFim').value='';
-document.getElementById('prodTipo').value='';
-createProdutoCharts();
+  ['prodDataInicio','prodDataFim'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('prodTipo').value='';
+  createProdutoCharts();
 }
 
 function createProdutoCharts(){
-const base=getProdutoBase();
-const tot=base.length;
+  const base=getProdutoBase();
+  const tot=base.length;
+  const topFunc=getTopValue(base,'funcionalidade');
+  const topCat=getTopValue(base,'categoria');
+  const bugReal=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('defeito')).length;
 
-// KPIs
-const topFunc=getTopValue(base,'funcionalidade');
-const topCat=getTopValue(base,'categoria');
-const bugReal=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('defeito')).length;
-const pctBugReal=tot>0?Math.round(bugReal/tot*100):0;
+  const el=document.getElementById('kpisProdutoContainer');
+  if(el) el.innerHTML=`
+    <div class="kpi"><div class="kpi-label">Total de Tickets</div><div class="kpi-value">${tot}</div></div>
+    <div class="kpi" style="border-left-color:#E74C3C"><div class="kpi-label">Top Funcionalidade</div><div class="kpi-value" style="font-size:18px;color:#E74C3C">${topFunc.value}</div><div class="kpi-subtitle">${topFunc.count} chamados</div></div>
+    <div class="kpi" style="border-left-color:#3498DB"><div class="kpi-label">Top Categoria</div><div class="kpi-value" style="font-size:18px;color:#3498DB">${topCat.value}</div><div class="kpi-subtitle">${topCat.count} chamados</div></div>
+    <div class="kpi" style="border-left-color:#9B59B6"><div class="kpi-label">Bug Real Confirmado</div><div class="kpi-value" style="color:#9B59B6">${tot>0?Math.round(bugReal/tot*100):0}%</div><div class="kpi-subtitle">${bugReal} tickets</div></div>`;
 
-document.getElementById('kpisProdutoContainer').innerHTML=`
-<div class="kpi"><div class="kpi-label">Total de Tickets</div><div class="kpi-value">${tot}</div></div>
-<div class="kpi" style="border-left-color:#E74C3C"><div class="kpi-label">Top Funcionalidade</div><div class="kpi-value" style="font-size:18px;color:#E74C3C">${topFunc.value||'N/A'}</div><div class="kpi-subtitle">${topFunc.count} chamados</div></div>
-<div class="kpi" style="border-left-color:#3498DB"><div class="kpi-label">Top Categoria</div><div class="kpi-value" style="font-size:18px;color:#3498DB">${topCat.value||'N/A'}</div><div class="kpi-subtitle">${topCat.count} chamados</div></div>
-<div class="kpi" style="border-left-color:#9B59B6"><div class="kpi-label">Bug Real Confirmado</div><div class="kpi-value" style="color:#9B59B6">${pctBugReal}%</div><div class="kpi-subtitle">${bugReal} tickets</div></div>
-`;
+  // G1: Top funcs empilhado por origem
+  const topFuncs=Object.entries(countBy(base,'funcionalidade')).sort((a,b)=>b[1]-a[1]).slice(0,10).map(f=>f[0]);
+  const origens=[...new Set(base.map(d=>d.origemDemanda).filter(Boolean))];
+  const cores=getPaleta(origens.length);
+  const ctxFO=document.getElementById('chartProdFuncOrigem');
+  if(ctxFO){
+    if(charts.prodFuncOrigem)try{charts.prodFuncOrigem.destroy();}catch(e){}
+    charts.prodFuncOrigem=new Chart(ctxFO.getContext('2d'),{
+      type:'bar',
+      data:{labels:topFuncs.map(f=>f.length>22?f.substring(0,22)+'...':f),
+        datasets:origens.map((orig,i)=>({label:orig,data:topFuncs.map(f=>base.filter(d=>d.funcionalidade===f&&d.origemDemanda===orig).length),backgroundColor:cores[i]}))},
+      options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+        onClick:(e,els)=>{if(els.length>0) openDrilldownCustom(base.filter(d=>d.funcionalidade===topFuncs[els[0].index]),`Funcionalidade: ${topFuncs[els[0].index]}`);},
+        plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
+        scales:{x:{stacked:true},y:{stacked:true,ticks:{font:{size:11}}}}}
+    });
+    charts['chartProdFuncOrigem']=charts.prodFuncOrigem;
+  }
 
-// Grafico 1: Top funcs empilhado por origem
-const topFuncs=Object.entries(countBy(base,'funcionalidade')).sort((a,b)=>b[1]-a[1]).slice(0,10).map(f=>f[0]);
-const origens=[...new Set(base.map(d=>d.origemDemanda).filter(Boolean))];
-const CORES_O=getPaleta(origens.length);
-const datasetsFO=origens.map((orig,i)=>({
-  label:orig,
-  data:topFuncs.map(f=>base.filter(d=>d.funcionalidade===f&&d.origemDemanda===orig).length),
-  backgroundColor:CORES_O[i%CORES_O.length]
-}));
-const ctxFO=document.getElementById('chartProdFuncOrigem');
-if(ctxFO){
-  if(charts.prodFuncOrigem)charts.prodFuncOrigem.destroy();
-  charts.prodFuncOrigem=new Chart(ctxFO.getContext('2d'),{
-    type:'bar',
-    data:{labels:topFuncs.map(f=>f.length>20?f.substring(0,20)+'...':f),datasets:datasetsFO},
-    options:{
-      responsive:true,maintainAspectRatio:false,indexAxis:'y',
-      onClick:(e,el)=>{if(el.length>0){const func=topFuncs[el[0].index];openDrilldownCustom(base.filter(d=>d.funcionalidade===func),`Funcionalidade: ${func}`);}},
-      plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
-      scales:{x:{stacked:true},y:{stacked:true,ticks:{font:{size:11}}}}
-    }
-  });
-  charts['chartProdFuncOrigem']=charts.prodFuncOrigem;
+  // G2: Cat x Tipo - filtrar vazios
+  const topCats=Object.entries(countBy(base,'categoria')).sort((a,b)=>b[1]-a[1]).slice(0,10).map(c=>c[0]);
+  const tipos=[...new Set(base.map(d=>d.tipo).filter(Boolean))];
+  const coresTipo=getPaleta(tipos.length);
+  const dsCT=tipos.map((t,i)=>({label:t,data:topCats.map(c=>base.filter(d=>d.categoria===c&&d.tipo===t).length),backgroundColor:coresTipo[i]}));
+  const topCatsFilt=topCats.filter(c=>dsCT.some(ds=>ds.data[topCats.indexOf(c)]>0));
+  const dsCTFilt=dsCT.map(ds=>({...ds,data:topCatsFilt.map(c=>ds.data[topCats.indexOf(c)])})).filter(ds=>ds.data.some(v=>v>0));
+  const ctxCT=document.getElementById('chartProdCatTipo');
+  if(ctxCT){
+    if(charts.prodCatTipo)try{charts.prodCatTipo.destroy();}catch(e){}
+    charts.prodCatTipo=new Chart(ctxCT.getContext('2d'),{
+      type:'bar',
+      data:{labels:topCatsFilt.map(c=>c.length>15?c.substring(0,15)+'...':c),datasets:dsCTFilt},
+      options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+        onClick:(e,els)=>{if(els.length>0) openDrilldownCustom(base.filter(d=>d.categoria===topCatsFilt[els[0].index]),`Categoria: ${topCatsFilt[els[0].index]}`);},
+        plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
+        scales:{x:{stacked:true},y:{stacked:true,ticks:{font:{size:11}}}}}
+    });
+    charts['chartProdCatTipo']=charts.prodCatTipo;
+  }
+
+  // G3: Onde direcionar energia
+  const dev=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('defeito')).length;
+  const proc=base.filter(d=>d.tipo&&d.tipo.toLowerCase().includes('incidente')&&(!d.origemDemanda||!d.origemDemanda.toLowerCase().includes('defeito'))).length;
+  const train=base.filter(d=>d.origemDemanda&&(d.origemDemanda.toLowerCase().includes('gap')||d.origemDemanda.toLowerCase().includes('comportamento'))).length;
+  const ext=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('depend')).length;
+  const decisao=[
+    {l:'Dev: Defeito Sistemico confirmado',v:dev,c:'#9B59B6'},
+    {l:'Processo/Usabilidade: incidente sem defeito',v:proc,c:'#E74C3C'},
+    {l:'Treinamento: GAP de conhecimento',v:train,c:'#FF9800'},
+    {l:'Dependencia externa: fora do controle',v:ext,c:'#3498DB'}
+  ];
+  const ctxD=document.getElementById('chartProdDecisao');
+  if(ctxD){
+    if(charts.prodDecisao)try{charts.prodDecisao.destroy();}catch(e){}
+    charts.prodDecisao=new Chart(ctxD.getContext('2d'),{
+      type:'bar',
+      data:{labels:decisao.map(d=>d.l),datasets:[{data:decisao.map(d=>d.v),backgroundColor:decisao.map(d=>d.c),borderRadius:3}]},
+      options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+        onClick:(e,els)=>{
+          if(els.length>0){
+            const i=els[0].index;
+            let f=base;
+            if(i===0)f=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('defeito'));
+            else if(i===1)f=base.filter(d=>d.tipo&&d.tipo.toLowerCase().includes('incidente')&&(!d.origemDemanda||!d.origemDemanda.toLowerCase().includes('defeito')));
+            else if(i===2)f=base.filter(d=>d.origemDemanda&&(d.origemDemanda.toLowerCase().includes('gap')||d.origemDemanda.toLowerCase().includes('comportamento')));
+            else f=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('depend'));
+            openDrilldownCustom(f,decisao[i].l);
+          }
+        },
+        plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11}}}}}
+    });
+    charts['chartProdDecisao']=charts.prodDecisao;
+  }
+
+  // G4: Evolucao top 5 cats por mes
+  const top5=Object.entries(countBy(base,'categoria')).sort((a,b)=>b[1]-a[1]).slice(0,5).map(c=>c[0]);
+  const meses=[...new Set(base.map(d=>{const dt=parseDateStr(d.dataCriacao);return dt?dt.substring(0,7):null;}).filter(Boolean))].sort();
+  const cores5=getPaleta(top5.length);
+  const ctxEC=document.getElementById('chartProdEvolCat');
+  if(ctxEC){
+    if(charts.prodEvolCat)try{charts.prodEvolCat.destroy();}catch(e){}
+    charts.prodEvolCat=new Chart(ctxEC.getContext('2d'),{
+      type:'line',
+      data:{labels:meses,datasets:top5.map((cat,i)=>{
+        const bM={};
+        base.filter(d=>d.categoria===cat).forEach(d=>{const dt=parseDateStr(d.dataCriacao);if(dt){const m=dt.substring(0,7);bM[m]=(bM[m]||0)+1;}});
+        return {label:cat,data:meses.map(m=>bM[m]||0),borderColor:cores5[i],backgroundColor:'transparent',tension:0.4,borderWidth:2,pointRadius:4};
+      })},
+      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+        plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
+        scales:{x:{ticks:{font:{size:10}}}}}
+    });
+    charts['chartProdEvolCat']=charts.prodEvolCat;
+  }
 }
 
-// Grafico 2: Top categorias x tipo (stacked)
-const topCats=Object.entries(countBy(base,'categoria')).sort((a,b)=>b[1]-a[1]).slice(0,10).map(c=>c[0]);
-const tipos=[...new Set(base.map(d=>d.tipo).filter(Boolean))];
-const CORES_T=getPaleta(tipos.length);
-const datasetsCT=tipos.map((t,i)=>({
-  label:t,
-  data:topCats.map(c=>base.filter(d=>d.categoria===c&&d.tipo===t).length),
-  backgroundColor:CORES_T[i%CORES_T.length]
-}));
-const ctxCT=document.getElementById('chartProdCatTipo');
-if(ctxCT){
-  if(charts.prodCatTipo)charts.prodCatTipo.destroy();
-  const topCatsFilt=topCats.filter(c=>datasetsCT.some(ds=>ds.data[topCats.indexOf(c)]>0));
-  const dsCTFilt=datasetsCT.map(ds=>({...ds,data:topCatsFilt.map(c=>ds.data[topCats.indexOf(c)])})).filter(ds=>ds.data.some(v=>v>0));
-  charts.prodCatTipo=new Chart(ctxCT.getContext('2d'),{
-    type:'bar',
-    data:{labels:topCatsFilt.map(c=>c.length>15?c.substring(0,15)+'...':c),datasets:dsCTFilt},
-    options:{
-      responsive:true,maintainAspectRatio:false,indexAxis:'y',
-      onClick:(e,el)=>{if(el.length>0){const cat=topCats[el[0].index];openDrilldownCustom(base.filter(d=>d.categoria===cat),`Categoria: ${cat}`);}},
-      plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
-      scales:{x:{stacked:true},y:{stacked:true,ticks:{font:{size:11}}}}
-    }
-  });
-  charts['chartProdCatTipo']=charts.prodCatTipo;
-}
-
-// Grafico 3: Onde investir - barra horizontal Dev vs UX vs Treinamento
-const devCount=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('defeito')).length;
-const uxCount=base.filter(d=>d.tipo&&d.tipo.toLowerCase().includes('incidente')&&d.origemDemanda&&!d.origemDemanda.toLowerCase().includes('defeito')).length;
-const trainCount=base.filter(d=>d.origemDemanda&&(d.origemDemanda.toLowerCase().includes('gap')||d.origemDemanda.toLowerCase().includes('comportamento'))).length;
-const extCount=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('depend')).length;
-const decisaoData=[
-  {label:'Dev: Defeito Sistemico confirmado',val:devCount,color:'#9B59B6'},
-  {label:'Processo/Usabilidade: incidente sem defeito',val:uxCount,color:'#E74C3C'},
-  {label:'Treinamento: GAP de conhecimento',val:trainCount,color:'#FF9800'},
-  {label:'Dependencia externa: fora do controle',val:extCount,color:'#3498DB'}
-];
-const ctxD=document.getElementById('chartProdDecisao');
-if(ctxD){
-  if(charts.prodDecisao)charts.prodDecisao.destroy();
-  charts.prodDecisao=new Chart(ctxD.getContext('2d'),{
-    type:'bar',
-    data:{
-      labels:decisaoData.map(d=>d.label),
-      datasets:[{data:decisaoData.map(d=>d.val),backgroundColor:decisaoData.map(d=>d.color)}]
-    },
-    options:{
-      responsive:true,maintainAspectRatio:false,indexAxis:'y',
-      onClick:(e,el)=>{
-        if(el.length>0){
-          const idx=el[0].index;
-          let filtered=base;
-          if(idx===0)filtered=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('defeito'));
-          else if(idx===1)filtered=base.filter(d=>d.tipo&&d.tipo.toLowerCase().includes('incidente')&&d.origemDemanda&&!d.origemDemanda.toLowerCase().includes('defeito'));
-          else if(idx===2)filtered=base.filter(d=>d.origemDemanda&&(d.origemDemanda.toLowerCase().includes('gap')||d.origemDemanda.toLowerCase().includes('comportamento')));
-          else filtered=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('depend'));
-          openDrilldownCustom(filtered,decisaoData[idx].label);
-        }
-      },
-      plugins:{legend:{display:false}},
-      scales:{y:{ticks:{font:{size:11}}}}
-    }
-  });
-  charts['chartProdDecisao']=charts.prodDecisao;
-}
-
-// Grafico 4: Evolucao categorias por mes (top 5)
-const top5Cats=Object.entries(countBy(base,'categoria')).sort((a,b)=>b[1]-a[1]).slice(0,5).map(c=>c[0]);
-const meses=[...new Set(base.map(d=>d.dataCriacao?d.dataCriacao.split(' ')[0].substring(0,7):null).filter(Boolean))].sort();
-const CORES_CAT=getPaleta(top5Cats.length);
-const datasetsEC=top5Cats.map((cat,i)=>{
-  const byMes={};
-  base.filter(d=>d.categoria===cat).forEach(d=>{
-    if(d.dataCriacao){const m=d.dataCriacao.split(' ')[0].substring(0,7);byMes[m]=(byMes[m]||0)+1;}
-  });
-  return {label:cat,data:meses.map(m=>byMes[m]||0),borderColor:CORES_CAT[i],backgroundColor:'transparent',tension:0.4,borderWidth:2,pointRadius:4};
-});
-const ctxEC=document.getElementById('chartProdEvolCat');
-if(ctxEC){
-  if(charts.prodEvolCat)charts.prodEvolCat.destroy();
-  charts.prodEvolCat=new Chart(ctxEC.getContext('2d'),{
-    type:'line',
-    data:{labels:meses,datasets:datasetsEC},
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      interaction:{mode:'index',intersect:false},
-      plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
-      scales:{x:{ticks:{font:{size:10}}}}
-    }
-  });
-  charts['chartProdEvolCat']=charts.prodEvolCat;
-}
-}
-
-
-function openDrilldownCustom(data, title){
-currentAuditData=data;
-document.getElementById('auditTitle').textContent=title;
-document.getElementById('auditSubtitle').textContent=`Total: ${data.length} registros`;
-const tbody=document.getElementById('auditTableBody');
-tbody.innerHTML='';
-data.forEach(d=>{
-  const row=`<tr><td>${d.protocolo||''}</td><td>${d.assunto?d.assunto.substring(0,50):''}</td><td>${d.tipo||''}</td><td>${d.categoria||''}</td><td>${d.funcionalidade||''}</td><td>${d.origemDemanda||''}</td><td>${d.origemCanal||''}</td><td>${d.atendente||''}</td></tr>`;
-  tbody.innerHTML+=row;
-});
-document.getElementById('auditModal').classList.add('active');
-}
-
+// ================================================================
+// ANALISE DO CLIENTE
+// ================================================================
 function buscarClientes(){
-const s=document.getElementById('clienteSearch').value.toLowerCase();
-const dropdown=document.getElementById('clienteSugestoes');
-if(!s||s.length<2){dropdown.style.display='none';return;}
-const clientes=[...new Set(allData.map(d=>d.organizacao).filter(Boolean))].sort();
-const filtrados=clientes.filter(c=>c.toLowerCase().includes(s)).slice(0,15);
-if(filtrados.length===0){dropdown.style.display='none';return;}
-dropdown.innerHTML=filtrados.map(c=>`<div style="padding:10px 14px;cursor:pointer;font-size:14px;border-bottom:1px solid #f0f0f0;" onmousedown="selecionarCliente('${c.replace(/'/g,"\'")}')" onmouseover="this.style.background='#fef7f0'" onmouseout="this.style.background='#fff'">${c}</div>`).join('');
-dropdown.style.display='block';
+  const s=document.getElementById('clienteSearch').value.toLowerCase().trim();
+  const dropdown=document.getElementById('clienteSugestoes');
+  if(!s||s.length<2){dropdown.style.display='none';return;}
+  const clientes=[...new Set(allData.map(d=>d.organizacao).filter(Boolean))];
+  const matches=clientes.filter(c=>c.toLowerCase().includes(s)).slice(0,10);
+  if(matches.length===0){dropdown.style.display='none';return;}
+  dropdown.innerHTML=matches.map(c=>`<div class="sugestao-item" onmousedown="selecionarCliente('${c.replace(/'/g,"\\'")}')">${c}</div>`).join('');
+  dropdown.style.display='block';
 }
 
 function selecionarCliente(cliente){
-clienteSelecionado=cliente;
-document.getElementById('clienteSearch').value=cliente;
-document.getElementById('clienteSugestoes').style.display='none';
-aplicarFiltrosCliente();
+  clienteSelecionado=cliente;
+  document.getElementById('clienteSearch').value=cliente;
+  document.getElementById('clienteSugestoes').style.display='none';
+  aplicarFiltrosCliente();
 }
 
 function aplicarFiltrosCliente(){
-const searchVal=document.getElementById('clienteSearch').value.trim();
-if(searchVal&&!clienteSelecionado) clienteSelecionado=searchVal;
-if(!clienteSelecionado){alert('Selecione um cliente primeiro!');return;}let baseData=allData.filter(d=>d.organizacao===clienteSelecionado);const i=document.getElementById('clienteDataInicio').value,f=document.getElementById('clienteDataFim').value;if(i&&f){baseData=baseData.filter(d=>{const dt=d.dataCriacao?d.dataCriacao.split(' ')[0]:'';return dt>=i&&dt<=f;});}clienteFilteredData=baseData;atualizarGraficosCliente();}
-
-function limparFiltrosCliente(){
-document.getElementById('clienteSearch').value='';
-document.getElementById('clienteDataInicio').value='';
-document.getElementById('clienteDataFim').value='';
-document.getElementById('clienteSugestoes').style.display='none';
-clienteSelecionado='';
-clienteFilteredData=[];
-document.getElementById('kpisClienteContainer').innerHTML='';
-['chartClientePeriodo','chartClienteTipo','chartClienteCategoria','chartClienteOrigem',
- 'chartClienteFunc','chartClienteCanal','chartClienteAtendentes','chartClienteStatus','chartClienteReabertura'
-].forEach(id=>{if(charts[id]){try{charts[id].destroy();}catch(e){}delete charts[id];}});
+  const searchVal=document.getElementById('clienteSearch').value.trim();
+  if(searchVal&&!clienteSelecionado) clienteSelecionado=searchVal;
+  if(!clienteSelecionado){alert('Selecione um cliente primeiro!');return;}
+  let base=allData.filter(d=>d.organizacao===clienteSelecionado);
+  const ini=document.getElementById('clienteDataInicio').value;
+  const fim=document.getElementById('clienteDataFim').value;
+  if(ini&&fim) base=base.filter(d=>{const dt=parseDateStr(d.dataCriacao);return dt&&dt>=ini&&dt<=fim;});
+  clienteFilteredData=base;
+  atualizarGraficosCliente();
 }
 
-function atualizarGraficosCliente(){const d=clienteFilteredData,tot=d.length,reab=d.filter(x=>x.reaberto==='Sim').length,taxa=tot>0?(reab/tot*100).toFixed(1):0,topC=getTopValue(d,'categoria');document.getElementById('kpisClienteContainer').innerHTML=`<div class="kpi"><div class="kpi-label">Total de Tickets</div><div class="kpi-value">${tot}</div></div><div class="kpi success"><div class="kpi-label">Taxa de Reabertura</div><div class="kpi-value">${taxa}%</div><div class="kpi-subtitle">${reab} reabertos</div></div><div class="kpi"><div class="kpi-label">Top Categoria</div><div class="kpi-value" style="font-size:20px">${topC.value||'N/A'}</div><div class="kpi-subtitle">${topC.count}</div></div><div class="kpi"><div class="kpi-label">Status Abertos</div><div class="kpi-value" style="font-size:24px">${d.filter(x=>x.status&&!x.status.toLowerCase().includes('finali')).length}</div></div>`;criarGraficosCliente();}
+function limparFiltrosCliente(){
+  clienteSelecionado='';
+  clienteFilteredData=[];
+  document.getElementById('clienteSearch').value='';
+  document.getElementById('clienteDataInicio').value='';
+  document.getElementById('clienteDataFim').value='';
+  document.getElementById('clienteSugestoes').style.display='none';
+  document.getElementById('kpisClienteContainer').innerHTML='';
+  ['chartClientePeriodo','chartClienteTipo','chartClienteCategoria','chartClienteOrigem',
+   'chartClienteFunc','chartClienteCanal','chartClienteAtendentes','chartClienteStatus','chartClienteReabertura'
+  ].forEach(id=>{if(charts[id]){try{charts[id].destroy();}catch(e){}delete charts[id];}});
+}
 
-function criarGraficosCliente(){const d=clienteFilteredData;const byMes={};d.forEach(x=>{if(x.dataCriacao){const m=x.dataCriacao.split(' ')[0].substring(0,7);byMes[m]=(byMes[m]||0)+1;}});const sortedMes=Object.entries(byMes).sort((a,b)=>a[0].localeCompare(b[0]));const ctxP=document.getElementById('chartClientePeriodo');if(ctxP){if(charts.clientePeriodo)charts.clientePeriodo.destroy();charts.clientePeriodo=new Chart(ctxP.getContext('2d'),{type:'line',data:{labels:sortedMes.map(m=>m[0]),datasets:[{label:'Chamados',data:sortedMes.map(m=>m[1]),borderColor:'#F8931D',backgroundColor:'rgba(248,147,29,0.1)',tension:0.4,fill:true,borderWidth:3,pointRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});charts['chartClientePeriodo']=charts.clientePeriodo;}const dataTipo=countBy(d,'tipo');const ctxT=document.getElementById('chartClienteTipo');if(ctxT){if(charts.clienteTipo)charts.clienteTipo.destroy();charts.clienteTipo=new Chart(ctxT.getContext('2d'),{type:'doughnut',data:{labels:Object.keys(dataTipo),datasets:[{data:Object.values(dataTipo),backgroundColor:['#FF9999','#66B2FF','#99FF99']}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom'}}}});charts['chartClienteTipo']=charts.clienteTipo;}const dataCat=countBy(d,'categoria');const sortedCat=Object.entries(dataCat).sort((a,b)=>b[1]-a[1]).slice(0,10);const ctxC=document.getElementById('chartClienteCategoria');if(ctxC){if(charts.clienteCategoria)charts.clienteCategoria.destroy();charts.clienteCategoria=new Chart(ctxC.getContext('2d'),{type:'bar',data:{labels:sortedCat.map(s=>s[0].substring(0,15)),datasets:[{data:sortedCat.map(s=>s[1]),backgroundColor:['#E74C3C','#3498DB','#2ECC71','#F39C12','#9B59B6','#1ABC9C','#E67E22','#95A5A6','#34495E','#C0392B']}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}}}});charts['chartClienteCategoria']=charts.clienteCategoria;}const dataO=countBy(d,'origemDemanda');const ctxO=document.getElementById('chartClienteOrigem');if(ctxO){if(charts.clienteOrigem)charts.clienteOrigem.destroy();charts.clienteOrigem=new Chart(ctxO.getContext('2d'),{type:'pie',data:{labels:Object.keys(dataO),datasets:[{data:Object.values(dataO),backgroundColor:['#FF6B6B','#4ECDC4','#45B7D1','#FFA07A','#98D8C8']}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom'}}}});charts['chartClienteOrigem']=charts.clienteOrigem;}const dataF=countBy(d,'funcionalidade');const sortedF=Object.entries(dataF).sort((a,b)=>b[1]-a[1]).slice(0,5);const ctxF=document.getElementById('chartClienteFunc');if(ctxF){if(charts.clienteFunc)charts.clienteFunc.destroy();charts.clienteFunc=new Chart(ctxF.getContext('2d'),{type:'bar',data:{labels:sortedF.map(s=>s[0].substring(0,15)),datasets:[{data:sortedF.map(s=>s[1]),backgroundColor:['#FF7F50','#6495ED','#32CD32','#FFD700','#FF69B4']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});charts['chartClienteFunc']=charts.clienteFunc;}const dataCn=countBy(d,'origemCanal');const ctxCn=document.getElementById('chartClienteCanal');if(ctxCn){if(charts.clienteCanal)charts.clienteCanal.destroy();charts.clienteCanal=new Chart(ctxCn.getContext('2d'),{type:'doughnut',data:{labels:Object.keys(dataCn),datasets:[{data:Object.values(dataCn),backgroundColor:['#3498DB','#2ECC71','#F39C12','#E74C3C']}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom'}}}});charts['chartClienteCanal']=charts.clienteCanal;}const dataA=countBy(d,'atendente');const sortedA=Object.entries(dataA).sort((a,b)=>b[1]-a[1]).slice(0,8);const ctxA=document.getElementById('chartClienteAtendentes');if(ctxA){if(charts.clienteAtendentes)charts.clienteAtendentes.destroy();charts.clienteAtendentes=new Chart(ctxA.getContext('2d'),{type:'bar',data:{labels:sortedA.map(s=>s[0].substring(0,12)),datasets:[{data:sortedA.map(s=>s[1]),backgroundColor:['#FF7F50','#6495ED','#32CD32','#FFD700','#FF69B4','#00CED1','#FF4500','#9370DB']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});charts['chartClienteAtendentes']=charts.clienteAtendentes;}const dataSt={};dataSt['Abertos']=d.filter(x=>x.status&&!x.status.toLowerCase().includes('finali')).length;dataSt['Finalizados']=d.filter(x=>x.status&&x.status.toLowerCase().includes('finali')).length;const ctxSt=document.getElementById('chartClienteStatus');if(ctxSt){if(charts.clienteStatus)charts.clienteStatus.destroy();charts.clienteStatus=new Chart(ctxSt.getContext('2d'),{type:'doughnut',data:{labels:Object.keys(dataSt),datasets:[{data:Object.values(dataSt),backgroundColor:['#F39C12','#2ECC71']}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom'}}}});charts['chartClienteStatus']=charts.clienteStatus;}const dataRe={};dataRe['Reabertos']=d.filter(x=>x.reaberto==='Sim').length;dataRe['Não Reabertos']=d.filter(x=>x.reaberto!=='Sim').length;const ctxRe=document.getElementById('chartClienteReabertura');if(ctxRe){if(charts.clienteReabertura)charts.clienteReabertura.destroy();charts.clienteReabertura=new Chart(ctxRe.getContext('2d'),{type:'doughnut',data:{labels:Object.keys(dataRe),datasets:[{data:Object.values(dataRe),backgroundColor:['#E74C3C','#2ECC71']}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom'}}}});charts['chartClienteReabertura']=charts.clienteReabertura;}}
+function atualizarGraficosCliente(){
+  const data=clienteFilteredData;
+  const tot=data.length;
+  const reab=data.filter(d=>d.reaberto==='Sim').length;
+  const topCat=getTopValue(data,'categoria');
+  const abertos=data.filter(d=>!d.dataFinalizacao||d.dataFinalizacao.trim()==='').length;
 
+  const el=document.getElementById('kpisClienteContainer');
+  if(el) el.innerHTML=`
+    <div class="kpi"><div class="kpi-label">Total de Tickets</div><div class="kpi-value">${tot}</div></div>
+    <div class="kpi success"><div class="kpi-label">Taxa de Reabertura</div><div class="kpi-value">${tot>0?(reab/tot*100).toFixed(1):0}%</div><div class="kpi-subtitle">${reab} reabertos</div></div>
+    <div class="kpi"><div class="kpi-label">Top Categoria</div><div class="kpi-value" style="font-size:18px">${topCat.value}</div><div class="kpi-subtitle">${topCat.count}</div></div>
+    <div class="kpi" style="border-left-color:#E74C3C"><div class="kpi-label">Status Abertos</div><div class="kpi-value" style="color:#E74C3C">${abertos}</div></div>`;
 
+  criarGraficosCliente(data);
+}
 
+function criarGraficosCliente(data){
+  const pairs=[
+    ['chartClienteTipo','tipo','doughnut'],
+    ['chartClienteCategoria','categoria','bar'],
+    ['chartClienteOrigem','origemDemanda','pie'],
+    ['chartClienteFunc','funcionalidade','bar'],
+    ['chartClienteCanal','origemCanal','doughnut'],
+    ['chartClienteAtendentes','atendente','bar']
+  ];
+  pairs.forEach(([id,field,type])=>{
+    const sorted=Object.entries(countBy(data,field)).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    criarGraficoSimples(id,type,sorted.map(s=>s[0]),sorted.map(s=>s[1]),
+      (i)=>openDrilldownCustom(data.filter(d=>d[field]===sorted[i][0]),`${sorted[i][0]}`));
+    charts[id]=charts[id];
+  });
+
+  // Chamados por mes
+  const byMes={};
+  data.forEach(d=>{const dt=parseDateStr(d.dataCriacao);if(dt){const m=dt.substring(0,7);byMes[m]=(byMes[m]||0)+1;}});
+  const meses=Object.keys(byMes).sort();
+  const ctxP=document.getElementById('chartClientePeriodo');
+  if(ctxP){
+    if(charts.clientePeriodo)try{charts.clientePeriodo.destroy();}catch(e){}
+    charts.clientePeriodo=new Chart(ctxP.getContext('2d'),{
+      type:'line',
+      data:{labels:meses,datasets:[{label:'Chamados',data:meses.map(m=>byMes[m]),borderColor:'#F8931D',backgroundColor:'rgba(248,147,29,0.1)',tension:0.4,borderWidth:2,fill:true}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:10}}}}}
+    });
+    charts['chartClientePeriodo']=charts.clientePeriodo;
+  }
+}
+
+// ================================================================
+// DIGISAC
+// ================================================================
 function initDigisacFilters(){
-if(!digisacData||digisacData.length===0)return;
-const atends=[...new Set(digisacData.map(d=>d.atendente).filter(Boolean))].sort();
-document.getElementById('dgAtendente').innerHTML='<option value="">Todos</option>'+atends.map(x=>`<option value="${x}">${x}</option>`).join('');
-const deptos=[...new Set(digisacData.map(d=>d.departamento).filter(Boolean))].sort();
-document.getElementById('dgDepartamento').innerHTML='<option value="">Todos</option>'+deptos.map(x=>`<option value="${x}">${x}</option>`).join('');
-createDigisacCharts();
+  if(!digisacData||digisacData.length===0)return;
+  const atends=[...new Set(digisacData.map(d=>d.atendente).filter(Boolean))].sort();
+  const deptos=[...new Set(digisacData.map(d=>d.departamento).filter(Boolean))].sort();
+  const elA=document.getElementById('dgAtendente');
+  const elD=document.getElementById('dgDepartamento');
+  if(elA) elA.innerHTML='<option value="">Todos</option>'+atends.map(x=>`<option value="${x}">${x}</option>`).join('');
+  if(elD) elD.innerHTML='<option value="">Todos</option>'+deptos.map(x=>`<option value="${x}">${x}</option>`).join('');
+  createDigisacCharts();
 }
 
 function getDigisacBase(){
-let base=digisacData;
-const ini=document.getElementById('dgDataInicio').value;
-const fim=document.getElementById('dgDataFim').value;
-const atend=document.getElementById('dgAtendente').value;
-const depto=document.getElementById('dgDepartamento').value;
-if(ini&&fim){
-  base=base.filter(d=>{
-    if(!d.dataInicio)return false;
-    const dt=d.dataInicio.includes('/')?
-      d.dataInicio.split(' ')[0].split('/').reverse().join('-'):
-      d.dataInicio.split(' ')[0];
-    return dt>=ini&&dt<=fim;
-  });
-}
-if(atend) base=base.filter(d=>d.atendente===atend);
-if(depto) base=base.filter(d=>d.departamento===depto);
-return base;
+  let base=[...digisacData];
+  const ini=document.getElementById('dgDataInicio').value;
+  const fim=document.getElementById('dgDataFim').value;
+  const atend=document.getElementById('dgAtendente').value;
+  const depto=document.getElementById('dgDepartamento').value;
+  if(ini&&fim){
+    base=base.filter(d=>{
+      const dt=parseDateStr(d.dataInicio);
+      return dt&&dt>=ini&&dt<=fim;
+    });
+  }
+  if(atend) base=base.filter(d=>d.atendente===atend);
+  if(depto) base=base.filter(d=>d.departamento===depto);
+  return base;
 }
 
 function applyDigisacFilters(){createDigisacCharts();}
 
 function clearDigisacFilters(){
-document.getElementById('dgDataInicio').value='';
-document.getElementById('dgDataFim').value='';
-document.getElementById('dgAtendente').value='';
-document.getElementById('dgDepartamento').value='';
-createDigisacCharts();
+  ['dgDataInicio','dgDataFim'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['dgAtendente','dgDepartamento'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  createDigisacCharts();
 }
-
-function segsParaMin(s){return s>0?Math.round(s/60):0;}
-function segsParaHHMM(s){const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);return (h>0?h+'h ':'')+m+'min';}
 
 function createDigisacCharts(){
-if(!digisacData||digisacData.length===0){
-  document.getElementById('kpisDigisacContainer').innerHTML='<div class="kpi"><div class="kpi-label">Status</div><div class="kpi-value" style="font-size:16px;color:#999;">Aguardando dados do Digisac</div></div>';
-  return;
-}
-const base=getDigisacBase();
-const tot=base.length;
+  if(!digisacData||digisacData.length===0){
+    const el=document.getElementById('kpisDigisacContainer');
+    if(el) el.innerHTML='<div class="kpi"><div class="kpi-label">Status</div><div class="kpi-value" style="font-size:16px;color:#999;">Aguardando dados do Digisac</div></div>';
+    return;
+  }
+  const base=getDigisacBase();
+  const tot=base.length;
+  const comTempo=base.filter(d=>d.tempoTotalSeg>0);
+  const tempoMedSeg=comTempo.length?Math.round(comTempo.reduce((s,d)=>s+d.tempoTotalSeg,0)/comTempo.length):0;
+  const comEspera=base.filter(d=>d.primeiroTempoEsperaSeg>0);
+  const esperaMedSeg=comEspera.length?Math.round(comEspera.reduce((s,d)=>s+d.primeiroTempoEsperaSeg,0)/comEspera.length):0;
+  const enc=base.filter(d=>d.dataEncerramento&&d.dataEncerramento.trim()!=='').length;
+  const recep=base.filter(d=>d.tipo==='Receptivo').length;
 
-// Tempo medio total em segundos
-const comTempo=base.filter(d=>d.tempoTotalSeg>0);
-const tempoMedioSeg=comTempo.length>0?Math.round(comTempo.reduce((s,d)=>s+d.tempoTotalSeg,0)/comTempo.length):0;
-const esperaMediaSeg=base.filter(d=>d.primeiroTempoEsperaSeg>0).length>0?
-  Math.round(base.filter(d=>d.primeiroTempoEsperaSeg>0).reduce((s,d)=>s+d.primeiroTempoEsperaSeg,0)/base.filter(d=>d.primeiroTempoEsperaSeg>0).length):0;
-const receptivos=base.filter(d=>d.tipo==='Receptivo').length;
-const encerrados=base.filter(d=>d.dataEncerramento&&d.dataEncerramento.trim()!=='').length;
-const taxaEnc=tot>0?Math.round(encerrados/tot*100):0;
+  const el=document.getElementById('kpisDigisacContainer');
+  if(el) el.innerHTML=`
+    <div class="kpi"><div class="kpi-label">Total Atendimentos</div><div class="kpi-value">${tot}</div></div>
+    <div class="kpi" style="border-left-color:#3498DB"><div class="kpi-label">Tempo Medio Atendimento</div><div class="kpi-value" style="color:#3498DB;font-size:22px;">${segsParaHHMM(tempoMedSeg)}</div><div class="kpi-subtitle">${comTempo.length} com registro</div></div>
+    <div class="kpi" style="border-left-color:#F8931D"><div class="kpi-label">1a Espera Media</div><div class="kpi-value" style="color:#F8931D;font-size:22px;">${segsParaHHMM(esperaMedSeg)}</div></div>
+    <div class="kpi" style="border-left-color:#2ECC71"><div class="kpi-label">Encerrados</div><div class="kpi-value" style="color:#2ECC71">${tot>0?Math.round(enc/tot*100):0}%</div><div class="kpi-subtitle">${enc} de ${tot}</div></div>
+    <div class="kpi" style="border-left-color:#9B59B6"><div class="kpi-label">Receptivos</div><div class="kpi-value" style="color:#9B59B6">${recep}</div><div class="kpi-subtitle">${tot>0?Math.round(recep/tot*100):0}% do total</div></div>`;
 
-// KPIs
-document.getElementById('kpisDigisacContainer').innerHTML=`
-<div class="kpi"><div class="kpi-label">Total Atendimentos</div><div class="kpi-value">${tot}</div></div>
-<div class="kpi" style="border-left-color:#3498DB"><div class="kpi-label">Tempo Medio Atendimento</div><div class="kpi-value" style="color:#3498DB;font-size:22px;">${segsParaHHMM(tempoMedioSeg)}</div><div class="kpi-subtitle">${comTempo.length} com registro</div></div>
-<div class="kpi" style="border-left-color:#F8931D"><div class="kpi-label">1a Espera Media</div><div class="kpi-value" style="color:#F8931D;font-size:22px;">${segsParaHHMM(esperaMediaSeg)}</div><div class="kpi-subtitle">Ate primeiro atendimento</div></div>
-<div class="kpi" style="border-left-color:#2ECC71"><div class="kpi-label">Encerrados</div><div class="kpi-value" style="color:#2ECC71">${taxaEnc}%</div><div class="kpi-subtitle">${encerrados} de ${tot}</div></div>
-<div class="kpi" style="border-left-color:#9B59B6"><div class="kpi-label">Receptivos</div><div class="kpi-value" style="color:#9B59B6">${receptivos}</div><div class="kpi-subtitle">${tot>0?Math.round(receptivos/tot*100):0}% do total</div></div>
-`;
+  // Volume por dia
+  const byDia={};
+  base.forEach(d=>{const dt=parseDateStr(d.dataInicio);if(dt)byDia[dt]=(byDia[dt]||0)+1;});
+  const dias=Object.keys(byDia).sort();
+  const ctx1=document.getElementById('chartDgVolume');
+  if(ctx1){
+    if(charts.dgVolume)try{charts.dgVolume.destroy();}catch(e){}
+    charts.dgVolume=new Chart(ctx1.getContext('2d'),{type:'bar',
+      data:{labels:dias.map(d=>d.substring(5)),datasets:[{data:dias.map(d=>byDia[d]),backgroundColor:'#F8931D',borderRadius:3}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:20,font:{size:10}}},y:{ticks:{font:{size:10}}}}}
+    });
+    charts['chartDgVolume']=charts.dgVolume;
+  }
 
-// Grafico 1: Volume por dia
-const byDia={};
-base.forEach(d=>{
-  if(!d.dataInicio)return;
-  const dt=d.dataInicio.includes('/')?
-    d.dataInicio.split(' ')[0].split('/').reverse().join('-'):
-    d.dataInicio.split(' ')[0];
-  byDia[dt]=(byDia[dt]||0)+1;
-});
-const diasSorted=Object.keys(byDia).sort();
-const ctx1=document.getElementById('chartDgVolume');
-if(ctx1){
-  if(charts.dgVolume)charts.dgVolume.destroy();
-  charts.dgVolume=new Chart(ctx1.getContext('2d'),{
-    type:'bar',
-    data:{labels:diasSorted.map(d=>d.substring(5)),datasets:[{data:diasSorted.map(d=>byDia[d]),backgroundColor:'#F8931D',borderRadius:3}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:20,font:{size:10}}},y:{ticks:{font:{size:10}}}}}
+  // Tempo medio por atendente
+  const atends=[...new Set(base.map(d=>d.atendente).filter(Boolean))];
+  const tempoAt=atends.map(a=>{
+    const rows=base.filter(d=>d.atendente===a&&d.tempoTotalSeg>0);
+    return {n:a.split(' ')[0],v:rows.length?Math.round(rows.reduce((s,d)=>s+d.tempoTotalSeg,0)/rows.length/60):0};
+  }).sort((a,b)=>b.v-a.v);
+  const ctx2=document.getElementById('chartDgTempoAtend');
+  if(ctx2){
+    if(charts.dgTempoAtend)try{charts.dgTempoAtend.destroy();}catch(e){}
+    charts.dgTempoAtend=new Chart(ctx2.getContext('2d'),{type:'bar',
+      data:{labels:tempoAt.map(a=>a.n),datasets:[{data:tempoAt.map(a=>a.v),backgroundColor:getPaleta(tempoAt.length),borderRadius:3}]},
+      options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.x} min`}}},
+        scales:{y:{ticks:{font:{size:11}}},x:{ticks:{font:{size:10}}}}}
+    });
+    charts['chartDgTempoAtend']=charts.dgTempoAtend;
+  }
+
+  // Espera por atendente
+  const esperaAt=atends.map(a=>{
+    const rows=base.filter(d=>d.atendente===a&&d.primeiroTempoEsperaSeg>0);
+    return {n:a.split(' ')[0],v:rows.length?Math.round(rows.reduce((s,d)=>s+d.primeiroTempoEsperaSeg,0)/rows.length/60):0};
+  }).sort((a,b)=>b.v-a.v);
+  const ctx3=document.getElementById('chartDgEspera');
+  if(ctx3){
+    if(charts.dgEspera)try{charts.dgEspera.destroy();}catch(e){}
+    charts.dgEspera=new Chart(ctx3.getContext('2d'),{type:'bar',
+      data:{labels:esperaAt.map(a=>a.n),datasets:[{data:esperaAt.map(a=>a.v),backgroundColor:getPaleta(esperaAt.length),borderRadius:3}]},
+      options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.x} min`}}},
+        scales:{y:{ticks:{font:{size:11}}},x:{ticks:{font:{size:10}}}}}
+    });
+    charts['chartDgEspera']=charts.dgEspera;
+  }
+
+  // Receptivo vs Ativo
+  const tipos=countBy(base,'tipo');
+  criarGraficoSimples('chartDgTipo','doughnut',Object.keys(tipos),Object.values(tipos),null);
+
+  // Volume por depto
+  const deptos=Object.entries(countBy(base,'departamento')).sort((a,b)=>b[1]-a[1]);
+  const ctx5=document.getElementById('chartDgDepto');
+  if(ctx5){
+    if(charts.dgDepto)try{charts.dgDepto.destroy();}catch(e){}
+    charts.dgDepto=new Chart(ctx5.getContext('2d'),{type:'bar',
+      data:{labels:deptos.map(s=>s[0]),datasets:[{data:deptos.map(s=>s[1]),backgroundColor:getPaleta(deptos.length),borderRadius:3}]},
+      options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11}}}}}
+    });
+    charts['chartDgDepto']=charts.dgDepto;
+  }
+
+  // Evolucao tempo por mes
+  const byMes={};
+  base.forEach(d=>{
+    const dt=parseDateStr(d.dataInicio);
+    if(!dt||d.tempoTotalSeg<=0)return;
+    const m=dt.substring(0,7);
+    if(!byMes[m])byMes[m]={t:0,c:0};
+    byMes[m].t+=d.tempoTotalSeg;byMes[m].c++;
   });
-  charts['chartDgVolume']=charts.dgVolume;
+  const meses=Object.keys(byMes).sort();
+  const ctx6=document.getElementById('chartDgEvolucao');
+  if(ctx6){
+    if(charts.dgEvolucao)try{charts.dgEvolucao.destroy();}catch(e){}
+    charts.dgEvolucao=new Chart(ctx6.getContext('2d'),{type:'line',
+      data:{labels:meses,datasets:[{label:'Tempo medio (min)',data:meses.map(m=>Math.round(byMes[m].t/byMes[m].c/60)),borderColor:'#F8931D',backgroundColor:'rgba(248,147,29,0.1)',tension:0.4,borderWidth:2.5,pointRadius:5,fill:true}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.y} min`}}},scales:{x:{ticks:{font:{size:11}}},y:{ticks:{font:{size:10}}}}}
+    });
+    charts['chartDgEvolucao']=charts.dgEvolucao;
+  }
 }
 
-// Grafico 2: Tempo medio por atendente
-const atendentes=[...new Set(base.map(d=>d.atendente).filter(Boolean))];
-const tempoByAtend=atendentes.map(a=>{
-  const rows=base.filter(d=>d.atendente===a&&d.tempoTotalSeg>0);
-  return {nome:a.split(' ')[0],media:rows.length>0?Math.round(rows.reduce((s,d)=>s+d.tempoTotalSeg,0)/rows.length/60):0};
-}).sort((a,b)=>b.media-a.media);
-
-const ctx2=document.getElementById('chartDgTempoAtend');
-if(ctx2){
-  if(charts.dgTempoAtend)charts.dgTempoAtend.destroy();
-  charts.dgTempoAtend=new Chart(ctx2.getContext('2d'),{
-    type:'bar',
-    data:{labels:tempoByAtend.map(a=>a.nome),datasets:[{data:tempoByAtend.map(a=>a.media),backgroundColor:getPaleta(tempoByAtend.length),borderRadius:3}]},
-    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.x} min`}}},
-      scales:{y:{ticks:{font:{size:11}}},x:{ticks:{font:{size:10}}}}}
-  });
-  charts['chartDgTempoAtend']=charts.dgTempoAtend;
-}
-
-// Grafico 3: Tempo 1a espera por atendente
-const esperaByAtend=atendentes.map(a=>{
-  const rows=base.filter(d=>d.atendente===a&&d.primeiroTempoEsperaSeg>0);
-  return {nome:a.split(' ')[0],media:rows.length>0?Math.round(rows.reduce((s,d)=>s+d.primeiroTempoEsperaSeg,0)/rows.length/60):0};
-}).sort((a,b)=>b.media-a.media);
-
-const ctx3=document.getElementById('chartDgEspera');
-if(ctx3){
-  if(charts.dgEspera)charts.dgEspera.destroy();
-  charts.dgEspera=new Chart(ctx3.getContext('2d'),{
-    type:'bar',
-    data:{labels:esperaByAtend.map(a=>a.nome),datasets:[{data:esperaByAtend.map(a=>a.media),backgroundColor:getPaleta(esperaByAtend.length),borderRadius:3}]},
-    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.x} min`}}},
-      scales:{y:{ticks:{font:{size:11}}},x:{ticks:{font:{size:10}}}}}
-  });
-  charts['chartDgEspera']=charts.dgEspera;
-}
-
-// Grafico 4: Receptivo vs Ativo
-const tipos={};
-base.forEach(d=>{const t=d.tipo||'Desconhecido';tipos[t]=(tipos[t]||0)+1;});
-const ctx4=document.getElementById('chartDgTipo');
-if(ctx4){
-  if(charts.dgTipo)charts.dgTipo.destroy();
-  charts.dgTipo=new Chart(ctx4.getContext('2d'),{
-    type:'doughnut',
-    data:{labels:Object.keys(tipos),datasets:[{data:Object.values(tipos),backgroundColor:getPaleta(Object.keys(tipos).length)}]},
-    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}}
-  });
-  charts['chartDgTipo']=charts.dgTipo;
-}
-
-// Grafico 5: Volume por departamento
-const byDepto=countBy(base,'departamento');
-const sortedDepto=Object.entries(byDepto).sort((a,b)=>b[1]-a[1]);
-const ctx5=document.getElementById('chartDgDepto');
-if(ctx5){
-  if(charts.dgDepto)charts.dgDepto.destroy();
-  charts.dgDepto=new Chart(ctx5.getContext('2d'),{
-    type:'bar',
-    data:{labels:sortedDepto.map(s=>s[0]),datasets:[{data:sortedDepto.map(s=>s[1]),backgroundColor:getPaleta(sortedDepto.length),borderRadius:3}]},
-    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11}}}}}
-  });
-  charts['chartDgDepto']=charts.dgDepto;
-}
-
-// Grafico 6: Evolucao tempo medio por mes
-const byMes={};
-base.forEach(d=>{
-  if(!d.dataInicio||d.tempoTotalSeg<=0)return;
-  const dt=d.dataInicio.includes('/')?
-    d.dataInicio.split(' ')[0].split('/').reverse().join('-'):
-    d.dataInicio.split(' ')[0];
-  const mes=dt.substring(0,7);
-  if(!byMes[mes])byMes[mes]={total:0,count:0};
-  byMes[mes].total+=d.tempoTotalSeg;
-  byMes[mes].count++;
-});
-const mesesSorted=Object.keys(byMes).sort();
-const ctx6=document.getElementById('chartDgEvolucao');
-if(ctx6){
-  if(charts.dgEvolucao)charts.dgEvolucao.destroy();
-  charts.dgEvolucao=new Chart(ctx6.getContext('2d'),{
-    type:'line',
-    data:{
-      labels:mesesSorted,
-      datasets:[{
-        label:'Tempo medio (min)',
-        data:mesesSorted.map(m=>Math.round(byMes[m].total/byMes[m].count/60)),
-        borderColor:'#F8931D',backgroundColor:'rgba(248,147,29,0.1)',
-        tension:0.4,borderWidth:2.5,pointRadius:5,fill:true
-      }]
-    },
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.y} min`}}},
-      scales:{x:{ticks:{font:{size:11}}},y:{ticks:{font:{size:10}}}}}
-  });
-  charts['chartDgEvolucao']=charts.dgEvolucao;
-}
-}
-
-var tvInterval=null;var tvCountdown=300;var tvCharts={};
+// ================================================================
+// MODO TV
+// ================================================================
+var tvInterval=null,tvCountdown=300,tvCharts={};
 
 function toggleTVMode(){
-var tv=document.getElementById('tvMode');
-var isTV=tv.style.display!=='none';
-if(isTV){
-  tv.style.display='none';
-  document.getElementById('btnTV').innerHTML='&#128250; Modo TV';
-  if(tvInterval)clearInterval(tvInterval);
-}else{
-  tv.style.display='block';
-  document.getElementById('btnTV').innerHTML='Sair TV';
-  renderTVMode();
-  tvCountdown=300;
-  if(tvInterval)clearInterval(tvInterval);
-  tvInterval=setInterval(function(){
-    tvCountdown--;
-    var m=Math.floor(tvCountdown/60);
-    var s=tvCountdown%60;
-    var el=document.getElementById('tvNextUpdate');
-    if(el)el.textContent='Proxima att em '+m+':'+(s<10?'0':'')+s;
-    if(tvCountdown<=0){tvCountdown=300;renderTVMode();}
-  },1000);
-  updateTVClock();
-  setInterval(updateTVClock,1000);
-}
+  const tv=document.getElementById('tvMode');
+  const isTV=tv.style.display!=='none';
+  if(isTV){
+    tv.style.display='none';
+    document.getElementById('btnTV').innerHTML='&#128250; Modo TV';
+    if(tvInterval)clearInterval(tvInterval);
+  } else {
+    tv.style.display='block';
+    document.getElementById('btnTV').innerHTML='Sair TV';
+    renderTVMode();
+    tvCountdown=300;
+    if(tvInterval)clearInterval(tvInterval);
+    tvInterval=setInterval(function(){
+      tvCountdown--;
+      const m=Math.floor(tvCountdown/60),s=tvCountdown%60;
+      const el=document.getElementById('tvNextUpdate');
+      if(el)el.textContent='Proxima att em '+m+':'+(s<10?'0':'')+s;
+      if(tvCountdown<=0){tvCountdown=300;renderTVMode();}
+    },1000);
+    updateTVClock();
+    setInterval(updateTVClock,1000);
+  }
 }
 
 function updateTVClock(){
-var now=new Date();
-var h=String(now.getHours()).padStart(2,'0');
-var m=String(now.getMinutes()).padStart(2,'0');
-var s=String(now.getSeconds()).padStart(2,'0');
-var el=document.getElementById('tvClock');
-if(el)el.textContent=h+':'+m+':'+s;
-var dias=['Domingo','Segunda','Terca','Quarta','Quinta','Sexta','Sabado'];
-var meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-var d=document.getElementById('tvDate');
-if(d)d.textContent=dias[now.getDay()]+', '+now.getDate()+' '+meses[now.getMonth()]+' '+now.getFullYear();
+  const now=new Date();
+  const h=String(now.getHours()).padStart(2,'0'),m=String(now.getMinutes()).padStart(2,'0'),s=String(now.getSeconds()).padStart(2,'0');
+  const el=document.getElementById('tvClock');if(el)el.textContent=h+':'+m+':'+s;
+  const dias=['Domingo','Segunda','Terca','Quarta','Quinta','Sexta','Sabado'];
+  const meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const d=document.getElementById('tvDate');
+  if(d)d.textContent=dias[now.getDay()]+', '+now.getDate()+' '+meses[now.getMonth()]+' '+now.getFullYear();
 }
 
 function renderTVMode(){
-if(!allData||allData.length===0)return;
-var now=new Date();
-var mesAtual=now.getFullYear()+'-'+(now.getMonth()+1<10?'0':'')+(now.getMonth()+1);
-var doMes=allData.filter(function(d){return d.dataCriacao&&d.dataCriacao.substring(0,7)===mesAtual;});
-var naoIniciados=allData.filter(function(d){return d.ultimaSituacao&&d.ultimaSituacao.toLowerCase().indexOf('nao iniciada')>=0||d.ultimaSituacao&&d.ultimaSituacao.toLowerCase().indexOf('n\u00e3o iniciada')>=0;});
-var aguardandoCliente=allData.filter(function(d){return d.ultimaSituacao&&d.ultimaSituacao.toLowerCase().indexOf('aguardando resposta do cliente')>=0;});
-var fechadosDoMes=doMes.filter(function(d){return d.ultimaSituacao&&d.ultimaSituacao.toLowerCase().indexOf('finaliz')>=0;});
-var reabertosDoMes=doMes.filter(function(d){return d.reaberto==='Sim';}).length;
-var taxaReab=doMes.length>0?Math.round(reabertosDoMes/doMes.length*100):0;
-var abertosDoMes=doMes.filter(function(d){return !d.ultimaSituacao||d.ultimaSituacao.toLowerCase().indexOf('finaliz')<0;});
+  if(!allData||allData.length===0)return;
+  const now=new Date();
+  const mesAtual=now.getFullYear()+'-'+(now.getMonth()+1<10?'0':'')+(now.getMonth()+1);
+  const doMes=allData.filter(d=>{const dt=parseDateStr(d.dataCriacao);return dt&&dt.substring(0,7)===mesAtual;});
+  const naoIniciados=allData.filter(d=>d.ultimaSituacao&&d.ultimaSituacao.toLowerCase().includes('iniciada'));
+  const aguardCliente=allData.filter(d=>d.ultimaSituacao&&d.ultimaSituacao.toLowerCase().includes('aguardando resposta do cliente'));
+  const fechMes=doMes.filter(d=>d.ultimaSituacao&&d.ultimaSituacao.toLowerCase().includes('finaliz'));
+  const reabMes=doMes.filter(d=>d.reaberto==='Sim').length;
+  const taxaReab=doMes.length>0?Math.round(reabMes/doMes.length*100):0;
+  const abertosMes=doMes.filter(d=>!d.ultimaSituacao||!d.ultimaSituacao.toLowerCase().includes('finaliz'));
 
-var kpiEl=document.getElementById('tvKpis');
-if(kpiEl)kpiEl.innerHTML=
-'<div style="background:#161920;border-radius:10px;border-left:4px solid #F8931D;padding:20px 24px;">'+
-'<div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Abertos no Mes</div>'+
-'<div style="font-size:52px;font-weight:700;color:#F8931D;line-height:1;">'+abertosDoMes.length+'</div>'+
-'<div style="font-size:12px;color:#555;margin-top:8px;">'+doMes.length+' tickets no mes</div></div>'+
-'<div style="background:#161920;border-radius:10px;border-left:4px solid #E74C3C;padding:20px 24px;">'+
-'<div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Aguardando Atendimento</div>'+
-'<div style="font-size:52px;font-weight:700;color:#E74C3C;line-height:1;">'+naoIniciados.length+'</div>'+
-'<div style="font-size:12px;color:#555;margin-top:8px;">Nao iniciados</div></div>'+
-'<div style="background:#161920;border-radius:10px;border-left:4px solid #F39C12;padding:20px 24px;">'+
-'<div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Aguardando Cliente</div>'+
-'<div style="font-size:52px;font-weight:700;color:#F39C12;line-height:1;">'+aguardandoCliente.length+'</div>'+
-'<div style="font-size:12px;color:#555;margin-top:8px;">Aguardando retorno</div></div>'+
-'<div style="background:#161920;border-radius:10px;border-left:4px solid #2ECC71;padding:20px 24px;">'+
-'<div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Fechados no Mes</div>'+
-'<div style="font-size:52px;font-weight:700;color:#2ECC71;line-height:1;">'+fechadosDoMes.length+'</div>'+
-'<div style="font-size:12px;color:#555;margin-top:8px;">Finalizados</div></div>'+
-'<div style="background:#161920;border-radius:10px;border-left:4px solid #9B59B6;padding:20px 24px;">'+
-'<div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Taxa de Reabertura</div>'+
-'<div style="font-size:52px;font-weight:700;color:#9B59B6;line-height:1;">'+taxaReab+'%</div>'+
-'<div style="font-size:12px;color:#555;margin-top:8px;">'+reabertosDoMes+' reabertos</div></div>';
+  const kpiEl=document.getElementById('tvKpis');
+  if(kpiEl)kpiEl.innerHTML=[
+    ['Abertos no Mes',abertosMes.length,'#F8931D',doMes.length+' tickets no mes'],
+    ['Aguardando Atendimento',naoIniciados.length,'#E74C3C','Nao iniciados'],
+    ['Aguardando Cliente',aguardCliente.length,'#F39C12','Aguardando retorno'],
+    ['Fechados no Mes',fechMes.length,'#2ECC71','Finalizados'],
+    ['Taxa de Reabertura',taxaReab+'%','#9B59B6',reabMes+' reabertos']
+  ].map(([l,v,c,s])=>`<div style="background:#161920;border-radius:10px;border-left:4px solid ${c};padding:20px 24px;"><div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">${l}</div><div style="font-size:48px;font-weight:700;color:${c};line-height:1;">${v}</div><div style="font-size:12px;color:#555;margin-top:8px;">${s}</div></div>`).join('');
 
-var hoje=new Date();
-var dias14=[];
-for(var i=13;i>=0;i--){var dd=new Date(hoje);dd.setDate(dd.getDate()-i);dias14.push(dd.toISOString().split('T')[0]);}
-var abert14=dias14.map(function(d){return allData.filter(function(x){return x.dataCriacao&&x.dataCriacao.split(' ')[0]===d;}).length;});
-var fech14=dias14.map(function(d){return allData.filter(function(x){return x.dataFinalizacao&&x.dataFinalizacao.split(' ')[0]===d;}).length;});
+  const hoje=new Date();
+  const dias14=Array.from({length:14},(_,i)=>{const d=new Date(hoje);d.setDate(d.getDate()-(13-i));return d.toISOString().split('T')[0];});
+  const ctx1=document.getElementById('tvChartAbertosFechados');
+  if(ctx1){
+    if(tvCharts.af)try{tvCharts.af.destroy();}catch(e){}
+    tvCharts.af=new Chart(ctx1.getContext('2d'),{type:'bar',
+      data:{labels:dias14.map(d=>d.substring(5)),datasets:[
+        {label:'Abertos',data:dias14.map(d=>allData.filter(x=>{const dt=parseDateStr(x.dataCriacao);return dt===d;}).length),backgroundColor:'rgba(248,147,29,0.85)',borderRadius:4},
+        {label:'Fechados',data:dias14.map(d=>allData.filter(x=>{const dt=parseDateStr(x.dataFinalizacao);return dt===d;}).length),backgroundColor:'rgba(46,204,113,0.85)',borderRadius:4}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#888',font:{size:11},boxWidth:10}}},scales:{x:{ticks:{color:'#666',font:{size:10}},grid:{color:'#1e2230'}},y:{ticks:{color:'#666',font:{size:10}},grid:{color:'#1e2230'}}}}
+    });
+  }
 
-var ctx1=document.getElementById('tvChartAbertosFechados');
-if(ctx1){if(tvCharts.af)tvCharts.af.destroy();tvCharts.af=new Chart(ctx1.getContext('2d'),{type:'bar',data:{labels:dias14.map(function(d){return d.substring(5);}),datasets:[{label:'Abertos',data:abert14,backgroundColor:'rgba(248,147,29,0.85)',borderRadius:4},{label:'Fechados',data:fech14,backgroundColor:'rgba(46,204,113,0.85)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#888',font:{size:11},boxWidth:10}}},scales:{x:{ticks:{color:'#666',font:{size:10}},grid:{color:'#1e2230'}},y:{ticks:{color:'#666',font:{size:10}},grid:{color:'#1e2230'}}}}});}
+  const byAtend={};
+  naoIniciados.concat(aguardCliente).forEach(d=>{if(d.atendente)byAtend[d.atendente]=(byAtend[d.atendente]||0)+1;});
+  const sortedAt=Object.entries(byAtend).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const ctx2=document.getElementById('tvChartAtendentes');
+  if(ctx2){
+    if(tvCharts.at)try{tvCharts.at.destroy();}catch(e){}
+    tvCharts.at=new Chart(ctx2.getContext('2d'),{type:'bar',
+      data:{labels:sortedAt.map(s=>s[0].split(' ')[0]),datasets:[{data:sortedAt.map(s=>s[1]),backgroundColor:'#F8931D',borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#888',font:{size:11}},grid:{color:'#1e2230'}},y:{ticks:{color:'#666',font:{size:10}},grid:{color:'#1e2230'}}}}
+    });
+  }
 
-var byAtend={};
-naoIniciados.concat(aguardandoCliente).forEach(function(d){if(d.atendente)byAtend[d.atendente]=(byAtend[d.atendente]||0)+1;});
-var sortedAt=Object.entries(byAtend).sort(function(a,b){return b[1]-a[1];}).slice(0,8);
-var ctx2=document.getElementById('tvChartAtendentes');
-if(ctx2){if(tvCharts.at)tvCharts.at.destroy();tvCharts.at=new Chart(ctx2.getContext('2d'),{type:'bar',data:{labels:sortedAt.map(function(s){return s[0].split(' ')[0];}),datasets:[{data:sortedAt.map(function(s){return s[1];}),backgroundColor:'#F8931D',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#888',font:{size:11}},grid:{color:'#1e2230'}},y:{ticks:{color:'#666',font:{size:10}},grid:{color:'#1e2230'}}}}});}
+  const situacoes={};
+  allData.filter(d=>d.ultimaSituacao&&!d.ultimaSituacao.toLowerCase().includes('finaliz')&&!d.ultimaSituacao.toLowerCase().includes('cancelad')).forEach(d=>{const s=d.ultimaSituacao;situacoes[s]=(situacoes[s]||0)+1;});
+  const sortedSit=Object.entries(situacoes).sort((a,b)=>b[1]-a[1]);
+  const ctx3=document.getElementById('tvChartSituacao');
+  if(ctx3){
+    if(tvCharts.sit)try{tvCharts.sit.destroy();}catch(e){}
+    tvCharts.sit=new Chart(ctx3.getContext('2d'),{type:'doughnut',
+      data:{labels:sortedSit.map(s=>s[0].length>28?s[0].substring(0,28)+'...':s[0]),datasets:[{data:sortedSit.map(s=>s[1]),backgroundColor:getPaleta(sortedSit.length)}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#888',font:{size:10},boxWidth:10}}}}
+    });
+  }
 
-var situacoes={};
-allData.filter(function(d){return d.ultimaSituacao&&d.ultimaSituacao.toLowerCase().indexOf('finaliz')<0&&d.ultimaSituacao.toLowerCase().indexOf('cancelad')<0;}).forEach(function(d){var s=d.ultimaSituacao;situacoes[s]=(situacoes[s]||0)+1;});
-var sortedSit=Object.entries(situacoes).sort(function(a,b){return b[1]-a[1];});
-var ctx3=document.getElementById('tvChartSituacao');
-if(ctx3){if(tvCharts.sit)tvCharts.sit.destroy();tvCharts.sit=new Chart(ctx3.getContext('2d'),{type:'doughnut',data:{labels:sortedSit.map(function(s){return s[0].length>28?s[0].substring(0,28)+'...':s[0];}),datasets:[{data:sortedSit.map(function(s){return s[1];}),backgroundColor:['#E74C3C','#F39C12','#3498DB','#9B59B6','#2ECC71']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#888',font:{size:10},boxWidth:10}}}}});}
-
-var lista=document.getElementById('tvListaAbertos');
-if(lista){lista.innerHTML=naoIniciados.slice(0,12).map(function(d){return '<div style="background:#0f1117;border:1px solid #222;border-radius:6px;padding:10px 12px;"><div style="font-size:11px;color:#F8931D;font-weight:600;margin-bottom:3px;">#'+(d.protocolo||'--')+'</div><div style="font-size:12px;color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(d.assunto?d.assunto.substring(0,38):'Sem assunto')+'</div><div style="font-size:11px;color:#555;margin-top:4px;">'+(d.organizacao||'')+'</div></div>';}).join('');}
+  const lista=document.getElementById('tvListaAbertos');
+  if(lista)lista.innerHTML=naoIniciados.slice(0,12).map(d=>`<div style="background:#0f1117;border:1px solid #222;border-radius:6px;padding:10px 12px;"><div style="font-size:11px;color:#F8931D;font-weight:600;margin-bottom:3px;">#${d.protocolo||'--'}</div><div style="font-size:12px;color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.assunto?d.assunto.substring(0,38):'Sem assunto'}</div><div style="font-size:11px;color:#555;margin-top:4px;">${d.organizacao||''}</div></div>`).join('');
 }
 
-function closeAudit(){document.getElementById('auditModal').classList.remove('active');}
-
-function exportToXLSX(){const h=['Protocolo','Assunto','Tipo','Categoria','Funcionalidade','Origem','Canal','Atendente'];let csv=h.join('\t')+'\n';currentAuditData.forEach(d=>{const r=[d.protocolo||'',d.assunto||'',d.tipo||'',d.categoria||'',d.funcionalidade||'',d.origemDemanda||'',d.origemCanal||'',d.atendente||''].join('\t');csv+=r+'\n';});const bom=new Uint8Array([0xEF,0xBB,0xBF]);const enc=new TextEncoder().encode(csv);const merged=new Uint8Array(bom.length+enc.length);merged.set(bom);merged.set(enc,bom.length);const blob=new Blob([merged],{type:'application/vnd.ms-excel'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='auditoria_tomticket.xls';link.click();}
-
-function exportToCSV(){const h=['Protocolo','Assunto','Tipo','Categoria','Funcionalidade','Origem','Canal','Atendente'];let csv=h.join(',')+'\n';currentAuditData.forEach(d=>{const r=[d.protocolo,d.assunto?`"${d.assunto.replace(/"/g,'""')}"`:' ',d.tipo,d.categoria,d.funcionalidade,d.origemDemanda,d.origemCanal,d.atendente].join(',');csv+=r+'\n';});const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='auditoria_tomticket.csv';link.click();}
-
-function expandChart(id){
-const canvas=document.getElementById(id);
-if(!canvas)return;
-const container=canvas.closest('.chart-card');
-const titleEl=container.querySelector('.chart-title');
-const titleText=titleEl?titleEl.childNodes[0].textContent.trim():'Gráfico';
-const originalChart=charts[id]||Object.values(charts).find(c=>c.canvas&&c.canvas.id===id);
-if(!originalChart){alert('Gráfico ainda não carregado.');return;}
-const cfg=originalChart.config;
-const expandContent=document.getElementById('expandContent');
-expandContent.innerHTML='<div style="font-size:18px;font-weight:700;color:#333;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #F8931D;">'+titleText+'</div><div style="position:relative;width:100%;height:70vh;"><canvas id="expandCanvas"></canvas></div>';
-document.getElementById('expandModal').classList.add('active');
-setTimeout(()=>{
-const ctx=document.getElementById('expandCanvas');
-if(!ctx)return;
-if(window._expandChart){try{window._expandChart.destroy();}catch(e){}}
-window._expandChart=new Chart(ctx.getContext('2d'),{
-type:cfg.type,
-data:JSON.parse(JSON.stringify(cfg.data)),
-options:{...JSON.parse(JSON.stringify(cfg.options)),responsive:true,maintainAspectRatio:false}
-});
-},50);
+// ================================================================
+// GAP / CANAIS / CATIPO / FUNC (telas antigas mantidas)
+// ================================================================
+function createGAPCharts(){
+  const base=filteredData;
+  const gap=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('gap'));
+  criarGrafico('chartGapCat','categoria','bar',gap,10);
+  criarGrafico('chartGapFunc','funcionalidade','bar',gap,10);
+  const byMes={};
+  gap.forEach(d=>{const dt=parseDateStr(d.dataCriacao);if(dt){const m=dt.substring(0,7);byMes[m]=(byMes[m]||0)+1;}});
+  const meses=Object.keys(byMes).sort();
+  const ctx=document.getElementById('chartGapTempo');
+  if(ctx){
+    if(charts.gapTempo)try{charts.gapTempo.destroy();}catch(e){}
+    charts.gapTempo=new Chart(ctx.getContext('2d'),{type:'line',
+      data:{labels:meses,datasets:[{label:'GAP',data:meses.map(m=>byMes[m]),borderColor:'#FF9800',backgroundColor:'rgba(255,152,0,0.1)',tension:0.4,fill:true}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:10}}}}}
+    });
+    charts['chartGapTempo']=charts.gapTempo;
+  }
 }
 
-function closeExpand(){document.getElementById('expandModal').classList.remove('active');}
-
-function normalizarDigisac(d){
-function parseTempo(s){
-  if(!s||s.trim()==='')return 0;
-  const parts=s.trim().split(':');
-  if(parts.length===3)return parseInt(parts[0])*3600+parseInt(parts[1])*60+parseInt(parts[2]);
-  return 0;
-}
-return {
-  protocolo: d['Protocolo']||'',
-  nome: d['Nome']||'',
-  numero: d['Numero']||d['Número']||'',
-  atendente: d['Atendente']||'',
-  tags: d['Tags']||'',
-  departamento: d['Departamento']||'',
-  conexao: d['Conexão']||d['Conexao']||'',
-  dataInicio: d['Data de início']||d['Data de inicio']||'',
-  dataEncerramento: d['Data de encerramento']||'',
-  assunto: d['Assunto(s)']||'',
-  resumo: d['Resumo do chamado']||'',
-  tempoTotalSeg: parseTempo(d['Tempo total de atendimento']),
-  tempoTotalStr: d['Tempo total de atendimento']||'',
-  primeiroTempoEsperaSeg: parseTempo(d['1º tempo de espera']),
-  primeiroTempoEsperaStr: d['1º tempo de espera']||'',
-  tempoMedioEsperaSeg: parseTempo(d['Tempo médio de espera']),
-  tipo: (d['Tipo (Receptivo/Ativo)']||'').includes('Receptivo')||
-        (d['Tipo (Receptivo/Ativo)']||'').includes('Ativo')?
-        d['Tipo (Receptivo/Ativo)']:'Receptivo',
-  transferencias: d['Transferências']||d['Transferencias']||'',
-  maiorTempoEsperaSeg: parseTempo(d['Maior tempo de espera'])
-};
+function createCanaisCharts(){
+  criarGrafico('chartCanalTipo','origemCanal','bar',filteredData,10);
+  criarGrafico('chartCanalOrigem','origemDemanda','bar',filteredData,10);
 }
 
+function createCatTipoCharts(){
+  criarGrafico('chartCatTipo','categoria','bar',filteredData,10);
+  criarGrafico('chartBugsCat','categoria','bar',filteredData.filter(d=>d.tipo&&d.tipo.toLowerCase().includes('incidente')),10);
+}
 
-function countBy(arr,key){return arr.reduce((acc,i)=>{const v=i[key];if(v)acc[v]=(acc[v]||0)+1;return acc;},{});}
+function createFuncCharts(){
+  criarGrafico('chartFuncTop','funcionalidade','bar',filteredData,10);
+  criarGrafico('chartFuncTipo','tipo','doughnut',filteredData);
+}
 
-function getTopValue(arr,key){const counts=countBy(arr,key);const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);return sorted.length>0?{value:sorted[0][0],count:sorted[0][1]}:{value:'',count:0};}
-
-window.addEventListener('DOMContentLoaded',loadDataFromSheets);
+// Iniciar
+loadDataFromSheets();
 </script>
-</body>
-</html>
