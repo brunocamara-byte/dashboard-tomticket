@@ -231,12 +231,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </div>
 
 <div class="chart-card">
-  <div class="chart-title">Heatmap — Dia da Semana × Hora <button class="btn expand-btn btn-small" onclick="expandHeatmap()">Expandir</button></div>
+  <div class="chart-title">Heatmap - Dia da Semana x Hora <button class="btn expand-btn btn-small" onclick="expandHeatmap()">Expandir</button></div>
   <div id="heatmapContainer" style="overflow-x:auto;padding:10px 0;"></div>
 </div>
 
 <div class="chart-card">
-  <div class="chart-title">Top 20 Clientes — Volume de Chamados <button class="btn expand-btn btn-small" onclick="expandChart('chartTopClientes')">Expandir</button></div>
+  <div class="chart-title">Top 20 Clientes - Volume de Chamados <button class="btn expand-btn btn-small" onclick="expandChart('chartTopClientes')">Expandir</button></div>
   <div style="position:relative;height:520px;"><canvas id="chartTopClientes"></canvas></div>
 </div>
 
@@ -328,7 +328,7 @@ function updateKPIs(){const tot=filteredData.length,reab=filteredData.filter(d=>
 
 function createCharts(){criarGraficoComDrilldown('chartTipo','tipo','doughnut',[' #FF9999','#66B2FF','#99FF99']);criarGraficoComDrilldown('chartCategorias','categoria','bar',['#E74C3C','#3498DB','#2ECC71','#F39C12','#9B59B6','#1ABC9C','#E67E22','#95A5A6','#34495E','#C0392B','#16A085','#8E44AD','#2980B9','#D35400','#C0392B']);criarGraficoComDrilldown('chartFuncionalidades','funcionalidade','bar',['#FF6B6B','#4ECDC4','#45B7D1','#FFA07A','#98D8C8','#F7DC6F','#BB8FCE','#85C1E2','#F8B88B','#ABEBC6']);criarGraficoComDrilldown('chartOrigemDemanda','origemDemanda','pie',['#FF6B6B','#4ECDC4','#45B7D1','#FFA07A','#98D8C8']);criarGraficoComDrilldown('chartOrigemCanal','origemCanal','doughnut',['#3498DB','#2ECC71','#F39C12','#E74C3C']);criarGraficoComDrilldown('chartAtendentes','atendente','bar',['#FF7F50','#6495ED','#32CD32','#FFD700','#FF69B4','#00CED1','#FF4500','#9370DB','#20B2AA','#DAA520','#DC143C','#00FA9A','#FF8C00','#1E90FF','#FFB6C1']);criarGraficoComDrilldown('chartReabertura','atendente','bar',['#E74C3C','#3498DB','#2ECC71','#F39C12','#9B59B6','#1ABC9C','#E67E22','#95A5A6','#34495E','#C0392B'],true);createGAPCharts();createCanaisCharts();createCatTipoCharts();createFuncCharts();createTendenciaCharts();}
 
-function criarGraficoComDrilldown(id,field,type,colors,reabertosOnly=false){const ctx=document.getElementById(id);if(!ctx)return;let data=reabertosOnly?countBy(filteredData.filter(d=>d.reaberto==='Sim'),field):countBy(filteredData,field);let sorted=Object.entries(data).sort((a,b)=>b[1]-a[1]);if(id==='chartCategorias'||id==='chartFuncionalidades')sorted=sorted.slice(0,15);if(id==='chartAtendentes'||id==='chartReabertura')sorted=sorted.slice(0,15);if(charts[id])charts[id].destroy();const labels=sorted.map(s=>s[0].substring(0,25));const values=sorted.map(s=>s[1]);const isDoughnutOrPie=type==='doughnut'||type==='pie';const opts={responsive:true,maintainAspectRatio:isDoughnutOrPie,onClick:(evt,elements)=>{if(elements.length>0){const idx=elements[0].index;const label=labels[idx];openDrilldown(field,label);}},plugins:{legend:{display:isDoughnutOrPie,position:'bottom'}}};if(type==='bar'){opts.indexAxis='y';opts.scales={y:{ticks:{font:{size:11},callback:function(val,idx){const l=this.getLabelForValue(idx);return l&&l.length>22?l.substring(0,22)+'…':l;}}},x:{ticks:{maxTicksLimit:8}}}};opts.layout={padding:{left:0}};const dataset={data:values,backgroundColor:colors.slice(0,values.length)};charts[id]=new Chart(ctx.getContext('2d'),{type,data:{labels,datasets:[dataset]},options:opts});}
+function criarGraficoComDrilldown(id,field,type,colors,reabertosOnly=false){const ctx=document.getElementById(id);if(!ctx)return;let data=reabertosOnly?countBy(filteredData.filter(d=>d.reaberto==='Sim'),field):countBy(filteredData,field);let sorted=Object.entries(data).sort((a,b)=>b[1]-a[1]);if(id==='chartCategorias'||id==='chartFuncionalidades')sorted=sorted.slice(0,15);if(id==='chartAtendentes'||id==='chartReabertura')sorted=sorted.slice(0,15);if(charts[id])charts[id].destroy();const labels=sorted.map(s=>s[0].substring(0,25));const values=sorted.map(s=>s[1]);const isDoughnutOrPie=type==='doughnut'||type==='pie';const opts={responsive:true,maintainAspectRatio:isDoughnutOrPie,onClick:(evt,elements)=>{if(elements.length>0){const idx=elements[0].index;const label=labels[idx];openDrilldown(field,label);}},plugins:{legend:{display:isDoughnutOrPie,position:'bottom'}}};if(type==='bar'){opts.indexAxis='y';opts.scales={y:{ticks:{font:{size:11},callback:function(val,idx){const l=this.getLabelForValue(idx);return l&&l.length>22?l.substring(0,22)+'...':l;}}},x:{ticks:{maxTicksLimit:8}}}};opts.layout={padding:{left:0}};const dataset={data:values,backgroundColor:colors.slice(0,values.length)};charts[id]=new Chart(ctx.getContext('2d'),{type,data:{labels,datasets:[dataset]},options:opts});}
 
 function openDrilldown(field,value){const data=filteredData.filter(d=>d[field]===value);currentAuditData=data;document.getElementById('auditTitle').textContent=`${field.toUpperCase()} - ${value}`;document.getElementById('auditSubtitle').textContent=`Total: ${data.length} registros`;const tbody=document.getElementById('auditTableBody');tbody.innerHTML='';data.forEach(d=>{const row=`<tr><td>${d.protocolo||''}</td><td>${d.assunto?d.assunto.substring(0,50):''}</td><td>${d.tipo||''}</td><td>${d.categoria||''}</td><td>${d.funcionalidade||''}</td><td>${d.origemDemanda||''}</td><td>${d.origemCanal||''}</td><td>${d.atendente||''}</td></tr>`;tbody.innerHTML+=row;});document.getElementById('auditModal').classList.add('active');}
 
@@ -514,7 +514,7 @@ function expandHeatmap(){
 const svg=window._heatmapSVG;
 if(!svg){alert('Heatmap ainda não carregado.');return;}
 const container=document.getElementById('expandContent');
-container.innerHTML=`<div style="font-size:18px;font-weight:700;color:#333;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #F8931D;">Heatmap — Dia da Semana × Hora</div><div style="overflow-x:auto;">${svg}</div>`;
+container.innerHTML=`<div style="font-size:18px;font-weight:700;color:#333;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #F8931D;">Heatmap - Dia da Semana x Hora</div><div style="overflow-x:auto;">${svg}</div>`;
 document.getElementById('expandModal').classList.add('active');
 }
 
@@ -535,7 +535,7 @@ const colors=sorted.map((_,i)=>{
 charts.topClientes=new Chart(ctx.getContext('2d'),{
   type:'bar',
   data:{
-    labels:sorted.map(s=>s[0].length>22?s[0].substring(0,22)+'…':s[0]),
+    labels:sorted.map(s=>s[0].length>22?s[0].substring(0,22)+'...':s[0]),
     datasets:[{data:sorted.map(s=>s[1]),backgroundColor:colors}]
   },
   options:{
@@ -590,21 +590,7 @@ function criarGraficosCliente(){const d=clienteFilteredData;const byMes={};d.for
 
 function closeAudit(){document.getElementById('auditModal').classList.remove('active');}
 
-function exportToXLSX(){
-const h=['Protocolo','Assunto','Tipo','Categoria','Funcionalidade','Origem','Canal','Atendente'];
-let csv='﻿'+h.join('	')+'
-';
-currentAuditData.forEach(d=>{
-  const r=[d.protocolo||'',d.assunto||'',d.tipo||'',d.categoria||'',d.funcionalidade||'',d.origemDemanda||'',d.origemCanal||'',d.atendente||''].join('	');
-  csv+=r+'
-';
-});
-const blob=new Blob([csv],{type:'application/vnd.ms-excel;charset=utf-8;'});
-const link=document.createElement('a');
-link.href=URL.createObjectURL(blob);
-link.download='auditoria_tomticket.xls';
-link.click();
-}
+function exportToXLSX(){const h=['Protocolo','Assunto','Tipo','Categoria','Funcionalidade','Origem','Canal','Atendente'];let csv=h.join('\t')+'\n';currentAuditData.forEach(d=>{const r=[d.protocolo||'',d.assunto||'',d.tipo||'',d.categoria||'',d.funcionalidade||'',d.origemDemanda||'',d.origemCanal||'',d.atendente||''].join('\t');csv+=r+'\n';});const bom=new Uint8Array([0xEF,0xBB,0xBF]);const enc=new TextEncoder().encode(csv);const merged=new Uint8Array(bom.length+enc.length);merged.set(bom);merged.set(enc,bom.length);const blob=new Blob([merged],{type:'application/vnd.ms-excel'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='auditoria_tomticket.xls';link.click();}
 
 function exportToCSV(){const h=['Protocolo','Assunto','Tipo','Categoria','Funcionalidade','Origem','Canal','Atendente'];let csv=h.join(',')+'\n';currentAuditData.forEach(d=>{const r=[d.protocolo,d.assunto?`"${d.assunto.replace(/"/g,'""')}"`:' ',d.tipo,d.categoria,d.funcionalidade,d.origemDemanda,d.origemCanal,d.atendente].join(',');csv+=r+'\n';});const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='auditoria_tomticket.csv';link.click();}
 
