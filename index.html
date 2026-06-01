@@ -502,7 +502,7 @@ function getPaleta(n){return Array.from({length:n},(_,i)=>getCor(i));}
 
 let allData=[],filteredData=[],clienteFilteredData=[],charts={},currentAuditData=[],clienteSelecionado='';
 
-aasync function loadDataFromSheets(){
+async function loadDataFromSheets(){
 try{
   // Carregar TomTicket e Digisac em paralelo
   const [rTT, rDG] = await Promise.all([
