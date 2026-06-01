@@ -69,9 +69,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </head>
 <body>
 
-<div class="header">
-<div class="logo">Gestão<span class="logo-orange">.Online</span></div>
-<div class="subtitle">Dashboard TomTicket - Operações - Versão Final</div>
+<div class="header" style="display:flex;align-items:center;justify-content:space-between;padding:16px 40px;">
+<div style="display:flex;align-items:center;gap:20px;">
+  <div>
+    <div class="logo" style="font-size:26px;font-weight:700;letter-spacing:-0.5px">Gestão<span class="logo-orange">.Online</span></div>
+    <div class="subtitle" style="font-size:13px;color:#888;margin-top:2px;letter-spacing:0.3px">PAINEL ESTRATÉGICO — TIME DE OPERAÇÕES</div>
+  </div>
+</div>
+<button onclick="toggleTVMode()" id="btnTV" style="background:#F8931D;color:#fff;border:none;padding:9px 20px;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;">
+  &#128250; Modo TV
+</button>
 </div>
 
 <div id="loadingScreen" class="loading">
@@ -353,6 +360,61 @@ Gestao.Online | Documento Interno | Rua das Orquideas, Quadra 28, Lote 01, Sala 
 
 </div>
 
+
+<div id="tvMode" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#0f1117;z-index:9999;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+
+  <!-- Header TV -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 40px;border-bottom:2px solid #F8931D;background:#161920;">
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div style="font-size:22px;font-weight:700;color:#fff;">Gestão<span style="color:#F8931D">.Online</span></div>
+      <div style="width:1px;height:28px;background:#333;"></div>
+      <div style="font-size:13px;color:#aaa;letter-spacing:1px;text-transform:uppercase;">Painel Operacional — Time de Operações</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div id="tvClock" style="font-size:22px;font-weight:600;color:#F8931D;font-variant-numeric:tabular-nums;"></div>
+      <div id="tvDate" style="font-size:13px;color:#888;"></div>
+      <button onclick="toggleTVMode()" style="background:transparent;border:1px solid #444;color:#aaa;padding:7px 16px;border-radius:6px;font-size:12px;cursor:pointer;">Sair</button>
+    </div>
+  </div>
+
+  <!-- KPIs principais -->
+  <div id="tvKpis" style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;padding:20px 40px 0;"></div>
+
+  <!-- Graficos -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;padding:16px 40px;">
+
+    <div style="background:#161920;border-radius:10px;border:1px solid #222;padding:20px;">
+      <div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">Abertos e Fechados — Ultimos 14 dias</div>
+      <div style="position:relative;height:200px;"><canvas id="tvChartAbertosFechados" role="img" aria-label="Abertos e fechados"></canvas></div>
+    </div>
+
+    <div style="background:#161920;border-radius:10px;border:1px solid #222;padding:20px;">
+      <div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">Abertos por Atendente</div>
+      <div style="position:relative;height:200px;"><canvas id="tvChartAtendentes" role="img" aria-label="Abertos por atendente"></canvas></div>
+    </div>
+
+    <div style="background:#161920;border-radius:10px;border:1px solid #222;padding:20px;">
+      <div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">Distribuicao por Situacao</div>
+      <div style="position:relative;height:200px;"><canvas id="tvChartSituacao" role="img" aria-label="Situacao tickets"></canvas></div>
+    </div>
+
+  </div>
+
+  <!-- Lista abertos aguardando -->
+  <div style="padding:0 40px 20px;">
+    <div style="background:#161920;border-radius:10px;border:1px solid #1a1f2e;padding:20px;">
+      <div style="font-size:12px;color:#F8931D;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;font-weight:600;">Aguardando Atendimento — Nao iniciados</div>
+      <div id="tvListaAbertos" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-height:160px;overflow:hidden;"></div>
+    </div>
+  </div>
+
+  <!-- Rodape -->
+  <div style="position:absolute;bottom:0;left:0;right:0;padding:8px 40px;background:#161920;border-top:1px solid #222;display:flex;justify-content:space-between;align-items:center;">
+    <div style="font-size:11px;color:#555;">Dados sincronizados com Google Sheets — atualiza a cada 5 minutos</div>
+    <div id="tvNextUpdate" style="font-size:11px;color:#555;"></div>
+  </div>
+
+</div>
 <div id="auditModal" class="modal">
 <div class="modal-content">
 <span class="modal-close" onclick="closeAudit()">&times;</span>
@@ -381,7 +443,7 @@ let allData=[],filteredData=[],clienteFilteredData=[],charts={},currentAuditData
 
 async function loadDataFromSheets(){try{const r=await fetch(APPS_SCRIPT_URL);if(!r.ok)throw new Error('Erro ao buscar dados');const d=await r.json();if(d.status!=='OK')throw new Error(d.mensagem||'Erro desconhecido');allData=(d.tomticket||[]).map(normalizarDados);filteredData=[...allData];document.getElementById('loadingScreen').classList.add('hidden');document.getElementById('mainContent').classList.remove('hidden');init();}catch(e){document.getElementById('loadingScreen').classList.add('hidden');document.getElementById('errorScreen').classList.remove('hidden');document.getElementById('errorMessage').textContent=e.message;}}
 
-function normalizarDados(d){return{protocolo:d['Protocolo'],assunto:d['Assunto'],tipo:d['Tipo do Ticket (Finalização - Chamado Externo)'],categoria:d['Categoria'],funcionalidade:extrairFuncionalidade(d),atendente:d['Atendente'],organizacao:d['Organização'],dataCriacao:d['Data de Criação'],reaberto:d['Reaberto'],escalonado:d['Escalonado'],origemDemanda:d['Origem da Demanda (Finalização - Chamado Externo)'],origemCanal:d['Origem do Chamado'],status:d['Status']};}
+function normalizarDados(d){return{protocolo:d['Protocolo'],assunto:d['Assunto'],tipo:d['Tipo do Ticket (Finalização - Chamado Externo)'],categoria:d['Categoria'],funcionalidade:extrairFuncionalidade(d),atendente:d['Atendente'],organizacao:d['Organização'],dataCriacao:d['Data de Criação'],reaberto:d['Reaberto'],escalonado:d['Escalonado'],origemDemanda:d['Origem da Demanda (Finalização - Chamado Externo)'],origemCanal:d['Origem do Chamado'],status:d['Status'],dataFinalizacao:d['Data de Finalizacao']||d['Data de Finalização']||null,ultimaSituacao:d['Ultima Situacao']||d['Última Situação']||''};}
 
 function extrairFuncionalidade(d){const c=['Funcionalidades (AR Virtual) (Finalização - Chamado Externo)','Funcionalidades (Agendamentos/Atividades) (Finalização - Chamado Externo)','Funcionalidades (Comercial) (Finalização - Chamado Externo)','Funcionalidades (Controle de Unidades) (Finalização - Chamado Externo)','Funcionalidades (Financeiro) (Finalização - Chamado Externo)','Funcionalidades (Fiscal) (Finalização - Chamado Externo)','Funcionalidades (GOpag) (Finalização - Chamado Externo)','Funcionalidades (Gestão de Indicadores) (Finalização - Chamado Externo)','Funcionalidades (Loja Virtual) (Finalização - Chamado Externo)','Funcionalidades (Marketplace/Apps) (Finalização - Chamado Externo)','Funcionalidades (Marketplace/Utilidades) (Finalização - Chamado Externo)','Funcionalidades (Módulo de Indicador) (Finalização - Chamado Externo)','Funcionalidades (Pametrizações) (Finalização - Chamado Externo)','Funcionalidades (Parceiros) (Finalização - Chamado Externo)','Funcionalidades (Portais) (Finalização - Chamado Externo)','Funcionalidades (Produtos e Serviços) (Finalização - Chamado Externo)','Funcionalidades (Relatórios Exportados e Formatados) (Finalização - Chamado Externo)','Funcionalidades (Soluti) (Finalização - Chamado Externo)','Funcionalidades (Unidades/Lojas) (Finalização - Chamado Externo)','Funcionalidades (Usuários e Vendedores) (Finalização - Chamado Externo)'];for(let col of c){if(d[col])return d[col];}return d['Categoria']||'N/A';}
 
