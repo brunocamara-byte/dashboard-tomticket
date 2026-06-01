@@ -344,19 +344,61 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </div>
 
 <div id="digisac" class="view">
-<div class="section" style="text-align:center;padding:60px 20px;">
-  <div style="font-size:48px;margin-bottom:20px">&#128203;</div>
-  <div style="font-size:22px;font-weight:700;color:#333;margin-bottom:12px">Dashboard Digisac</div>
-  <div style="font-size:15px;color:#666;max-width:500px;margin:0 auto;line-height:1.6">
-    Conecte a planilha do Digisac para visualizar metricas de tempo de atendimento, FCR e volume de conversas.<br><br>
-    <span style="color:#F8931D;font-weight:600">Aguardando URL do Apps Script do Digisac.</span>
-  </div>
-  <div style="margin-top:30px;background:#fff8f0;border:2px dashed #F8931D;border-radius:8px;padding:20px;display:inline-block;text-align:left;min-width:400px">
-    <div style="font-size:13px;font-weight:600;color:#666;margin-bottom:8px">PARA ATIVAR:</div>
-    <div style="font-family:monospace;font-size:13px;color:#333">const DIGISAC_URL = 'SUA_URL_AQUI';</div>
-    <div style="font-size:12px;color:#999;margin-top:8px">Linha 3 do script — substitua e pronto.</div>
-  </div>
+
+<div class="section">
+<div class="section-title">Filtros</div>
+<div class="filters-grid">
+<div class="filter-group"><label class="filter-label">Data Inicio</label><input type="date" class="filter-input" id="dgDataInicio"></div>
+<div class="filter-group"><label class="filter-label">Data Fim</label><input type="date" class="filter-input" id="dgDataFim"></div>
+<div class="filter-group"><label class="filter-label">Atendente</label><select class="filter-select" id="dgAtendente"><option value="">Todos</option></select></div>
+<div class="filter-group"><label class="filter-label">Departamento</label><select class="filter-select" id="dgDepartamento"><option value="">Todos</option></select></div>
+<div class="filter-group" style="align-self:end">
+  <button class="btn" onclick="applyDigisacFilters()">Aplicar</button>
+  <button class="btn btn-secondary" onclick="clearDigisacFilters()">Limpar</button>
 </div>
+</div>
+</div>
+
+<div class="kpis" id="kpisDigisacContainer"></div>
+
+<div class="charts-grid">
+
+<div class="chart-card">
+  <div class="chart-title">Volume de atendimentos por dia <button class="btn expand-btn btn-small" onclick="expandChart('chartDgVolume')">Expandir</button></div>
+  <div class="chart-container"><canvas id="chartDgVolume"></canvas></div>
+</div>
+
+<div class="chart-card">
+  <div class="chart-title">Tempo medio de atendimento por atendente <button class="btn expand-btn btn-small" onclick="expandChart('chartDgTempoAtend')">Expandir</button></div>
+  <div class="chart-container"><canvas id="chartDgTempoAtend"></canvas></div>
+</div>
+
+<div class="chart-card">
+  <div class="chart-title">Tempo medio de 1a espera por atendente <button class="btn expand-btn btn-small" onclick="expandChart('chartDgEspera')">Expandir</button></div>
+  <div class="chart-container"><canvas id="chartDgEspera"></canvas></div>
+</div>
+
+<div class="chart-card">
+  <div class="chart-title">Receptivo vs Ativo <button class="btn expand-btn btn-small" onclick="expandChart('chartDgTipo')">Expandir</button></div>
+  <div class="chart-container"><canvas id="chartDgTipo"></canvas></div>
+</div>
+
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:0;">
+
+<div class="chart-card">
+  <div class="chart-title">Volume por departamento <button class="btn expand-btn btn-small" onclick="expandChart('chartDgDepto')">Expandir</button></div>
+  <div class="chart-container"><canvas id="chartDgDepto"></canvas></div>
+</div>
+
+<div class="chart-card">
+  <div class="chart-title">Evolucao do tempo de atendimento por mes <button class="btn expand-btn btn-small" onclick="expandChart('chartDgEvolucao')">Expandir</button></div>
+  <div style="position:relative;height:420px;"><canvas id="chartDgEvolucao"></canvas></div>
+</div>
+
+</div>
+
 </div>
 
 
@@ -447,15 +489,46 @@ Gestao.Online &nbsp;|&nbsp; Painel Estrategico - Time de Operacoes
 
 <script>
 const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbx3xVugaFJjgjUk398bijh8QY0QT_EQOHBzJpvAmNG4c8zal8Lp5tQK-k4-rw4e3521/exec';
+let digisacData=[];
+
+const PALETA_CORES=[
+  '#F8931D','#3498DB','#2ECC71','#E74C3C','#9B59B6',
+  '#1ABC9C','#E67E22','#2980B9','#27AE60','#C0392B',
+  '#8E44AD','#16A085','#D35400','#2471A3'
+];
+function getCor(i){return PALETA_CORES[i%PALETA_CORES.length];}
+function getPaleta(n){return Array.from({length:n},(_,i)=>getCor(i));}
+
+
 let allData=[],filteredData=[],clienteFilteredData=[],charts={},currentAuditData=[],clienteSelecionado='';
 
-async function loadDataFromSheets(){try{const r=await fetch(APPS_SCRIPT_URL);if(!r.ok)throw new Error('Erro ao buscar dados');const d=await r.json();if(d.status!=='OK')throw new Error(d.mensagem||'Erro desconhecido');allData=(d.tomticket||[]).map(normalizarDados);filteredData=[...allData];document.getElementById('loadingScreen').classList.add('hidden');document.getElementById('mainContent').classList.remove('hidden');init();}catch(e){document.getElementById('loadingScreen').classList.add('hidden');document.getElementById('errorScreen').classList.remove('hidden');document.getElementById('errorMessage').textContent=e.message;}}
+async async function loadDataFromSheets(){
+try{
+  // Carregar TomTicket e Digisac em paralelo
+  const [rTT, rDG] = await Promise.all([
+    fetch(APPS_SCRIPT_URL),
+    fetch(APPS_SCRIPT_URL+'?source=digisac')
+  ]);
+  const dTT = await rTT.json();
+  const dDG = await rDG.json();
+  if(dTT.status!=='ok') throw new Error(dTT.message||'Erro TomTicket');
+  allData=(dTT.data||[]).map(normalizarDados);
+  filteredData=[...allData];
+  digisacData=(dDG.status==='ok')?(dDG.data||[]).map(normalizarDigisac):[];
+  document.getElementById('loadingScreen').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+  init();
+}catch(e){
+  document.getElementById('loadingScreen').classList.add('hidden');
+  document.getElementById('errorScreen').classList.remove('hidden');
+  document.getElementById('errorMessage').textContent=e.message;
+}}
 
 function normalizarDados(d){return{protocolo:d['Protocolo'],assunto:d['Assunto'],tipo:d['Tipo do Ticket (Finalização - Chamado Externo)'],categoria:d['Categoria'],funcionalidade:extrairFuncionalidade(d),atendente:d['Atendente'],organizacao:d['Organização'],dataCriacao:d['Data de Criação'],reaberto:d['Reaberto'],escalonado:d['Escalonado'],origemDemanda:d['Origem da Demanda (Finalização - Chamado Externo)'],origemCanal:d['Origem do Chamado'],status:d['Status'],dataFinalizacao:d['Data de Finalizacao']||d['Data de Finalização']||null,ultimaSituacao:d['Ultima Situacao']||d['Última Situação']||''};}
 
 function extrairFuncionalidade(d){const c=['Funcionalidades (AR Virtual) (Finalização - Chamado Externo)','Funcionalidades (Agendamentos/Atividades) (Finalização - Chamado Externo)','Funcionalidades (Comercial) (Finalização - Chamado Externo)','Funcionalidades (Controle de Unidades) (Finalização - Chamado Externo)','Funcionalidades (Financeiro) (Finalização - Chamado Externo)','Funcionalidades (Fiscal) (Finalização - Chamado Externo)','Funcionalidades (GOpag) (Finalização - Chamado Externo)','Funcionalidades (Gestão de Indicadores) (Finalização - Chamado Externo)','Funcionalidades (Loja Virtual) (Finalização - Chamado Externo)','Funcionalidades (Marketplace/Apps) (Finalização - Chamado Externo)','Funcionalidades (Marketplace/Utilidades) (Finalização - Chamado Externo)','Funcionalidades (Módulo de Indicador) (Finalização - Chamado Externo)','Funcionalidades (Pametrizações) (Finalização - Chamado Externo)','Funcionalidades (Parceiros) (Finalização - Chamado Externo)','Funcionalidades (Portais) (Finalização - Chamado Externo)','Funcionalidades (Produtos e Serviços) (Finalização - Chamado Externo)','Funcionalidades (Relatórios Exportados e Formatados) (Finalização - Chamado Externo)','Funcionalidades (Soluti) (Finalização - Chamado Externo)','Funcionalidades (Unidades/Lojas) (Finalização - Chamado Externo)','Funcionalidades (Usuários e Vendedores) (Finalização - Chamado Externo)'];for(let col of c){if(d[col])return d[col];}return d['Categoria']||'N/A';}
 
-function init(){populateFilters();initTendenciaFilters();initQualidadeFilters();initProdutoFilters();updateKPIs();createCharts();createQualidadeCharts();createProdutoCharts();}
+function init(){populateFilters();initTendenciaFilters();initQualidadeFilters();initProdutoFilters();initDigisacFilters();updateKPIs();createCharts();createQualidadeCharts();createProdutoCharts();}
 
 function showView(v){document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));document.querySelectorAll('.nav-btn').forEach(e=>e.classList.remove('active'));document.getElementById(v).classList.add('active');event.target.classList.add('active');}
 
@@ -471,7 +544,7 @@ function updateKPIs(){const tot=filteredData.length,reab=filteredData.filter(d=>
 
 function createCharts(){criarGraficoComDrilldown('chartTipo','tipo','doughnut',[' #FF9999','#66B2FF','#99FF99']);criarGraficoComDrilldown('chartCategorias','categoria','bar',['#E74C3C','#3498DB','#2ECC71','#F39C12','#9B59B6','#1ABC9C','#E67E22','#95A5A6','#34495E','#C0392B','#16A085','#8E44AD','#2980B9','#D35400','#C0392B']);criarGraficoComDrilldown('chartFuncionalidades','funcionalidade','bar',['#FF6B6B','#4ECDC4','#45B7D1','#FFA07A','#98D8C8','#F7DC6F','#BB8FCE','#85C1E2','#F8B88B','#ABEBC6']);criarGraficoComDrilldown('chartOrigemDemanda','origemDemanda','pie',['#FF6B6B','#4ECDC4','#45B7D1','#FFA07A','#98D8C8']);criarGraficoComDrilldown('chartOrigemCanal','origemCanal','doughnut',['#3498DB','#2ECC71','#F39C12','#E74C3C']);criarGraficoComDrilldown('chartAtendentes','atendente','bar',['#FF7F50','#6495ED','#32CD32','#FFD700','#FF69B4','#00CED1','#FF4500','#9370DB','#20B2AA','#DAA520','#DC143C','#00FA9A','#FF8C00','#1E90FF','#FFB6C1']);criarGraficoComDrilldown('chartReabertura','atendente','bar',['#E74C3C','#3498DB','#2ECC71','#F39C12','#9B59B6','#1ABC9C','#E67E22','#95A5A6','#34495E','#C0392B'],true);createGAPCharts();createCanaisCharts();createCatTipoCharts();createFuncCharts();createTendenciaCharts();}
 
-function criarGraficoComDrilldown(id,field,type,colors,reabertosOnly=false){const ctx=document.getElementById(id);if(!ctx)return;let data=reabertosOnly?countBy(filteredData.filter(d=>d.reaberto==='Sim'),field):countBy(filteredData,field);let sorted=Object.entries(data).sort((a,b)=>b[1]-a[1]);if(id==='chartCategorias'||id==='chartFuncionalidades')sorted=sorted.slice(0,15);if(id==='chartAtendentes'||id==='chartReabertura')sorted=sorted.slice(0,15);if(charts[id])charts[id].destroy();const labels=sorted.map(s=>s[0].substring(0,25));const values=sorted.map(s=>s[1]);const isDoughnutOrPie=type==='doughnut'||type==='pie';const opts={responsive:true,maintainAspectRatio:isDoughnutOrPie,onClick:(evt,elements)=>{if(elements.length>0){const idx=elements[0].index;const label=labels[idx];openDrilldown(field,label);}},plugins:{legend:{display:isDoughnutOrPie,position:'bottom'}}};if(type==='bar'){opts.indexAxis='y';opts.scales={y:{ticks:{font:{size:11},callback:function(val,idx){const l=this.getLabelForValue(idx);return l&&l.length>22?l.substring(0,22)+'...':l;}}},x:{ticks:{maxTicksLimit:8}}}};opts.layout={padding:{left:0}};const dataset={data:values,backgroundColor:colors.slice(0,values.length)};charts[id]=new Chart(ctx.getContext('2d'),{type,data:{labels,datasets:[dataset]},options:opts});}
+function criarGraficoComDrilldown(id,field,type,colors,reabertosOnly=false){const ctx=document.getElementById(id);if(!ctx)return;let data=reabertosOnly?countBy(filteredData.filter(d=>d.reaberto==='Sim'),field):countBy(filteredData,field);let sorted=Object.entries(data).sort((a,b)=>b[1]-a[1]);if(id==='chartCategorias'||id==='chartFuncionalidades')sorted=sorted.slice(0,15);if(id==='chartAtendentes'||id==='chartReabertura')sorted=sorted.slice(0,15);if(charts[id])charts[id].destroy();const labels=sorted.map(s=>s[0].substring(0,25));const values=sorted.map(s=>s[1]);const isDoughnutOrPie=type==='doughnut'||type==='pie';const opts={responsive:true,maintainAspectRatio:isDoughnutOrPie,onClick:(evt,elements)=>{if(elements.length>0){const idx=elements[0].index;const label=labels[idx];openDrilldown(field,label);}},plugins:{legend:{display:isDoughnutOrPie,position:'bottom'}}};if(type==='bar'){opts.indexAxis='y';opts.scales={y:{ticks:{font:{size:11},callback:function(val,idx){const l=this.getLabelForValue(idx);return l&&l.length>22?l.substring(0,22)+'...':l;}}},x:{ticks:{maxTicksLimit:8}}}};opts.layout={padding:{left:0}};const isDough=type==='doughnut'||type==='pie';const dataset={data:values,backgroundColor:isDough?getPaleta(values.length):'#F8931D'};charts[id]=new Chart(ctx.getContext('2d'),{type,data:{labels,datasets:[dataset]},options:opts});}
 
 function openDrilldown(field,value){const data=filteredData.filter(d=>d[field]===value);currentAuditData=data;document.getElementById('auditTitle').textContent=`${field.toUpperCase()} - ${value}`;document.getElementById('auditSubtitle').textContent=`Total: ${data.length} registros`;const tbody=document.getElementById('auditTableBody');tbody.innerHTML='';data.forEach(d=>{const row=`<tr><td>${d.protocolo||''}</td><td>${d.assunto?d.assunto.substring(0,50):''}</td><td>${d.tipo||''}</td><td>${d.categoria||''}</td><td>${d.funcionalidade||''}</td><td>${d.origemDemanda||''}</td><td>${d.origemCanal||''}</td><td>${d.atendente||''}</td></tr>`;tbody.innerHTML+=row;});document.getElementById('auditModal').classList.add('active');}
 
@@ -537,7 +610,7 @@ createTendenciaCharts();
 
 function createTendenciaCharts(){
 const {base,por}=getTendenciaData();
-const CORES=['#F8931D','#3498DB','#2ECC71','#E74C3C','#9B59B6','#1ABC9C','#F39C12','#34495E','#E67E22','#16A085','#8E44AD','#2980B9'];
+const CORES=getPaleta(origens.length+1);
 
 // Grafico principal: multiplas linhas por origemCanal
 const origens=[...new Set(base.map(d=>d.origemCanal).filter(Boolean))].sort();
@@ -767,7 +840,7 @@ if(ctxO){
   const vals=Object.values(origemData);
   charts.qualOrigem=new Chart(ctxO.getContext('2d'),{
     type:'doughnut',
-    data:{labels,datasets:[{data:vals,backgroundColor:['#9B59B6','#FF9800','#E74C3C','#3498DB','#2ECC71']}]},
+    data:{labels,datasets:[{data:vals,backgroundColor:getPaleta(vals.length)}]},
     options:{responsive:true,maintainAspectRatio:true,
       onClick:(e,el)=>{if(el.length>0){const l=labels[el[0].index];openDrilldownCustom(base.filter(d=>d.origemDemanda===l),`Origem: ${l}`);}},
       plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}}
@@ -832,7 +905,7 @@ if(ctxGC){
 // Grafico 4: Tendencia origens por mes
 const origens=[...new Set(base.map(d=>d.origemDemanda).filter(Boolean))];
 const meses=[...new Set(base.map(d=>d.dataCriacao?d.dataCriacao.split(' ')[0].substring(0,7):null).filter(Boolean))].sort();
-const CORES=['#9B59B6','#FF9800','#E74C3C','#3498DB','#2ECC71'];
+const CORES=getPaleta(origens.length);
 const datasetsTO=origens.map((orig,i)=>{
   const byMes={};
   base.filter(d=>d.origemDemanda===orig).forEach(d=>{
@@ -902,7 +975,7 @@ document.getElementById('kpisProdutoContainer').innerHTML=`
 // Grafico 1: Top funcs empilhado por origem
 const topFuncs=Object.entries(countBy(base,'funcionalidade')).sort((a,b)=>b[1]-a[1]).slice(0,10).map(f=>f[0]);
 const origens=[...new Set(base.map(d=>d.origemDemanda).filter(Boolean))];
-const CORES_O=['#E74C3C','#FF9800','#9B59B6','#3498DB','#2ECC71'];
+const CORES_O=getPaleta(origens.length);
 const datasetsFO=origens.map((orig,i)=>({
   label:orig,
   data:topFuncs.map(f=>base.filter(d=>d.funcionalidade===f&&d.origemDemanda===orig).length),
@@ -927,7 +1000,7 @@ if(ctxFO){
 // Grafico 2: Top categorias x tipo (stacked)
 const topCats=Object.entries(countBy(base,'categoria')).sort((a,b)=>b[1]-a[1]).slice(0,10).map(c=>c[0]);
 const tipos=[...new Set(base.map(d=>d.tipo).filter(Boolean))];
-const CORES_T=['#FF6B6B','#4ECDC4','#45B7D1'];
+const CORES_T=getPaleta(tipos.length);
 const datasetsCT=tipos.map((t,i)=>({
   label:t,
   data:topCats.map(c=>base.filter(d=>d.categoria===c&&d.tipo===t).length),
@@ -994,7 +1067,7 @@ if(ctxD){
 // Grafico 4: Evolucao categorias por mes (top 5)
 const top5Cats=Object.entries(countBy(base,'categoria')).sort((a,b)=>b[1]-a[1]).slice(0,5).map(c=>c[0]);
 const meses=[...new Set(base.map(d=>d.dataCriacao?d.dataCriacao.split(' ')[0].substring(0,7):null).filter(Boolean))].sort();
-const CORES_CAT=['#E74C3C','#3498DB','#2ECC71','#F39C12','#9B59B6'];
+const CORES_CAT=getPaleta(top5Cats.length);
 const datasetsEC=top5Cats.map((cat,i)=>{
   const byMes={};
   base.filter(d=>d.categoria===cat).forEach(d=>{
@@ -1070,6 +1143,198 @@ function atualizarGraficosCliente(){const d=clienteFilteredData,tot=d.length,rea
 
 function criarGraficosCliente(){const d=clienteFilteredData;const byMes={};d.forEach(x=>{if(x.dataCriacao){const m=x.dataCriacao.split(' ')[0].substring(0,7);byMes[m]=(byMes[m]||0)+1;}});const sortedMes=Object.entries(byMes).sort((a,b)=>a[0].localeCompare(b[0]));const ctxP=document.getElementById('chartClientePeriodo');if(ctxP){if(charts.clientePeriodo)charts.clientePeriodo.destroy();charts.clientePeriodo=new Chart(ctxP.getContext('2d'),{type:'line',data:{labels:sortedMes.map(m=>m[0]),datasets:[{label:'Chamados',data:sortedMes.map(m=>m[1]),borderColor:'#F8931D',backgroundColor:'rgba(248,147,29,0.1)',tension:0.4,fill:true,borderWidth:3,pointRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});charts['chartClientePeriodo']=charts.clientePeriodo;}const dataTipo=countBy(d,'tipo');const ctxT=document.getElementById('chartClienteTipo');if(ctxT){if(charts.clienteTipo)charts.clienteTipo.destroy();charts.clienteTipo=new Chart(ctxT.getContext('2d'),{type:'doughnut',data:{labels:Object.keys(dataTipo),datasets:[{data:Object.values(dataTipo),backgroundColor:['#FF9999','#66B2FF','#99FF99']}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom'}}}});charts['chartClienteTipo']=charts.clienteTipo;}const dataCat=countBy(d,'categoria');const sortedCat=Object.entries(dataCat).sort((a,b)=>b[1]-a[1]).slice(0,10);const ctxC=document.getElementById('chartClienteCategoria');if(ctxC){if(charts.clienteCategoria)charts.clienteCategoria.destroy();charts.clienteCategoria=new Chart(ctxC.getContext('2d'),{type:'bar',data:{labels:sortedCat.map(s=>s[0].substring(0,15)),datasets:[{data:sortedCat.map(s=>s[1]),backgroundColor:['#E74C3C','#3498DB','#2ECC71','#F39C12','#9B59B6','#1ABC9C','#E67E22','#95A5A6','#34495E','#C0392B']}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}}}});charts['chartClienteCategoria']=charts.clienteCategoria;}const dataO=countBy(d,'origemDemanda');const ctxO=document.getElementById('chartClienteOrigem');if(ctxO){if(charts.clienteOrigem)charts.clienteOrigem.destroy();charts.clienteOrigem=new Chart(ctxO.getContext('2d'),{type:'pie',data:{labels:Object.keys(dataO),datasets:[{data:Object.values(dataO),backgroundColor:['#FF6B6B','#4ECDC4','#45B7D1','#FFA07A','#98D8C8']}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom'}}}});charts['chartClienteOrigem']=charts.clienteOrigem;}const dataF=countBy(d,'funcionalidade');const sortedF=Object.entries(dataF).sort((a,b)=>b[1]-a[1]).slice(0,5);const ctxF=document.getElementById('chartClienteFunc');if(ctxF){if(charts.clienteFunc)charts.clienteFunc.destroy();charts.clienteFunc=new Chart(ctxF.getContext('2d'),{type:'bar',data:{labels:sortedF.map(s=>s[0].substring(0,15)),datasets:[{data:sortedF.map(s=>s[1]),backgroundColor:['#FF7F50','#6495ED','#32CD32','#FFD700','#FF69B4']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});charts['chartClienteFunc']=charts.clienteFunc;}const dataCn=countBy(d,'origemCanal');const ctxCn=document.getElementById('chartClienteCanal');if(ctxCn){if(charts.clienteCanal)charts.clienteCanal.destroy();charts.clienteCanal=new Chart(ctxCn.getContext('2d'),{type:'doughnut',data:{labels:Object.keys(dataCn),datasets:[{data:Object.values(dataCn),backgroundColor:['#3498DB','#2ECC71','#F39C12','#E74C3C']}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom'}}}});charts['chartClienteCanal']=charts.clienteCanal;}const dataA=countBy(d,'atendente');const sortedA=Object.entries(dataA).sort((a,b)=>b[1]-a[1]).slice(0,8);const ctxA=document.getElementById('chartClienteAtendentes');if(ctxA){if(charts.clienteAtendentes)charts.clienteAtendentes.destroy();charts.clienteAtendentes=new Chart(ctxA.getContext('2d'),{type:'bar',data:{labels:sortedA.map(s=>s[0].substring(0,12)),datasets:[{data:sortedA.map(s=>s[1]),backgroundColor:['#FF7F50','#6495ED','#32CD32','#FFD700','#FF69B4','#00CED1','#FF4500','#9370DB']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});charts['chartClienteAtendentes']=charts.clienteAtendentes;}const dataSt={};dataSt['Abertos']=d.filter(x=>x.status&&!x.status.toLowerCase().includes('finali')).length;dataSt['Finalizados']=d.filter(x=>x.status&&x.status.toLowerCase().includes('finali')).length;const ctxSt=document.getElementById('chartClienteStatus');if(ctxSt){if(charts.clienteStatus)charts.clienteStatus.destroy();charts.clienteStatus=new Chart(ctxSt.getContext('2d'),{type:'doughnut',data:{labels:Object.keys(dataSt),datasets:[{data:Object.values(dataSt),backgroundColor:['#F39C12','#2ECC71']}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom'}}}});charts['chartClienteStatus']=charts.clienteStatus;}const dataRe={};dataRe['Reabertos']=d.filter(x=>x.reaberto==='Sim').length;dataRe['Não Reabertos']=d.filter(x=>x.reaberto!=='Sim').length;const ctxRe=document.getElementById('chartClienteReabertura');if(ctxRe){if(charts.clienteReabertura)charts.clienteReabertura.destroy();charts.clienteReabertura=new Chart(ctxRe.getContext('2d'),{type:'doughnut',data:{labels:Object.keys(dataRe),datasets:[{data:Object.values(dataRe),backgroundColor:['#E74C3C','#2ECC71']}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom'}}}});charts['chartClienteReabertura']=charts.clienteReabertura;}}
 
+
+
+function initDigisacFilters(){
+if(!digisacData||digisacData.length===0)return;
+const atends=[...new Set(digisacData.map(d=>d.atendente).filter(Boolean))].sort();
+document.getElementById('dgAtendente').innerHTML='<option value="">Todos</option>'+atends.map(x=>`<option value="${x}">${x}</option>`).join('');
+const deptos=[...new Set(digisacData.map(d=>d.departamento).filter(Boolean))].sort();
+document.getElementById('dgDepartamento').innerHTML='<option value="">Todos</option>'+deptos.map(x=>`<option value="${x}">${x}</option>`).join('');
+createDigisacCharts();
+}
+
+function getDigisacBase(){
+let base=digisacData;
+const ini=document.getElementById('dgDataInicio').value;
+const fim=document.getElementById('dgDataFim').value;
+const atend=document.getElementById('dgAtendente').value;
+const depto=document.getElementById('dgDepartamento').value;
+if(ini&&fim){
+  base=base.filter(d=>{
+    if(!d.dataInicio)return false;
+    const dt=d.dataInicio.includes('/')?
+      d.dataInicio.split(' ')[0].split('/').reverse().join('-'):
+      d.dataInicio.split(' ')[0];
+    return dt>=ini&&dt<=fim;
+  });
+}
+if(atend) base=base.filter(d=>d.atendente===atend);
+if(depto) base=base.filter(d=>d.departamento===depto);
+return base;
+}
+
+function applyDigisacFilters(){createDigisacCharts();}
+
+function clearDigisacFilters(){
+document.getElementById('dgDataInicio').value='';
+document.getElementById('dgDataFim').value='';
+document.getElementById('dgAtendente').value='';
+document.getElementById('dgDepartamento').value='';
+createDigisacCharts();
+}
+
+function segsParaMin(s){return s>0?Math.round(s/60):0;}
+function segsParaHHMM(s){const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);return (h>0?h+'h ':'')+m+'min';}
+
+function createDigisacCharts(){
+if(!digisacData||digisacData.length===0){
+  document.getElementById('kpisDigisacContainer').innerHTML='<div class="kpi"><div class="kpi-label">Status</div><div class="kpi-value" style="font-size:16px;color:#999;">Aguardando dados do Digisac</div></div>';
+  return;
+}
+const base=getDigisacBase();
+const tot=base.length;
+
+// Tempo medio total em segundos
+const comTempo=base.filter(d=>d.tempoTotalSeg>0);
+const tempoMedioSeg=comTempo.length>0?Math.round(comTempo.reduce((s,d)=>s+d.tempoTotalSeg,0)/comTempo.length):0;
+const esperaMediaSeg=base.filter(d=>d.primeiroTempoEsperaSeg>0).length>0?
+  Math.round(base.filter(d=>d.primeiroTempoEsperaSeg>0).reduce((s,d)=>s+d.primeiroTempoEsperaSeg,0)/base.filter(d=>d.primeiroTempoEsperaSeg>0).length):0;
+const receptivos=base.filter(d=>d.tipo==='Receptivo').length;
+const encerrados=base.filter(d=>d.dataEncerramento&&d.dataEncerramento.trim()!=='').length;
+const taxaEnc=tot>0?Math.round(encerrados/tot*100):0;
+
+// KPIs
+document.getElementById('kpisDigisacContainer').innerHTML=`
+<div class="kpi"><div class="kpi-label">Total Atendimentos</div><div class="kpi-value">${tot}</div></div>
+<div class="kpi" style="border-left-color:#3498DB"><div class="kpi-label">Tempo Medio Atendimento</div><div class="kpi-value" style="color:#3498DB;font-size:22px;">${segsParaHHMM(tempoMedioSeg)}</div><div class="kpi-subtitle">${comTempo.length} com registro</div></div>
+<div class="kpi" style="border-left-color:#F8931D"><div class="kpi-label">1a Espera Media</div><div class="kpi-value" style="color:#F8931D;font-size:22px;">${segsParaHHMM(esperaMediaSeg)}</div><div class="kpi-subtitle">Ate primeiro atendimento</div></div>
+<div class="kpi" style="border-left-color:#2ECC71"><div class="kpi-label">Encerrados</div><div class="kpi-value" style="color:#2ECC71">${taxaEnc}%</div><div class="kpi-subtitle">${encerrados} de ${tot}</div></div>
+<div class="kpi" style="border-left-color:#9B59B6"><div class="kpi-label">Receptivos</div><div class="kpi-value" style="color:#9B59B6">${receptivos}</div><div class="kpi-subtitle">${tot>0?Math.round(receptivos/tot*100):0}% do total</div></div>
+`;
+
+// Grafico 1: Volume por dia
+const byDia={};
+base.forEach(d=>{
+  if(!d.dataInicio)return;
+  const dt=d.dataInicio.includes('/')?
+    d.dataInicio.split(' ')[0].split('/').reverse().join('-'):
+    d.dataInicio.split(' ')[0];
+  byDia[dt]=(byDia[dt]||0)+1;
+});
+const diasSorted=Object.keys(byDia).sort();
+const ctx1=document.getElementById('chartDgVolume');
+if(ctx1){
+  if(charts.dgVolume)charts.dgVolume.destroy();
+  charts.dgVolume=new Chart(ctx1.getContext('2d'),{
+    type:'bar',
+    data:{labels:diasSorted.map(d=>d.substring(5)),datasets:[{data:diasSorted.map(d=>byDia[d]),backgroundColor:'#F8931D',borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:20,font:{size:10}}},y:{ticks:{font:{size:10}}}}}
+  });
+  charts['chartDgVolume']=charts.dgVolume;
+}
+
+// Grafico 2: Tempo medio por atendente
+const atendentes=[...new Set(base.map(d=>d.atendente).filter(Boolean))];
+const tempoByAtend=atendentes.map(a=>{
+  const rows=base.filter(d=>d.atendente===a&&d.tempoTotalSeg>0);
+  return {nome:a.split(' ')[0],media:rows.length>0?Math.round(rows.reduce((s,d)=>s+d.tempoTotalSeg,0)/rows.length/60):0};
+}).sort((a,b)=>b.media-a.media);
+
+const ctx2=document.getElementById('chartDgTempoAtend');
+if(ctx2){
+  if(charts.dgTempoAtend)charts.dgTempoAtend.destroy();
+  charts.dgTempoAtend=new Chart(ctx2.getContext('2d'),{
+    type:'bar',
+    data:{labels:tempoByAtend.map(a=>a.nome),datasets:[{data:tempoByAtend.map(a=>a.media),backgroundColor:getPaleta(tempoByAtend.length),borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.x} min`}}},
+      scales:{y:{ticks:{font:{size:11}}},x:{ticks:{font:{size:10}}}}}
+  });
+  charts['chartDgTempoAtend']=charts.dgTempoAtend;
+}
+
+// Grafico 3: Tempo 1a espera por atendente
+const esperaByAtend=atendentes.map(a=>{
+  const rows=base.filter(d=>d.atendente===a&&d.primeiroTempoEsperaSeg>0);
+  return {nome:a.split(' ')[0],media:rows.length>0?Math.round(rows.reduce((s,d)=>s+d.primeiroTempoEsperaSeg,0)/rows.length/60):0};
+}).sort((a,b)=>b.media-a.media);
+
+const ctx3=document.getElementById('chartDgEspera');
+if(ctx3){
+  if(charts.dgEspera)charts.dgEspera.destroy();
+  charts.dgEspera=new Chart(ctx3.getContext('2d'),{
+    type:'bar',
+    data:{labels:esperaByAtend.map(a=>a.nome),datasets:[{data:esperaByAtend.map(a=>a.media),backgroundColor:getPaleta(esperaByAtend.length),borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.x} min`}}},
+      scales:{y:{ticks:{font:{size:11}}},x:{ticks:{font:{size:10}}}}}
+  });
+  charts['chartDgEspera']=charts.dgEspera;
+}
+
+// Grafico 4: Receptivo vs Ativo
+const tipos={};
+base.forEach(d=>{const t=d.tipo||'Desconhecido';tipos[t]=(tipos[t]||0)+1;});
+const ctx4=document.getElementById('chartDgTipo');
+if(ctx4){
+  if(charts.dgTipo)charts.dgTipo.destroy();
+  charts.dgTipo=new Chart(ctx4.getContext('2d'),{
+    type:'doughnut',
+    data:{labels:Object.keys(tipos),datasets:[{data:Object.values(tipos),backgroundColor:getPaleta(Object.keys(tipos).length)}]},
+    options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}}
+  });
+  charts['chartDgTipo']=charts.dgTipo;
+}
+
+// Grafico 5: Volume por departamento
+const byDepto=countBy(base,'departamento');
+const sortedDepto=Object.entries(byDepto).sort((a,b)=>b[1]-a[1]);
+const ctx5=document.getElementById('chartDgDepto');
+if(ctx5){
+  if(charts.dgDepto)charts.dgDepto.destroy();
+  charts.dgDepto=new Chart(ctx5.getContext('2d'),{
+    type:'bar',
+    data:{labels:sortedDepto.map(s=>s[0]),datasets:[{data:sortedDepto.map(s=>s[1]),backgroundColor:getPaleta(sortedDepto.length),borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{y:{ticks:{font:{size:11}}}}}
+  });
+  charts['chartDgDepto']=charts.dgDepto;
+}
+
+// Grafico 6: Evolucao tempo medio por mes
+const byMes={};
+base.forEach(d=>{
+  if(!d.dataInicio||d.tempoTotalSeg<=0)return;
+  const dt=d.dataInicio.includes('/')?
+    d.dataInicio.split(' ')[0].split('/').reverse().join('-'):
+    d.dataInicio.split(' ')[0];
+  const mes=dt.substring(0,7);
+  if(!byMes[mes])byMes[mes]={total:0,count:0};
+  byMes[mes].total+=d.tempoTotalSeg;
+  byMes[mes].count++;
+});
+const mesesSorted=Object.keys(byMes).sort();
+const ctx6=document.getElementById('chartDgEvolucao');
+if(ctx6){
+  if(charts.dgEvolucao)charts.dgEvolucao.destroy();
+  charts.dgEvolucao=new Chart(ctx6.getContext('2d'),{
+    type:'line',
+    data:{
+      labels:mesesSorted,
+      datasets:[{
+        label:'Tempo medio (min)',
+        data:mesesSorted.map(m=>Math.round(byMes[m].total/byMes[m].count/60)),
+        borderColor:'#F8931D',backgroundColor:'rgba(248,147,29,0.1)',
+        tension:0.4,borderWidth:2.5,pointRadius:5,fill:true
+      }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.y} min`}}},
+      scales:{x:{ticks:{font:{size:11}}},y:{ticks:{font:{size:10}}}}}
+  });
+  charts['chartDgEvolucao']=charts.dgEvolucao;
+}
+}
 
 var tvInterval=null;var tvCountdown=300;var tvCharts={};
 
@@ -1203,6 +1468,39 @@ options:{...JSON.parse(JSON.stringify(cfg.options)),responsive:true,maintainAspe
 }
 
 function closeExpand(){document.getElementById('expandModal').classList.remove('active');}
+
+function normalizarDigisac(d){
+function parseTempo(s){
+  if(!s||s.trim()==='')return 0;
+  const parts=s.trim().split(':');
+  if(parts.length===3)return parseInt(parts[0])*3600+parseInt(parts[1])*60+parseInt(parts[2]);
+  return 0;
+}
+return {
+  protocolo: d['Protocolo']||'',
+  nome: d['Nome']||'',
+  numero: d['Numero']||d['Número']||'',
+  atendente: d['Atendente']||'',
+  tags: d['Tags']||'',
+  departamento: d['Departamento']||'',
+  conexao: d['Conexão']||d['Conexao']||'',
+  dataInicio: d['Data de início']||d['Data de inicio']||'',
+  dataEncerramento: d['Data de encerramento']||'',
+  assunto: d['Assunto(s)']||'',
+  resumo: d['Resumo do chamado']||'',
+  tempoTotalSeg: parseTempo(d['Tempo total de atendimento']),
+  tempoTotalStr: d['Tempo total de atendimento']||'',
+  primeiroTempoEsperaSeg: parseTempo(d['1º tempo de espera']),
+  primeiroTempoEsperaStr: d['1º tempo de espera']||'',
+  tempoMedioEsperaSeg: parseTempo(d['Tempo médio de espera']),
+  tipo: (d['Tipo (Receptivo/Ativo)']||'').includes('Receptivo')||
+        (d['Tipo (Receptivo/Ativo)']||'').includes('Ativo')?
+        d['Tipo (Receptivo/Ativo)']:'Receptivo',
+  transferencias: d['Transferências']||d['Transferencias']||'',
+  maiorTempoEsperaSeg: parseTempo(d['Maior tempo de espera'])
+};
+}
+
 
 function countBy(arr,key){return arr.reduce((acc,i)=>{const v=i[key];if(v)acc[v]=(acc[v]||0)+1;return acc;},{});}
 
