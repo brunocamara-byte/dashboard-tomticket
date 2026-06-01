@@ -636,10 +636,9 @@ createTendenciaCharts();
 
 function createTendenciaCharts(){
 const {base,por}=getTendenciaData();
-const CORES=getPaleta(origens.length+1);
-
 // Grafico principal: multiplas linhas por origemCanal
 const origens=[...new Set(base.map(d=>d.origemCanal).filter(Boolean))].sort();
+const CORES=getPaleta(origens.length+1);
 const allKeys=[...new Set(base.map(d=>{
   if(!d.dataCriacao)return null;
   const dt=d.dataCriacao.split(' ')[0];
