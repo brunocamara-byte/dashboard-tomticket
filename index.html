@@ -149,14 +149,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 <div class="kpis" id="kpisQualidadeContainer"></div>
 
-<div class="charts-grid">
+<div style="display:grid;grid-template-columns:1fr 2fr;gap:20px;margin-bottom:20px;">
 
-<div class="chart-card">
+<div class="chart-card" style="min-height:480px">
   <div class="chart-title">Por que os chamados acontecem? <button class="btn expand-btn btn-small" onclick="expandChart('chartQualOrigem')">Expandir</button></div>
   <div class="chart-container"><canvas id="chartQualOrigem" class="clickable-canvas"></canvas></div>
 </div>
 
-<div class="chart-card">
+</div>
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:20px;">
+
+<div class="chart-card" style="min-height:460px">
   <div class="chart-title" style="flex-direction:column;align-items:flex-start;gap:4px">
     <span>Falso Bug <span style="font-size:12px;font-weight:400;color:#666">— bugs percebidos que nao sao bugs reais</span></span>
     <button class="btn expand-btn btn-small" onclick="expandChart('chartFalsoBug')">Expandir</button>
@@ -164,12 +168,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="chart-container"><canvas id="chartFalsoBug" class="clickable-canvas"></canvas></div>
 </div>
 
-<div class="chart-card">
+<div class="chart-card" style="min-height:460px">
   <div class="chart-title">Onde esta o GAP de conhecimento? <button class="btn expand-btn btn-small" onclick="expandChart('chartQualGapCat')">Expandir</button></div>
   <div class="chart-container"><canvas id="chartQualGapCat" class="clickable-canvas"></canvas></div>
 </div>
 
-<div class="chart-card">
+</div>
+
+<div class="chart-card" style="min-height:420px">
   <div class="chart-title">Tendencia das origens por mes <button class="btn expand-btn btn-small" onclick="expandChart('chartQualTendOrigem')">Expandir</button></div>
   <div class="chart-container"><canvas id="chartQualTendOrigem" class="clickable-canvas"></canvas></div>
 </div>
@@ -216,7 +222,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 <div class="chart-card">
   <div class="chart-title">Evolucao por categoria (mensal) <button class="btn expand-btn btn-small" onclick="expandChart('chartProdEvolCat')">Expandir</button></div>
-  <div class="chart-container"><canvas id="chartProdEvolCat" class="clickable-canvas"></canvas></div>
+  <div style="position:relative;height:480px;width:100%;"><canvas id="chartProdEvolCat" class="clickable-canvas"></canvas></div>
 </div>
 
 </div>
@@ -357,7 +363,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </div>
 
 <div class="footer">
-Gestao.Online | Documento Interno | Rua das Orquideas, Quadra 28, Lote 01, Sala 303, Jardim Goias, Goiania-GO
+Gestao.Online &nbsp;|&nbsp; Painel Estrategico - Time de Operacoes
 </div>
 
 </div>
@@ -930,9 +936,11 @@ const datasetsCT=tipos.map((t,i)=>({
 const ctxCT=document.getElementById('chartProdCatTipo');
 if(ctxCT){
   if(charts.prodCatTipo)charts.prodCatTipo.destroy();
+  const topCatsFilt=topCats.filter(c=>datasetsCT.some(ds=>ds.data[topCats.indexOf(c)]>0));
+  const dsCTFilt=datasetsCT.map(ds=>({...ds,data:topCatsFilt.map(c=>ds.data[topCats.indexOf(c)])})).filter(ds=>ds.data.some(v=>v>0));
   charts.prodCatTipo=new Chart(ctxCT.getContext('2d'),{
     type:'bar',
-    data:{labels:topCats.map(c=>c.length>15?c.substring(0,15)+'...':c),datasets:datasetsCT},
+    data:{labels:topCatsFilt.map(c=>c.length>15?c.substring(0,15)+'...':c),datasets:dsCTFilt},
     options:{
       responsive:true,maintainAspectRatio:false,indexAxis:'y',
       onClick:(e,el)=>{if(el.length>0){const cat=topCats[el[0].index];openDrilldownCustom(base.filter(d=>d.categoria===cat),`Categoria: ${cat}`);}},
@@ -949,10 +957,10 @@ const uxCount=base.filter(d=>d.tipo&&d.tipo.toLowerCase().includes('incidente')&
 const trainCount=base.filter(d=>d.origemDemanda&&(d.origemDemanda.toLowerCase().includes('gap')||d.origemDemanda.toLowerCase().includes('comportamento'))).length;
 const extCount=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('depend')).length;
 const decisaoData=[
-  {label:'Investir em Dev (bug real)',val:devCount,color:'#9B59B6'},
-  {label:'Investir em UX (falso bug)',val:uxCount,color:'#E74C3C'},
-  {label:'Investir em Treinamento (GAP)',val:trainCount,color:'#FF9800'},
-  {label:'Dependencia Externa',val:extCount,color:'#3498DB'}
+  {label:'Dev: Defeito Sistemico confirmado',val:devCount,color:'#9B59B6'},
+  {label:'Processo/Usabilidade: incidente sem defeito',val:uxCount,color:'#E74C3C'},
+  {label:'Treinamento: GAP de conhecimento',val:trainCount,color:'#FF9800'},
+  {label:'Dependencia externa: fora do controle',val:extCount,color:'#3498DB'}
 ];
 const ctxD=document.getElementById('chartProdDecisao');
 if(ctxD){
