@@ -574,17 +574,36 @@ function normalizarTomTicket(d){
   return {
     protocolo: d['Protocolo']||'',
     assunto: d['Assunto']||'',
-    tipo: d['Tipo do Ticket (Finalizacao - Chamado Externo)']||d['Tipo Chamado']||'',
-    categoria: d['Categoria']||'',
+    tipo: (function(){
+      for(const k of Object.keys(d)){if((k.toLowerCase().includes('tipo do ticket')||k.toLowerCase().includes('tipo chamado'))&&d[k]&&String(d[k]).trim())return String(d[k]).trim();}
+      return '';
+    })(),
+    categoria: (function(){
+      for(const k of Object.keys(d)){if(k.toLowerCase()==='categoria'&&d[k]&&String(d[k]).trim())return String(d[k]).trim();}
+      return '';
+    })(),
     funcionalidade: extrairFunc(d),
     atendente: d['Atendente']||'',
-    organizacao: d['Organizacao']||d['\u00d3rganiza\u00e7\u00e3o']||d['Organiza\u00e7\u00e3o']||'',
-    dataCriacao: d['Data de Cria\u00e7\u00e3o']||d['Data de Criacao']||'',
+    organizacao: (function(){
+      for(const k of Object.keys(d)){if(k.toLowerCase().includes('organiza')&&d[k]&&String(d[k]).trim())return String(d[k]).trim();}
+      return '';
+    })(),
+    dataCriacao: (function(){
+      // Buscar qualquer chave que contenha 'cria' (Data de Criação, Data de Criacao, etc)
+      for(const k of Object.keys(d)){
+        if(k.toLowerCase().includes('cria') && k.toLowerCase().includes('data') && d[k] && String(d[k]).trim())
+          return String(d[k]).trim();
+      }
+      return '';
+    })(),
     dataFinalizacao: d['Data de Finaliza\u00e7\u00e3o']||d['Data de Finalizacao']||'',
     ultimaSituacao: d['\u00daltima Situa\u00e7\u00e3o']||d['Ultima Situacao']||'',
     reaberto: d['Reaberto']||'',
     escalonado: d['Escalonado']||'',
-    origemDemanda: d['Origem da Demanda (Finalizacao - Chamado Externo)']||'',
+    origemDemanda: (function(){
+      for(const k of Object.keys(d)){if(k.toLowerCase().includes('origem da demanda')&&d[k]&&String(d[k]).trim())return String(d[k]).trim();}
+      return '';
+    })(),
     origemCanal: d['Origem do Chamado']||'',
     status: d['Status']||'',
     tipoChamado: d['Tipo Chamado']||''
