@@ -489,11 +489,13 @@ Gestao.Online &nbsp;|&nbsp; Painel Estrategico - Time de Operacoes
 
   <!-- PROGRESS BAR rotacao -->
   <div style="position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #E8ECF0;padding:6px 32px;display:flex;align-items:center;gap:16px;">
-    <div style="font-size:11px;color:#6B778C;white-space:nowrap;">Rotacao automatica</div>
+    <button onclick="tvPrevSlide()" style="background:#F4F5F7;border:1px solid #DFE1E6;color:#6B778C;padding:4px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:600;" title="Slide anterior">&larr;</button>
+    <div style="font-size:11px;color:#6B778C;white-space:nowrap;">Rotação automática</div>
     <div style="flex:1;background:#E8ECF0;border-radius:4px;height:4px;overflow:hidden;">
       <div id="tvProgressBar" style="height:100%;background:linear-gradient(90deg,#F8931D,#e07a10);border-radius:4px;transition:width .1s linear;width:0%;"></div>
     </div>
     <div id="tvRotacaoTexto" style="font-size:11px;color:#6B778C;white-space:nowrap;"></div>
+    <button onclick="tvNextSlide()" style="background:#F8931D;border:none;color:#fff;padding:4px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:600;" title="Próximo slide">&rarr;</button>
   </div>
 
 </div>
@@ -1747,9 +1749,16 @@ function setTVPeriod(p){
     if(i===p){btn.style.background='#F8931D';btn.style.color='#fff';}
     else{btn.style.background='transparent';btn.style.color='#6B778C';}
   });
-  // Rebulidar slides e renderizar
+  // Destruir todos os charts antes de rebuildar
+  Object.values(tvState.charts).forEach(c=>{try{c.destroy();}catch(e){}});
+  tvState.charts = {};
+  // Rebuildar KPIs e slides com novos dados
+  renderTVKpis();
   buildTVSlides();
+  tvState.currentSlide = 0;
   renderTVSlide(0);
+  // Resetar barra de progresso
+  startTVRotation();
 }
 
 function getTVBaseData(){
@@ -1764,7 +1773,10 @@ function getTVBaseData(){
     const limite = new Date(now);
     limite.setDate(limite.getDate() - dias);
     const limiteStr = limite.toISOString().split('T')[0];
-    return allData.filter(d => d.dataCriacao && d.dataCriacao >= limiteStr);
+    return allData.filter(d => {
+      const dt = parseDateStr(d.dataCriacao)||d.dataCriacao;
+      return dt && dt >= limiteStr;
+    });
   }
 }
 
@@ -1785,7 +1797,10 @@ function getTVDigisacBase(){
     const limite = new Date(now);
     limite.setDate(limite.getDate() - dias);
     const limiteStr = limite.toISOString().split('T')[0];
-    return digisacData.filter(d => {const dt=parseDateStr(d.dataInicio); return dt && dt >= limiteStr;});
+    return digisacData.filter(d => {
+      const dt=parseDateStr(d.dataInicio);
+      return dt && dt >= limiteStr;
+    });
   }
 }
 
@@ -2202,6 +2217,25 @@ function renderTVSlide(idx){
 // ================================================================
 // ROTAÇÃO AUTOMÁTICA
 // ================================================================
+function tvNextSlide(){
+  if(!tvState.slides||tvState.slides.length===0)return;
+  const next=(tvState.currentSlide+1)%tvState.slides.length;
+  renderTVSlide(next);
+  // Resetar countdown
+  const bar=document.getElementById('tvProgressBar');
+  if(bar) bar.style.width='0%';
+  startTVRotation();
+}
+
+function tvPrevSlide(){
+  if(!tvState.slides||tvState.slides.length===0)return;
+  const prev=(tvState.currentSlide-1+tvState.slides.length)%tvState.slides.length;
+  renderTVSlide(prev);
+  const bar=document.getElementById('tvProgressBar');
+  if(bar) bar.style.width='0%';
+  startTVRotation();
+}
+
 function startTVRotation(){
   tvState.countdown = tvState.totalTime;
 
