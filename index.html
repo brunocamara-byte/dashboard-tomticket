@@ -438,7 +438,12 @@ Gestao.Online &nbsp;|&nbsp; Painel Estrategico - Time de Operacoes
         <div id="tvNextUpdate" style="font-size:11px;color:#6B778C;"></div>
         <div id="tvLastUpdate" style="font-size:10px;color:#97A0AF;margin-top:2px;"></div>
       </div>
-      <button onclick="toggleTVMode()" style="background:#F4F5F7;border:1px solid #DFE1E6;color:#6B778C;padding:7px 16px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;" onmouseover="this.style.background='#EBECF0'" onmouseout="this.style.background='#F4F5F7'">Sair</button>
+      <div style="display:flex;gap:6px;background:#F4F5F7;border-radius:8px;padding:4px;">
+        <button id="tvPeriodBtn0" onclick="setTVPeriod(0)" style="padding:5px 12px;border-radius:6px;border:none;font-size:11px;font-weight:600;cursor:pointer;background:#F8931D;color:#fff;">Mês Atual</button>
+        <button id="tvPeriodBtn1" onclick="setTVPeriod(1)" style="padding:5px 12px;border-radius:6px;border:none;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:#6B778C;">60 dias</button>
+        <button id="tvPeriodBtn2" onclick="setTVPeriod(2)" style="padding:5px 12px;border-radius:6px;border:none;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:#6B778C;">90 dias</button>
+      </div>
+      <button onclick="toggleTVMode()" style="background:#F4F5F7;border:1px solid #DFE1E6;color:#6B778C;padding:7px 16px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;" onmouseover="this.style.background='#EBECF0'" onmouseout="this.style.background='#F4F5F7'">Sair</button>
     </div>
   </div>
 
@@ -1725,12 +1730,64 @@ function createDigisacCharts(){
 var tvState = {
   interval: null,
   progressInterval: null,
-  countdown: 20,
-  totalTime: 20,
+  countdown: 180,
+  totalTime: 180,
   currentSlide: 0,
   charts: {},
-  slides: []
+  slides: [],
+  periodo: 0  // 0=mes atual, 1=60 dias, 2=90 dias
 };
+
+function setTVPeriod(p){
+  tvState.periodo = p;
+  // Atualizar botões
+  [0,1,2].forEach(i=>{
+    const btn=document.getElementById('tvPeriodBtn'+i);
+    if(!btn)return;
+    if(i===p){btn.style.background='#F8931D';btn.style.color='#fff';}
+    else{btn.style.background='transparent';btn.style.color='#6B778C';}
+  });
+  // Rebulidar slides e renderizar
+  buildTVSlides();
+  renderTVSlide(0);
+}
+
+function getTVBaseData(){
+  // Retorna dados filtrados pelo período selecionado
+  const now = new Date();
+  if(tvState.periodo === 0){
+    // Mês atual
+    const mesAtual = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+    return allData.filter(d => d.dataCriacao && d.dataCriacao.substring(0,7) === mesAtual);
+  } else {
+    const dias = tvState.periodo === 1 ? 60 : 90;
+    const limite = new Date(now);
+    limite.setDate(limite.getDate() - dias);
+    const limiteStr = limite.toISOString().split('T')[0];
+    return allData.filter(d => d.dataCriacao && d.dataCriacao >= limiteStr);
+  }
+}
+
+function getTVPeriodLabel(){
+  if(tvState.periodo === 0) return 'Mês Atual';
+  if(tvState.periodo === 1) return 'Últimos 60 dias';
+  return 'Últimos 90 dias';
+}
+
+function getTVDigisacBase(){
+  if(!digisacData || digisacData.length === 0) return [];
+  const now = new Date();
+  if(tvState.periodo === 0){
+    const mesAtual = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+    return digisacData.filter(d => {const dt=parseDateStr(d.dataInicio); return dt && dt.substring(0,7) === mesAtual;});
+  } else {
+    const dias = tvState.periodo === 1 ? 60 : 90;
+    const limite = new Date(now);
+    limite.setDate(limite.getDate() - dias);
+    const limiteStr = limite.toISOString().split('T')[0];
+    return digisacData.filter(d => {const dt=parseDateStr(d.dataInicio); return dt && dt >= limiteStr;});
+  }
+}
 
 function toggleTVMode(){
   const tv = document.getElementById('tvMode');
@@ -1784,9 +1841,8 @@ function updateTVClock(){
 // ================================================================
 function renderTVKpis(){
   if(!allData || allData.length === 0) return;
-  const now = new Date();
-  const mesAtual = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
-  const doMes = allData.filter(d => d.dataCriacao && d.dataCriacao.substring(0,7) === mesAtual);
+  const doMes = getTVBaseData();
+  const periodLabel = getTVPeriodLabel();
   const naoIniciados = allData.filter(d => d.ultimaSituacao && d.ultimaSituacao.toLowerCase().includes('iniciada'));
   const aguardCliente = allData.filter(d => d.ultimaSituacao && d.ultimaSituacao.toLowerCase().includes('aguardando resposta do cliente'));
   const fechMes = doMes.filter(d => d.ultimaSituacao && d.ultimaSituacao.toLowerCase().includes('finaliz'));
@@ -1795,7 +1851,7 @@ function renderTVKpis(){
   const abertosMes = doMes.filter(d => !d.ultimaSituacao || !d.ultimaSituacao.toLowerCase().includes('finaliz'));
 
   const kpis = [
-    {icon:'📋', label:'Abertos no Mês', value: abertosMes.length, sub: doMes.length + ' total no mês', color:'#F8931D'},
+    {icon:'📋', label:'Abertos no Mês', value: abertosMes.length, sub: doMes.length + ' total | ' + periodLabel, color:'#F8931D'},
     {icon:'&#9203;', label:'Aguard. Atendimento', value: naoIniciados.length, sub: 'Não iniciados', color:'#E74C3C'},
     {icon:'💬', label:'Aguard. Cliente', value: aguardCliente.length, sub: 'Aguardando retorno', color:'#F39C12'},
     {icon:'✅', label:'Fechados no Mês', value: fechMes.length, sub: 'Finalizados', color:'#27AE60'},
@@ -1820,9 +1876,8 @@ function renderTVKpis(){
 // SLIDES - definição dos 8 gráficos rotativos
 // ================================================================
 function buildTVSlides(){
-  const now = new Date();
-  const mesAtual = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
-  const doMes = allData.filter(d => d.dataCriacao && d.dataCriacao.substring(0,7) === mesAtual);
+  const doMes = getTVBaseData();
+  const periodLabel = getTVPeriodLabel();
 
   // Últimos 14 dias
   const hoje = new Date();
@@ -1834,7 +1889,7 @@ function buildTVSlides(){
   tvState.slides = [
     {
       id: 's1',
-      mainTitle: 'Abertos vs Fechados  -  Últimos 14 dias',
+      mainTitle: 'Abertos vs Fechados  -  ' + periodLabel + ' (14 dias recentes)',
       sec1Title: 'Aguardando por Atendente',
       sec2Title: 'Situação Atual dos Tickets',
       buildMain: (ctx) => buildTVBar(ctx,
@@ -1869,44 +1924,69 @@ function buildTVSlides(){
           const chart=new Chart(ctx.getContext('2d'),{type:'bar',data:{labels:['Sem dados Digisac'],datasets:[{data:[0],backgroundColor:'#DFE1E6'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
           tvState.charts['main']=chart;return chart;
         }
+        const baseDgMain=getTVDigisacBase();
         const hoje=new Date();
-        const dias30=Array.from({length:30},(_,i)=>{const d=new Date(hoje);d.setDate(d.getDate()-(29-i));return d.toISOString().split('T')[0];});
+        const nDias=tvState.periodo===0?30:tvState.periodo===1?60:90;
+        const dias30=Array.from({length:nDias},(_,i)=>{const d=new Date(hoje);d.setDate(d.getDate()-(nDias-1-i));return d.toISOString().split('T')[0];});
         const byDia={};
-        digisacData.forEach(d=>{const dt=parseDateStr(d.dataInicio);if(dt)byDia[dt]=(byDia[dt]||0)+1;});
+        baseDgMain.forEach(d=>{const dt=parseDateStr(d.dataInicio);if(dt)byDia[dt]=(byDia[dt]||0)+1;});
         const chart=new Chart(ctx.getContext('2d'),{
           type:'bar',
           data:{labels:dias30.map(d=>d.substring(5)),datasets:[{label:'Atendimentos',data:dias30.map(d=>byDia[d]||0),backgroundColor:dias30.map(d=>{const dow=new Date(d+'T12:00:00').getDay();return dow===0||dow===6?'#DFE1E6':'#1ABC9C';}),borderRadius:3}]},
+          plugins:[{id:'barLabels',afterDatasetsDraw(chart){
+            const ctx2=chart.ctx;
+            chart.data.datasets.forEach((dataset,i)=>{
+              const meta=chart.getDatasetMeta(i);
+              meta.data.forEach((bar,j)=>{
+                const val=dataset.data[j];
+                if(!val||val===0)return;
+                ctx2.fillStyle='#172B4D';
+                ctx2.font='bold 11px -apple-system,sans-serif';
+                ctx2.textAlign='center';
+                ctx2.textBaseline='bottom';
+                ctx2.fillText(val,bar.x,bar.y-3);
+              });
+            });
+          }}],
           options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9},color:'#6B778C',maxTicksLimit:15},grid:{color:'#F4F5F7'}},y:{ticks:{font:{size:10},color:'#6B778C'},grid:{color:'#F4F5F7'}}}}
         });
         tvState.charts['main']=chart;return chart;
       },
       buildSec1: (ctx) => {
         if(!digisacData||digisacData.length===0) return buildTVBarH(ctx,['Sem dados'],[0],'#DFE1E6');
-        const atends=[...new Set(digisacData.map(d=>d.atendente).filter(Boolean))];
-        const tempoAt=atends.map(a=>{const rows=digisacData.filter(d=>d.atendente===a&&d.tempoTotalSeg>0);return {n:a.split(' ')[0],v:rows.length?Math.round(rows.reduce((s,d)=>s+d.tempoTotalSeg,0)/rows.length/60):0};}).filter(a=>a.v>0).sort((a,b)=>b.v-a.v).slice(0,6);
+        const baseDgSec=getTVDigisacBase();
+        const atends=[...new Set(baseDgSec.map(d=>d.atendente).filter(Boolean))];
+        const tempoAt=atends.map(a=>{const rows=baseDgSec.filter(d=>d.atendente===a&&d.tempoTotalSeg>0);return {n:a.split(' ')[0],v:rows.length?Math.round(rows.reduce((s,d)=>s+d.tempoTotalSeg,0)/rows.length/60):0};}).filter(a=>a.v>0).sort((a,b)=>b.v-a.v).slice(0,6);
         return buildTVBarH(ctx,tempoAt.map(a=>a.n),tempoAt.map(a=>a.v),'#F8931D');
       },
       buildSec2: (ctx) => {
-        if(!digisacData||digisacData.length===0) return buildTVDoughnut(ctx,['Sem dados'],[1]);
-        const now=new Date();
-        const mesAtual=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
-        const doMesDg=digisacData.filter(d=>{const dt=parseDateStr(d.dataInicio);return dt&&dt.substring(0,7)===mesAtual;});
-        const comTempo=doMesDg.filter(d=>d.tempoTotalSeg>0);
+        const baseDg=getTVDigisacBase();
+        if(baseDg.length===0) return buildTVDoughnut(ctx,['Sem dados'],[1]);
+        const comTempo=baseDg.filter(d=>d.tempoTotalSeg>0);
         const tempoMed=comTempo.length?Math.round(comTempo.reduce((s,d)=>s+d.tempoTotalSeg,0)/comTempo.length/60):0;
-        const diasUnicos=new Set(doMesDg.map(d=>parseDateStr(d.dataInicio)).filter(Boolean));
-        const mediaDia=diasUnicos.size>0?Math.round(doMesDg.length/diasUnicos.size):0;
-        const comEspera=doMesDg.filter(d=>d.primeiroTempoEsperaSeg>0);
+        const diasUnicos=new Set(baseDg.map(d=>parseDateStr(d.dataInicio)).filter(Boolean));
+        const mediaDia=diasUnicos.size>0?Math.round(baseDg.length/diasUnicos.size):0;
+        const comEspera=baseDg.filter(d=>d.primeiroTempoEsperaSeg>0);
         const esperaMed=comEspera.length?Math.round(comEspera.reduce((s,d)=>s+d.primeiroTempoEsperaSeg,0)/comEspera.length/60):0;
-        const tipos=countBy(doMesDg,'tipo');
-        const chart=buildTVDoughnut(ctx,Object.keys(tipos).length?Object.keys(tipos):['Total'],Object.values(tipos).length?Object.values(tipos):[doMesDg.length]);
+        const enc=baseDg.filter(d=>d.dataEncerramento&&d.dataEncerramento.trim()!=='').length;
+        const pctEnc=baseDg.length>0?Math.round(enc/baseDg.length*100):0;
+        const recep=baseDg.filter(d=>d.tipo==='Receptivo').length;
+        const pctRecep=baseDg.length>0?Math.round(recep/baseDg.length*100):0;
+        // Top atendente mais rapido
+        const atends=[...new Set(baseDg.map(d=>d.atendente).filter(Boolean))];
+        const maisRapido=atends.map(a=>{const rows=baseDg.filter(d=>d.atendente===a&&d.tempoTotalSeg>0);return {n:a.split(' ')[0],v:rows.length?Math.round(rows.reduce((s,d)=>s+d.tempoTotalSeg,0)/rows.length/60):999};}).filter(a=>a.v<999).sort((a,b)=>a.v-b.v)[0];
+        const maisVolume=atends.map(a=>({n:a.split(' ')[0],v:baseDg.filter(d=>d.atendente===a).length})).sort((a,b)=>b.v-a.v)[0];
+        // Usar canvas para mostrar grafico de receptivo vs ativo
+        const tipos=countBy(baseDg,'tipo');
+        const chart=buildTVDoughnut(ctx,Object.keys(tipos).length?Object.keys(tipos):['Sem dados'],Object.values(tipos).length?Object.values(tipos):[1]);
         const sec2Title=document.getElementById('tvChartSec2Title');
-        if(sec2Title) sec2Title.textContent='Mes: '+doMesDg.length+' atend | Med/dia: '+mediaDia+' | TMA: '+tempoMed+'min | 1a Espera: '+esperaMed+'min';
+        if(sec2Title) sec2Title.textContent=getTVPeriodLabel()+': '+baseDg.length+' | Med/dia: '+mediaDia+' | TMA: '+tempoMed+'min | Espera: '+esperaMed+'min | Enc: '+pctEnc+'%';
         return chart;
       }
     },
     {
       id: 's2',
-      mainTitle: 'Top Categorias  -  Mês Atual',
+      mainTitle: 'Top Categorias  -  ' + periodLabel,
       sec1Title: 'Distribuição por Tipo',
       sec2Title: 'Top Origens de Demanda',
       buildMain: (ctx) => {
@@ -1924,7 +2004,7 @@ function buildTVSlides(){
     },
     {
       id: 's3',
-      mainTitle: 'Top 10 Clientes  -  Mês Atual',
+      mainTitle: 'Top 10 Clientes  -  ' + periodLabel,
       sec1Title: 'Canal de Entrada',
       sec2Title: 'Top Atendentes',
       buildMain: (ctx) => {
