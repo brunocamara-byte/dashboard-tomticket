@@ -417,60 +417,82 @@ Gestao.Online &nbsp;|&nbsp; Painel Estrategico - Time de Operacoes
 </div>
 
 
-<div id="tvMode" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#0f1117;z-index:9999;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+<div id="tvMode" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;overflow:hidden;background:#F4F5F7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
 
-  <!-- Header TV -->
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 40px;border-bottom:2px solid #F8931D;background:#161920;">
-    <div style="display:flex;align-items:center;gap:16px;">
-      <img src="https://raw.githubusercontent.com/brunocamara-byte/dashboard-tomticket/main/logo-preto.png" alt="Gestao.Online" style="height:36px;width:auto;filter:brightness(0) invert(1);object-fit:contain;" onerror="this.outerHTML='<span style=&quot;font-size:20px;font-weight:700;color:#fff;&quot;>Gestao<span style=&quot;color:#F8931D&quot;>.Online</span></span>';"><span style="display:none"></span>
-      <div style="width:1px;height:28px;background:#333;"></div>
-      <div style="font-size:13px;color:#aaa;letter-spacing:1px;text-transform:uppercase;">Painel Operacional — Time de Operações</div>
+  <!-- HEADER -->
+  <div style="background:#fff;border-bottom:3px solid #F8931D;padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 4px rgba(0,0,0,.06);">
+    <div style="display:flex;align-items:center;gap:20px;">
+      <img src="https://raw.githubusercontent.com/brunocamara-byte/dashboard-tomticket/main/logo-preto.png" alt="GO" style="height:40px;object-fit:contain;" onerror="this.style.display='none'">
+      <div style="width:1px;height:30px;background:#E8ECF0;"></div>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#172B4D;letter-spacing:.5px;text-transform:uppercase;">Painel Estratégico</div>
+        <div style="font-size:11px;color:#6B778C;letter-spacing:.3px;">Time de Operações</div>
+      </div>
     </div>
-    <div style="display:flex;align-items:center;gap:16px;">
-      <div id="tvClock" style="font-size:22px;font-weight:600;color:#F8931D;font-variant-numeric:tabular-nums;"></div>
-      <div id="tvDate" style="font-size:13px;color:#888;"></div>
-      <button onclick="toggleTVMode()" style="background:transparent;border:1px solid #444;color:#aaa;padding:7px 16px;border-radius:6px;font-size:12px;cursor:pointer;">Sair</button>
-    </div>
-  </div>
-
-  <!-- KPIs principais -->
-  <div id="tvKpis" style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;padding:20px 40px 0;"></div>
-
-  <!-- Graficos -->
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;padding:16px 40px;">
-
-    <div style="background:#161920;border-radius:10px;border:1px solid #222;padding:20px;">
-      <div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">Abertos e Fechados — Ultimos 14 dias</div>
-      <div style="position:relative;height:200px;"><canvas id="tvChartAbertosFechados" role="img" aria-label="Abertos e fechados"></canvas></div>
-    </div>
-
-    <div style="background:#161920;border-radius:10px;border:1px solid #222;padding:20px;">
-      <div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">Abertos por Atendente</div>
-      <div style="position:relative;height:200px;"><canvas id="tvChartAtendentes" role="img" aria-label="Abertos por atendente"></canvas></div>
-    </div>
-
-    <div style="background:#161920;border-radius:10px;border:1px solid #222;padding:20px;">
-      <div style="font-size:12px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">Distribuicao por Situacao</div>
-      <div style="position:relative;height:200px;"><canvas id="tvChartSituacao" role="img" aria-label="Situacao tickets"></canvas></div>
-    </div>
-
-  </div>
-
-  <!-- Lista abertos aguardando -->
-  <div style="padding:0 40px 20px;">
-    <div style="background:#161920;border-radius:10px;border:1px solid #1a1f2e;padding:20px;">
-      <div style="font-size:12px;color:#F8931D;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;font-weight:600;">Aguardando Atendimento — Nao iniciados</div>
-      <div id="tvListaAbertos" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-height:160px;overflow:hidden;"></div>
+    <div style="display:flex;align-items:center;gap:24px;">
+      <div style="text-align:right;">
+        <div id="tvClock" style="font-size:26px;font-weight:700;color:#172B4D;font-variant-numeric:tabular-nums;line-height:1;"></div>
+        <div id="tvDate" style="font-size:11px;color:#6B778C;margin-top:2px;"></div>
+      </div>
+      <div style="text-align:right;border-left:1px solid #E8ECF0;padding-left:20px;">
+        <div id="tvNextUpdate" style="font-size:11px;color:#6B778C;"></div>
+        <div id="tvLastUpdate" style="font-size:10px;color:#97A0AF;margin-top:2px;"></div>
+      </div>
+      <button onclick="toggleTVMode()" style="background:#F4F5F7;border:1px solid #DFE1E6;color:#6B778C;padding:7px 16px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;" onmouseover="this.style.background='#EBECF0'" onmouseout="this.style.background='#F4F5F7'">Sair</button>
     </div>
   </div>
 
-  <!-- Rodape -->
-  <div style="position:absolute;bottom:0;left:0;right:0;padding:8px 40px;background:#161920;border-top:1px solid #222;display:flex;justify-content:space-between;align-items:center;">
-    <div style="font-size:11px;color:#555;">Dados sincronizados com Google Sheets — atualiza a cada 5 minutos</div>
-    <div id="tvNextUpdate" style="font-size:11px;color:#555;"></div>
+  <!-- KPI BAR -->
+  <div id="tvKpis" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:14px 32px;background:#fff;border-bottom:1px solid #E8ECF0;"></div>
+
+  <!-- GRAFICOS ROTATIVOS -->
+  <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:16px;padding:16px 32px;height:calc(100vh - 220px);">
+
+    <!-- Destaque esquerda -->
+    <div style="background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);border:1px solid #E8ECF0;display:flex;flex-direction:column;overflow:hidden;">
+      <div style="padding:16px 20px 12px;border-bottom:1px solid #F4F5F7;display:flex;align-items:center;justify-content:space-between;">
+        <div id="tvChartMainTitle" style="font-size:13px;font-weight:600;color:#172B4D;"></div>
+        <div id="tvRotacaoIndicador" style="display:flex;gap:6px;"></div>
+      </div>
+      <div style="flex:1;padding:16px 20px;position:relative;">
+        <canvas id="tvChartMain"></canvas>
+        <div id="tvHeatmapMain" style="display:none;overflow:auto;height:100%;"></div>
+      </div>
+    </div>
+
+    <!-- Dois menores direita -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div style="background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);border:1px solid #E8ECF0;flex:1;display:flex;flex-direction:column;overflow:hidden;">
+        <div style="padding:12px 16px 8px;border-bottom:1px solid #F4F5F7;">
+          <div id="tvChartSec1Title" style="font-size:12px;font-weight:600;color:#172B4D;"></div>
+        </div>
+        <div style="flex:1;padding:12px 16px;position:relative;">
+          <canvas id="tvChartSec1"></canvas>
+        </div>
+      </div>
+      <div style="background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);border:1px solid #E8ECF0;flex:1;display:flex;flex-direction:column;overflow:hidden;">
+        <div style="padding:12px 16px 8px;border-bottom:1px solid #F4F5F7;">
+          <div id="tvChartSec2Title" style="font-size:12px;font-weight:600;color:#172B4D;"></div>
+        </div>
+        <div style="flex:1;padding:12px 16px;position:relative;">
+          <canvas id="tvChartSec2"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PROGRESS BAR rotacao -->
+  <div style="position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #E8ECF0;padding:6px 32px;display:flex;align-items:center;gap:16px;">
+    <div style="font-size:11px;color:#6B778C;white-space:nowrap;">Rotacao automatica</div>
+    <div style="flex:1;background:#E8ECF0;border-radius:4px;height:4px;overflow:hidden;">
+      <div id="tvProgressBar" style="height:100%;background:linear-gradient(90deg,#F8931D,#e07a10);border-radius:4px;transition:width .1s linear;width:0%;"></div>
+    </div>
+    <div id="tvRotacaoTexto" style="font-size:11px;color:#6B778C;white-space:nowrap;"></div>
   </div>
 
 </div>
+
 <div id="auditModal" class="modal">
 <div class="modal-content">
 <span class="modal-close" onclick="closeAudit()">&times;</span>
@@ -1696,107 +1718,363 @@ function createDigisacCharts(){
 }
 
 // ================================================================
-// MODO TV
+// MODO TV - PAINEL ESTRATÉGICO
+// Visual Freshdesk/Zendesk - fundo claro, profissional
 // ================================================================
-var tvInterval=null,tvCountdown=300,tvCharts={};
+
+var tvState = {
+  interval: null,
+  progressInterval: null,
+  countdown: 20,
+  totalTime: 20,
+  currentSlide: 0,
+  charts: {},
+  slides: []
+};
 
 function toggleTVMode(){
-  const tv=document.getElementById('tvMode');
-  const isTV=tv.style.display!=='none';
+  const tv = document.getElementById('tvMode');
+  const isTV = tv.style.display !== 'none';
   if(isTV){
-    tv.style.display='none';
-    document.getElementById('btnTV').innerHTML='&#128250; Modo TV';
-    if(tvInterval)clearInterval(tvInterval);
+    tv.style.display = 'none';
+    document.getElementById('btnTV').innerHTML = '&#128250; Modo TV';
+    stopTV();
   } else {
-    tv.style.display='block';
-    document.getElementById('btnTV').innerHTML='Sair TV';
-    renderTVMode();
-    tvCountdown=300;
-    if(tvInterval)clearInterval(tvInterval);
-    tvInterval=setInterval(function(){
-      tvCountdown--;
-      const m=Math.floor(tvCountdown/60),s=tvCountdown%60;
-      const el=document.getElementById('tvNextUpdate');
-      if(el)el.textContent='Proxima att em '+m+':'+(s<10?'0':'')+s;
-      if(tvCountdown<=0){tvCountdown=300;renderTVMode();}
-    },1000);
-    updateTVClock();
-    setInterval(updateTVClock,1000);
+    tv.style.display = 'block';
+    document.getElementById('btnTV').innerHTML = 'Sair TV';
+    startTV();
   }
+}
+
+function stopTV(){
+  if(tvState.interval) clearInterval(tvState.interval);
+  if(tvState.progressInterval) clearInterval(tvState.progressInterval);
+  Object.values(tvState.charts).forEach(c=>{try{c.destroy();}catch(e){}});
+  tvState.charts = {};
+}
+
+function startTV(){
+  stopTV();
+  updateTVClock();
+  setInterval(updateTVClock, 1000);
+  renderTVKpis();
+  buildTVSlides();
+  renderTVSlide(0);
+  startTVRotation();
+  const now = new Date();
+  const el = document.getElementById('tvLastUpdate');
+  if(el) el.textContent = 'Atualizado às ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
 }
 
 function updateTVClock(){
-  const now=new Date();
-  const h=String(now.getHours()).padStart(2,'0'),m=String(now.getMinutes()).padStart(2,'0'),s=String(now.getSeconds()).padStart(2,'0');
-  const el=document.getElementById('tvClock');if(el)el.textContent=h+':'+m+':'+s;
-  const dias=['Domingo','Segunda','Terca','Quarta','Quinta','Sexta','Sabado'];
-  const meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  const d=document.getElementById('tvDate');
-  if(d)d.textContent=dias[now.getDay()]+', '+now.getDate()+' '+meses[now.getMonth()]+' '+now.getFullYear();
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  const el = document.getElementById('tvClock');
+  if(el) el.textContent = h + ':' + m + ':' + s;
+  const dias = ['Domingo','Segunda','Terca','Quarta','Quinta','Sexta','Sabado'];
+  const meses = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const d = document.getElementById('tvDate');
+  if(d) d.textContent = dias[now.getDay()] + ', ' + now.getDate() + ' de ' + meses[now.getMonth()] + ' de ' + now.getFullYear();
 }
 
-function renderTVMode(){
-  if(!allData||allData.length===0)return;
-  const now=new Date();
-  const mesAtual=now.getFullYear()+'-'+(now.getMonth()+1<10?'0':'')+(now.getMonth()+1);
-  const doMes=allData.filter(d=>{const dt=parseDateStr(d.dataCriacao);return dt&&dt.substring(0,7)===mesAtual;});
-  const naoIniciados=allData.filter(d=>d.ultimaSituacao&&d.ultimaSituacao.toLowerCase().includes('iniciada'));
-  const aguardCliente=allData.filter(d=>d.ultimaSituacao&&d.ultimaSituacao.toLowerCase().includes('aguardando resposta do cliente'));
-  const fechMes=doMes.filter(d=>d.ultimaSituacao&&d.ultimaSituacao.toLowerCase().includes('finaliz'));
-  const reabMes=doMes.filter(d=>d.reaberto==='Sim').length;
-  const taxaReab=doMes.length>0?Math.round(reabMes/doMes.length*100):0;
-  const abertosMes=doMes.filter(d=>!d.ultimaSituacao||!d.ultimaSituacao.toLowerCase().includes('finaliz'));
+// ================================================================
+// KPIs do topo
+// ================================================================
+function renderTVKpis(){
+  if(!allData || allData.length === 0) return;
+  const now = new Date();
+  const mesAtual = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  const doMes = allData.filter(d => d.dataCriacao && d.dataCriacao.substring(0,7) === mesAtual);
+  const naoIniciados = allData.filter(d => d.ultimaSituacao && d.ultimaSituacao.toLowerCase().includes('iniciada'));
+  const aguardCliente = allData.filter(d => d.ultimaSituacao && d.ultimaSituacao.toLowerCase().includes('aguardando resposta do cliente'));
+  const fechMes = doMes.filter(d => d.ultimaSituacao && d.ultimaSituacao.toLowerCase().includes('finaliz'));
+  const reabMes = doMes.filter(d => d.reaberto === 'Sim').length;
+  const taxaReab = doMes.length > 0 ? (reabMes/doMes.length*100).toFixed(1) : 0;
+  const abertosMes = doMes.filter(d => !d.ultimaSituacao || !d.ultimaSituacao.toLowerCase().includes('finaliz'));
 
-  const kpiEl=document.getElementById('tvKpis');
-  if(kpiEl)kpiEl.innerHTML=[
-    ['Abertos no Mes',abertosMes.length,'#F8931D',doMes.length+' tickets no mes'],
-    ['Aguardando Atendimento',naoIniciados.length,'#E74C3C','Nao iniciados'],
-    ['Aguardando Cliente',aguardCliente.length,'#F39C12','Aguardando retorno'],
-    ['Fechados no Mes',fechMes.length,'#2ECC71','Finalizados'],
-    ['Taxa de Reabertura',taxaReab+'%','#9B59B6',reabMes+' reabertos']
-  ].map(([l,v,c,s])=>`<div style="background:#161920;border-radius:10px;border-left:4px solid ${c};padding:20px 24px;"><div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">${l}</div><div style="font-size:48px;font-weight:700;color:${c};line-height:1;">${v}</div><div style="font-size:12px;color:#555;margin-top:8px;">${s}</div></div>`).join('');
+  const kpis = [
+    {icon:'📋', label:'Abertos no Mês', value: abertosMes.length, sub: doMes.length + ' total no mês', color:'#F8931D'},
+    {icon:'&#9203;', label:'Aguard. Atendimento', value: naoIniciados.length, sub: 'Não iniciados', color:'#E74C3C'},
+    {icon:'💬', label:'Aguard. Cliente', value: aguardCliente.length, sub: 'Aguardando retorno', color:'#F39C12'},
+    {icon:'✅', label:'Fechados no Mês', value: fechMes.length, sub: 'Finalizados', color:'#27AE60'},
+    {icon:'🔄', label:'Taxa Reabertura', value: taxaReab + '%', sub: reabMes + ' reabertos', color:'#9B59B6'}
+  ];
 
-  const hoje=new Date();
-  const dias14=Array.from({length:14},(_,i)=>{const d=new Date(hoje);d.setDate(d.getDate()-(13-i));return d.toISOString().split('T')[0];});
-  const ctx1=document.getElementById('tvChartAbertosFechados');
-  if(ctx1){
-    if(tvCharts.af)try{tvCharts.af.destroy();}catch(e){}
-    tvCharts.af=new Chart(ctx1.getContext('2d'),{type:'bar',
-      data:{labels:dias14.map(d=>d.substring(5)),datasets:[
-        {label:'Abertos',data:dias14.map(d=>allData.filter(x=>{const dt=parseDateStr(x.dataCriacao);return dt===d;}).length),backgroundColor:'rgba(248,147,29,0.85)',borderRadius:4},
-        {label:'Fechados',data:dias14.map(d=>allData.filter(x=>{const dt=parseDateStr(x.dataFinalizacao);return dt===d;}).length),backgroundColor:'rgba(46,204,113,0.85)',borderRadius:4}
-      ]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#888',font:{size:11},boxWidth:10}}},scales:{x:{ticks:{color:'#666',font:{size:10}},grid:{color:'#1e2230'}},y:{ticks:{color:'#666',font:{size:10}},grid:{color:'#1e2230'}}}}
-    });
-  }
-
-  const byAtend={};
-  naoIniciados.concat(aguardCliente).forEach(d=>{if(d.atendente)byAtend[d.atendente]=(byAtend[d.atendente]||0)+1;});
-  const sortedAt=Object.entries(byAtend).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  const ctx2=document.getElementById('tvChartAtendentes');
-  if(ctx2){
-    if(tvCharts.at)try{tvCharts.at.destroy();}catch(e){}
-    tvCharts.at=new Chart(ctx2.getContext('2d'),{type:'bar',
-      data:{labels:sortedAt.map(s=>s[0].split(' ')[0]),datasets:[{data:sortedAt.map(s=>s[1]),backgroundColor:'#F8931D',borderRadius:4}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#888',font:{size:11}},grid:{color:'#1e2230'}},y:{ticks:{color:'#666',font:{size:10}},grid:{color:'#1e2230'}}}}
-    });
-  }
-
-  const situacoes={};
-  allData.filter(d=>d.ultimaSituacao&&!d.ultimaSituacao.toLowerCase().includes('finaliz')&&!d.ultimaSituacao.toLowerCase().includes('cancelad')).forEach(d=>{const s=d.ultimaSituacao;situacoes[s]=(situacoes[s]||0)+1;});
-  const sortedSit=Object.entries(situacoes).sort((a,b)=>b[1]-a[1]);
-  const ctx3=document.getElementById('tvChartSituacao');
-  if(ctx3){
-    if(tvCharts.sit)try{tvCharts.sit.destroy();}catch(e){}
-    tvCharts.sit=new Chart(ctx3.getContext('2d'),{type:'doughnut',
-      data:{labels:sortedSit.map(s=>s[0].length>28?s[0].substring(0,28)+'...':s[0]),datasets:[{data:sortedSit.map(s=>s[1]),backgroundColor:getPaleta(sortedSit.length)}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#888',font:{size:10},boxWidth:10}}}}
-    });
-  }
-
-  const lista=document.getElementById('tvListaAbertos');
-  if(lista)lista.innerHTML=naoIniciados.slice(0,12).map(d=>`<div style="background:#0f1117;border:1px solid #222;border-radius:6px;padding:10px 12px;"><div style="font-size:11px;color:#F8931D;font-weight:600;margin-bottom:3px;">#${d.protocolo||'--'}</div><div style="font-size:12px;color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.assunto?d.assunto.substring(0,38):'Sem assunto'}</div><div style="font-size:11px;color:#555;margin-top:4px;">${d.organizacao||''}</div></div>`).join('');
+  const el = document.getElementById('tvKpis');
+  if(!el) return;
+  el.innerHTML = kpis.map(k => `
+    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:8px;border-left:3px solid ${k.color};box-shadow:0 1px 3px rgba(0,0,0,.06);">
+      <div style="font-size:22px;">${k.icon}</div>
+      <div>
+        <div style="font-size:9px;font-weight:600;color:#6B778C;text-transform:uppercase;letter-spacing:.8px;margin-bottom:1px;">${k.label}</div>
+        <div style="font-size:28px;font-weight:700;color:${k.color};line-height:1;">${k.value}</div>
+        <div style="font-size:10px;color:#97A0AF;margin-top:1px;">${k.sub}</div>
+      </div>
+    </div>
+  `).join('');
 }
+
+// ================================================================
+// SLIDES - definição dos 8 gráficos rotativos
+// ================================================================
+function buildTVSlides(){
+  const now = new Date();
+  const mesAtual = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  const doMes = allData.filter(d => d.dataCriacao && d.dataCriacao.substring(0,7) === mesAtual);
+
+  // Últimos 14 dias
+  const hoje = new Date();
+  const dias14 = Array.from({length:14}, (_,i) => {
+    const d = new Date(hoje); d.setDate(d.getDate()-(13-i));
+    return d.toISOString().split('T')[0];
+  });
+
+  tvState.slides = [
+    {
+      id: 's1',
+      mainTitle: 'Abertos vs Fechados  -  Últimos 14 dias',
+      sec1Title: 'Aguardando por Atendente',
+      sec2Title: 'Situação Atual dos Tickets',
+      buildMain: (ctx) => buildTVBar(ctx,
+        dias14.map(d => d.substring(5)),
+        [
+          {label:'Abertos', data: dias14.map(d => allData.filter(x => parseDateStr(x.dataCriacao) === d).length), backgroundColor:'#F8931D', borderRadius:4},
+          {label:'Fechados', data: dias14.map(d => allData.filter(x => parseDateStr(x.dataFinalizacao) === d).length), backgroundColor:'#27AE60', borderRadius:4}
+        ], false
+      ),
+      buildSec1: (ctx) => {
+        const byAtend = {};
+        allData.filter(d => d.ultimaSituacao && (d.ultimaSituacao.toLowerCase().includes('iniciada') || d.ultimaSituacao.toLowerCase().includes('aguardando'))).forEach(d => {if(d.atendente) byAtend[d.atendente] = (byAtend[d.atendente]||0)+1;});
+        const sorted = Object.entries(byAtend).sort((a,b) => b[1]-a[1]).slice(0,6);
+        return buildTVBarH(ctx, sorted.map(s=>s[0].split(' ')[0]), sorted.map(s=>s[1]), '#E74C3C');
+      },
+      buildSec2: (ctx) => {
+        const sit = {};
+        allData.filter(d => d.ultimaSituacao && !d.ultimaSituacao.toLowerCase().includes('finaliz') && !d.ultimaSituacao.toLowerCase().includes('cancelad')).forEach(d => {sit[d.ultimaSituacao]=(sit[d.ultimaSituacao]||0)+1;});
+        const sorted = Object.entries(sit).sort((a,b) => b[1]-a[1]);
+        return buildTVDoughnut(ctx, sorted.map(s=>s[0].substring(0,22)), sorted.map(s=>s[1]));
+      }
+    },
+    {
+      id: 's2',
+      mainTitle: 'Top Categorias  -  Mês Atual',
+      sec1Title: 'Distribuição por Tipo',
+      sec2Title: 'Top Origens de Demanda',
+      buildMain: (ctx) => {
+        const cats = Object.entries(countBy(doMes,'categoria')).sort((a,b)=>b[1]-a[1]).slice(0,10);
+        return buildTVBarH(ctx, cats.map(c=>c[0].length>22?c[0].substring(0,22)+'...':c[0]), cats.map(c=>c[1]), '#F8931D');
+      },
+      buildSec1: (ctx) => {
+        const tipos = countBy(doMes,'tipo');
+        return buildTVDoughnut(ctx, Object.keys(tipos), Object.values(tipos));
+      },
+      buildSec2: (ctx) => {
+        const orig = Object.entries(countBy(doMes,'origemDemanda')).filter(x=>x[0]).sort((a,b)=>b[1]-a[1]).slice(0,6);
+        return buildTVBarH(ctx, orig.map(o=>o[0].length>20?o[0].substring(0,20)+'...':o[0]), orig.map(o=>o[1]), '#9B59B6');
+      }
+    },
+    {
+      id: 's3',
+      mainTitle: 'Top 10 Clientes  -  Mês Atual',
+      sec1Title: 'Canal de Entrada',
+      sec2Title: 'Top Atendentes',
+      buildMain: (ctx) => {
+        const media = doMes.length > 0 ? doMes.length / Math.max(Object.keys(countBy(doMes,'organizacao')).length, 1) : 0;
+        const clientes = Object.entries(countBy(doMes,'organizacao')).sort((a,b)=>b[1]-a[1]).slice(0,10);
+        return buildTVBar(ctx,
+          clientes.map(c=>c[0].length>20?c[0].substring(0,20)+'...':c[0]),
+          [{label:'Chamados', data: clientes.map(c=>c[1]), backgroundColor: clientes.map(c=>c[1]>media?'#E74C3C':'#F8931D'), borderRadius:4}],
+          false, true
+        );
+      },
+      buildSec1: (ctx) => {
+        const canais = countBy(doMes,'origemCanal');
+        return buildTVDoughnut(ctx, Object.keys(canais), Object.values(canais));
+      },
+      buildSec2: (ctx) => {
+        const atend = Object.entries(countBy(doMes,'atendente')).sort((a,b)=>b[1]-a[1]).slice(0,6);
+        return buildTVBarH(ctx, atend.map(a=>a[0].split(' ')[0]), atend.map(a=>a[1]), '#3498DB');
+      }
+    },
+    {
+      id: 's4',
+      mainTitle: 'Mapa de Calor  -  Dia da Semana  x  Hora',
+      sec1Title: digisacData && digisacData.length > 0 ? 'Volume Digisac  -  Últimos dias' : 'Tickets por Origem',
+      sec2Title: digisacData && digisacData.length > 0 ? 'Tempo Médio Digisac por Atendente' : 'Falso Bug por Categoria',
+      isHeatmap: true,
+      buildMain: null,
+      buildSec1: (ctx) => {
+        if(digisacData && digisacData.length > 0){
+          const byDia = {};
+          digisacData.slice(-300).forEach(d => {const dt=parseDateStr(d.dataInicio);if(dt)byDia[dt]=(byDia[dt]||0)+1;});
+          const dias = Object.keys(byDia).sort().slice(-14);
+          return buildTVBar(ctx, dias.map(d=>d.substring(5)), [{label:'Atendimentos', data: dias.map(d=>byDia[d]), backgroundColor:'#1ABC9C', borderRadius:3}], false);
+        } else {
+          const canais = Object.entries(countBy(doMes,'origemCanal')).sort((a,b)=>b[1]-a[1]).slice(0,6);
+          return buildTVDoughnut(ctx, canais.map(c=>c[0]), canais.map(c=>c[1]));
+        }
+      },
+      buildSec2: (ctx) => {
+        if(digisacData && digisacData.length > 0){
+          const atends = [...new Set(digisacData.map(d=>d.atendente).filter(Boolean))];
+          const tempoAt = atends.map(a => {
+            const rows = digisacData.filter(d=>d.atendente===a&&d.tempoTotalSeg>0);
+            return {n:a.split(' ')[0], v:rows.length?Math.round(rows.reduce((s,d)=>s+d.tempoTotalSeg,0)/rows.length/60):0};
+          }).filter(a=>a.v>0).sort((a,b)=>b.v-a.v).slice(0,6);
+          return buildTVBarH(ctx, tempoAt.map(a=>a.n), tempoAt.map(a=>a.v), '#F8931D');
+        } else {
+          const bugs = doMes.filter(d=>d.tipo&&d.tipo.toLowerCase().includes('incidente'));
+          const falsoBug = Object.entries(countBy(bugs.filter(d=>!d.origemDemanda||!d.origemDemanda.toLowerCase().includes('defeito')),'categoria')).sort((a,b)=>b[1]-a[1]).slice(0,5);
+          return buildTVBarH(ctx, falsoBug.map(f=>f[0].substring(0,15)), falsoBug.map(f=>f[1]), '#E74C3C');
+        }
+      }
+    }
+  ];
+}
+
+// ================================================================
+// BUILDERS DE GRÁFICOS TV
+// ================================================================
+function buildTVBar(ctx, labels, datasets, stacked, indexAxisY){
+  if(tvState.charts['main']) try{tvState.charts['main'].destroy();}catch(e){}
+  const chart = new Chart(ctx.getContext('2d'), {
+    type:'bar',
+    data:{labels, datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      indexAxis: indexAxisY ? 'y' : 'x',
+      plugins:{legend:{display:datasets.length>1, position:'bottom', labels:{font:{size:11}, boxWidth:12, color:'#6B778C'}}},
+      scales:{
+        x:{stacked:!!stacked, ticks:{font:{size:10}, color:'#6B778C'}, grid:{color:'#F4F5F7'}},
+        y:{stacked:!!stacked, ticks:{font:{size:10}, color:'#6B778C'}, grid:{color:'#F4F5F7'}}
+      }
+    }
+  });
+  tvState.charts['main'] = chart;
+  return chart;
+}
+
+function buildTVBarH(ctx, labels, data, color){
+  const id = ctx.id;
+  if(tvState.charts[id]) try{tvState.charts[id].destroy();}catch(e){}
+  const chart = new Chart(ctx.getContext('2d'), {
+    type:'bar',
+    data:{labels, datasets:[{data, backgroundColor:color, borderRadius:3}]},
+    options:{
+      responsive:true, maintainAspectRatio:false, indexAxis:'y',
+      plugins:{legend:{display:false}},
+      scales:{
+        y:{ticks:{font:{size:10}, color:'#6B778C'}, grid:{color:'#F4F5F7'}},
+        x:{ticks:{font:{size:10}, color:'#6B778C', maxTicksLimit:6}, grid:{color:'#F4F5F7'}}
+      }
+    }
+  });
+  tvState.charts[id] = chart;
+  return chart;
+}
+
+function buildTVDoughnut(ctx, labels, data){
+  const id = ctx.id;
+  if(tvState.charts[id]) try{tvState.charts[id].destroy();}catch(e){}
+  const chart = new Chart(ctx.getContext('2d'), {
+    type:'doughnut',
+    data:{labels, datasets:[{data, backgroundColor:getPaleta(data.length), borderWidth:1}]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom', labels:{font:{size:10}, boxWidth:10, color:'#6B778C', padding:8}}}
+    }
+  });
+  tvState.charts[id] = chart;
+  return chart;
+}
+
+// ================================================================
+// RENDERIZAR SLIDE
+// ================================================================
+function renderTVSlide(idx){
+  const slide = tvState.slides[idx];
+  if(!slide) return;
+
+  // Títulos
+  const mainTitle = document.getElementById('tvChartMainTitle');
+  const sec1Title = document.getElementById('tvChartSec1Title');
+  const sec2Title = document.getElementById('tvChartSec2Title');
+  if(mainTitle) mainTitle.textContent = slide.mainTitle;
+  if(sec1Title) sec1Title.textContent = slide.sec1Title;
+  if(sec2Title) sec2Title.textContent = slide.sec2Title;
+
+  // Destruir charts anteriores
+  ['main','tvChartSec1','tvChartSec2'].forEach(id=>{
+    if(tvState.charts[id]){try{tvState.charts[id].destroy();}catch(e){} delete tvState.charts[id];}
+  });
+
+  // Main - heatmap ou gráfico
+  const heatDiv = document.getElementById('tvHeatmapMain');
+  const mainCanvas = document.getElementById('tvChartMain');
+
+  if(slide.isHeatmap){
+    mainCanvas.style.display = 'none';
+    heatDiv.style.display = 'block';
+    // Recriar heatmap inline com cores quentes
+    createHeatmap(allData);
+    const svgEl = document.getElementById('heatmapContainer');
+    if(svgEl && window._heatmapSVG) heatDiv.innerHTML = window._heatmapSVG;
+  } else {
+    mainCanvas.style.display = 'block';
+    heatDiv.style.display = 'none';
+    if(slide.buildMain) slide.buildMain(mainCanvas);
+  }
+
+  // Secundários
+  setTimeout(()=>{
+    const ctx1 = document.getElementById('tvChartSec1');
+    const ctx2 = document.getElementById('tvChartSec2');
+    if(ctx1 && slide.buildSec1) slide.buildSec1(ctx1);
+    if(ctx2 && slide.buildSec2) slide.buildSec2(ctx2);
+  }, 50);
+
+  // Indicador de slide
+  const ind = document.getElementById('tvRotacaoIndicador');
+  if(ind) ind.innerHTML = tvState.slides.map((_,i)=>
+    `<div style="width:${i===idx?20:6}px;height:6px;border-radius:3px;background:${i===idx?'#F8931D':'#DFE1E6'};transition:all .3s;"></div>`
+  ).join('');
+
+  tvState.currentSlide = idx;
+}
+
+// ================================================================
+// ROTAÇÃO AUTOMÁTICA
+// ================================================================
+function startTVRotation(){
+  tvState.countdown = tvState.totalTime;
+
+  if(tvState.progressInterval) clearInterval(tvState.progressInterval);
+  if(tvState.interval) clearInterval(tvState.interval);
+
+  const tickMs = 100;
+  const totalTicks = tvState.totalTime * 1000 / tickMs;
+  let ticks = 0;
+
+  tvState.progressInterval = setInterval(()=>{
+    ticks++;
+    const pct = (ticks / totalTicks) * 100;
+    const bar = document.getElementById('tvProgressBar');
+    if(bar) bar.style.width = Math.min(pct, 100) + '%';
+    const seg = Math.ceil((totalTicks - ticks) * tickMs / 1000);
+    const txt = document.getElementById('tvRotacaoTexto');
+    if(txt) txt.textContent = 'Próximo em ' + seg + 's';
+    if(ticks >= totalTicks){
+      ticks = 0;
+      const next = (tvState.currentSlide + 1) % tvState.slides.length;
+      renderTVSlide(next);
+      const bar = document.getElementById('tvProgressBar');
+      if(bar) bar.style.width = '0%';
+    }
+  }, tickMs);
+}
+
 
 // ================================================================
 // GAP / CANAIS / CATIPO / FUNC (telas antigas mantidas)
