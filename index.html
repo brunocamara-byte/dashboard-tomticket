@@ -591,6 +591,16 @@ function normalizarTomTicket(d){
     atendente: String(d['Atendente']||'').trim(),
     organizacao: String(d['Organização']||d['Organizacao']||d['Cliente']||'').trim(),
     dataCriacao: dataCriacao,
+    horaCriacao: (function(){
+      const s=String(d['Data de Criação']||d['Data de Criacao']||'').trim();
+      if(!s)return -1;
+      const dt=new Date(s);
+      if(!isNaN(dt)) return dt.getHours();
+      // dd/MM/yyyy HH:mm:ss
+      const m=s.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/);
+      if(m) return parseInt(m[4]);
+      return -1;
+    })(),
     dataFinalizacao: dataFinal,
     ultimaSituacao: String(d['Última Situação']||d['Ultima Situacao']||'').trim(),
     reaberto: String(d['Reaberto']||'').trim()==='Sim'?'Sim':'Não',
@@ -611,18 +621,22 @@ function normalizarDigisac(d){
   }
   const tipo=d['Tipo (Receptivo/Ativo)']||'';
   const tipoLimpo=(tipo==='Receptivo'||tipo==='Ativo')?tipo:'Receptivo';
+  function findKey(obj,substr){
+    for(const k of Object.keys(obj)){if(k.toLowerCase().includes(substr.toLowerCase())&&obj[k]!==undefined)return String(obj[k]||'');}
+    return '';
+  }
   return {
-    protocolo: d['Protocolo']||'',
-    nome: d['Nome']||'',
-    atendente: d['Atendente']||'',
-    tags: d['Tags']||'',
-    departamento: d['Departamento']||'',
-    dataInicio: d['Data de in\u00edcio']||d['Data de inicio']||'',
-    dataEncerramento: d['Data de encerramento']||'',
-    assunto: d['Assunto(s)']||'',
-    tempoTotalSeg: parseTempo(d['Tempo total de atendimento']),
-    primeiroTempoEsperaSeg: parseTempo(d['1\u00ba tempo de espera']),
-    tempoMedioEsperaSeg: parseTempo(d['Tempo m\u00e9dio de espera']),
+    protocolo: findKey(d,'protocolo'),
+    nome: findKey(d,'nome'),
+    atendente: findKey(d,'atendente'),
+    tags: findKey(d,'tags'),
+    departamento: findKey(d,'departamento'),
+    dataInicio: findKey(d,'início')||findKey(d,'inicio'),
+    dataEncerramento: findKey(d,'encerramento'),
+    assunto: findKey(d,'assunto'),
+    tempoTotalSeg: parseTempo(findKey(d,'tempo total')),
+    primeiroTempoEsperaSeg: parseTempo(findKey(d,'1º tempo')||findKey(d,'primeiro tempo')||findKey(d,'1o tempo')),
+    tempoMedioEsperaSeg: parseTempo(findKey(d,'médio de espera')||findKey(d,'medio de espera')),
     tipo: tipoLimpo
   };
 }
@@ -630,17 +644,39 @@ function normalizarDigisac(d){
 // ================================================================
 // INIT
 // ================================================================
+function getMesAtualRange(){
+  const now=new Date();
+  const y=now.getFullYear();
+  const m=String(now.getMonth()+1).padStart(2,'0');
+  const lastDay=new Date(y,now.getMonth()+1,0).getDate();
+  return {
+    ini:`${y}-${m}-01`,
+    fim:`${y}-${m}-${String(lastDay).padStart(2,'0')}`
+  };
+}
+
+function setMesAtual(iniId,fimId){
+  const r=getMesAtualRange();
+  const elI=document.getElementById(iniId);
+  const elF=document.getElementById(fimId);
+  if(elI) elI.value=r.ini;
+  if(elF) elF.value=r.fim;
+}
+
 function init(){
   populateFilters();
+  // Setar mês atual em todas as telas ao abrir
+  setMesAtual('globalDataInicio','globalDataFim');
+  setMesAtual('qualDataInicio','qualDataFim');
+  setMesAtual('prodDataInicio','prodDataFim');
+  setMesAtual('dgDataInicio','dgDataFim');
   initTendenciaFilters();
   initQualidadeFilters();
   initProdutoFilters();
   initDigisacFilters();
-  updateKPIs();
-  createDashboardCharts();
+  // Aplicar filtro do mês atual no dashboard geral
+  applyFilters();
   createTendenciaCharts();
-  createQualidadeCharts();
-  createProdutoCharts();
 }
 
 function showView(v){
@@ -1046,9 +1082,12 @@ function createHeatmap(data){
   dias.forEach(d=>{matrix[d]={};horas.forEach(h=>{matrix[d][h]=0;});});
   data.forEach(d=>{
     if(!d.dataCriacao)return;
-    const p=d.dataCriacao.split(' ');
-    const dt=new Date(p[0].includes('-')?d.dataCriacao:p[0].split('/').reverse().join('-')+'T'+(p[1]||'00:00:00'));
-    if(!isNaN(dt)){matrix[dias[dt.getDay()]][dt.getHours()]++;}
+    // Calcular dia da semana a partir de dataCriacao (yyyy-MM-dd)
+    const dt=new Date(d.dataCriacao+'T12:00:00'); // meio-dia para evitar problema de timezone
+    if(isNaN(dt))return;
+    const dia=dias[dt.getDay()];
+    const hora=d.horaCriacao>=0?d.horaCriacao:0;
+    matrix[dia][hora]++;
   });
   let maxVal=0;
   dias.forEach(d=>horas.forEach(h=>{if(matrix[d][h]>maxVal)maxVal=matrix[d][h];}));
@@ -1066,10 +1105,12 @@ function createHeatmap(data){
     horas.forEach(h=>{
       const val=matrix[dia][h];
       const t=val/maxVal;
-      const r=Math.round(235-(235-24)*t);
-      const g=Math.round(245-(245-103)*t);
-      const b=Math.round(255-(255-150)*t*0.3);
-      const color=val===0?'#f5f5f5':`rgb(${r},${g},${b})`;
+      // Escala quente: cinza -> amarelo -> laranja -> vermelho
+      let color;
+      if(val===0){color='#f5f5f5';}
+      else if(t<0.33){const pct=t/0.33;const r=Math.round(255);const g=Math.round(255-pct*55);const b=Math.round(100-pct*100);color=`rgb(${r},${g},${b})`;}
+      else if(t<0.66){const pct=(t-0.33)/0.33;const r=255;const g=Math.round(200-pct*100);const b=0;color=`rgb(${r},${g},${b})`;}
+      else{const pct=(t-0.66)/0.34;const r=255;const g=Math.round(100-pct*100);const b=0;color=`rgb(${r},${g},${b})`;}
       const x=lW+h*cW;
       svg+=`<rect x="${x+1}" y="${y+1}" width="${cW-2}" height="${cH-2}" rx="3" fill="${color}" stroke="#e0e0e0" stroke-width="0.5"/>`;
       if(val>0){
@@ -1080,8 +1121,12 @@ function createHeatmap(data){
   const lX=lW,lY=svgH-14;
   svg+=`<text x="${lX}" y="${lY}" font-size="10" fill="#999">Menor volume</text>`;
   [0,0.25,0.5,0.75,1].forEach((t,i)=>{
-    const r=Math.round(235-(235-24)*t),g=Math.round(245-(245-103)*t),b=Math.round(255-(255-150)*t*0.3);
-    svg+=`<rect x="${lX+110+i*18}" y="${lY-10}" width="16" height="10" rx="2" fill="${t===0?'#f5f5f5':`rgb(${r},${g},${b})`}"/>`;
+    let lc;
+    if(t===0)lc='#f5f5f5';
+    else if(t<0.33){const p=t/0.33;lc=`rgb(255,${Math.round(255-p*55)},${Math.round(100-p*100)})`;}
+    else if(t<0.66){const p=(t-0.33)/0.33;lc=`rgb(255,${Math.round(200-p*100)},0)`;}
+    else{const p=(t-0.66)/0.34;lc=`rgb(255,${Math.round(100-p*100)},0)`;}
+    svg+=`<rect x="${lX+110+i*18}" y="${lY-10}" width="16" height="10" rx="2" fill="${lc}"/>`;
   });
   svg+=`<text x="${lX+210}" y="${lY}" font-size="10" fill="#999">Maior volume</text></svg>`;
   const container=document.getElementById('heatmapContainer');
@@ -1541,8 +1586,13 @@ function createDigisacCharts(){
   const recep=base.filter(d=>d.tipo==='Receptivo').length;
 
   const el=document.getElementById('kpisDigisacContainer');
+  // Media de atendimentos por dia
+  const diasUnicos=new Set(base.map(d=>{const dt=parseDateStr(d.dataInicio);return dt;}).filter(Boolean));
+  const mediaDia=diasUnicos.size>0?Math.round(tot/diasUnicos.size):0;
+
   if(el) el.innerHTML=`
     <div class="kpi"><div class="kpi-label">Total Atendimentos</div><div class="kpi-value">${tot}</div></div>
+    <div class="kpi" style="border-left-color:#16A085"><div class="kpi-label">Media por Dia</div><div class="kpi-value" style="color:#16A085">${mediaDia}</div><div class="kpi-subtitle">${diasUnicos.size} dias no periodo</div></div>
     <div class="kpi" style="border-left-color:#3498DB"><div class="kpi-label">Tempo Medio Atendimento</div><div class="kpi-value" style="color:#3498DB;font-size:22px;">${segsParaHHMM(tempoMedSeg)}</div><div class="kpi-subtitle">${comTempo.length} com registro</div></div>
     <div class="kpi" style="border-left-color:#F8931D"><div class="kpi-label">1a Espera Media</div><div class="kpi-value" style="color:#F8931D;font-size:22px;">${segsParaHHMM(esperaMedSeg)}</div></div>
     <div class="kpi" style="border-left-color:#2ECC71"><div class="kpi-label">Encerrados</div><div class="kpi-value" style="color:#2ECC71">${tot>0?Math.round(enc/tot*100):0}%</div><div class="kpi-subtitle">${enc} de ${tot}</div></div>
@@ -1613,22 +1663,33 @@ function createDigisacCharts(){
     charts['chartDgDepto']=charts.dgDepto;
   }
 
-  // Evolucao tempo por mes
+  // Evolucao: volume por mes + tempo medio quando disponivel
   const byMes={};
   base.forEach(d=>{
     const dt=parseDateStr(d.dataInicio);
-    if(!dt||d.tempoTotalSeg<=0)return;
+    if(!dt)return;
     const m=dt.substring(0,7);
-    if(!byMes[m])byMes[m]={t:0,c:0};
-    byMes[m].t+=d.tempoTotalSeg;byMes[m].c++;
+    if(!byMes[m])byMes[m]={t:0,c:0,total:0};
+    byMes[m].total++;
+    if(d.tempoTotalSeg>0){byMes[m].t+=d.tempoTotalSeg;byMes[m].c++;}
   });
   const meses=Object.keys(byMes).sort();
   const ctx6=document.getElementById('chartDgEvolucao');
   if(ctx6){
     if(charts.dgEvolucao)try{charts.dgEvolucao.destroy();}catch(e){}
     charts.dgEvolucao=new Chart(ctx6.getContext('2d'),{type:'line',
-      data:{labels:meses,datasets:[{label:'Tempo medio (min)',data:meses.map(m=>Math.round(byMes[m].t/byMes[m].c/60)),borderColor:'#F8931D',backgroundColor:'rgba(248,147,29,0.1)',tension:0.4,borderWidth:2.5,pointRadius:5,fill:true}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.y} min`}}},scales:{x:{ticks:{font:{size:11}}},y:{ticks:{font:{size:10}}}}}
+      data:{labels:meses,datasets:[
+        {label:'Volume de atendimentos',data:meses.map(m=>byMes[m].total),borderColor:'#F8931D',backgroundColor:'rgba(248,147,29,0.1)',tension:0.4,borderWidth:2.5,pointRadius:5,fill:true,yAxisID:'y'},
+        {label:'Tempo medio (min)',data:meses.map(m=>byMes[m].c>0?Math.round(byMes[m].t/byMes[m].c/60):null),borderColor:'#3498DB',backgroundColor:'transparent',tension:0.4,borderWidth:2,pointRadius:4,borderDash:[5,3],yAxisID:'y1'}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        interaction:{mode:'index',intersect:false},
+        plugins:{legend:{display:true,position:'bottom',labels:{font:{size:11}}}},
+        scales:{
+          x:{ticks:{font:{size:11}}},
+          y:{type:'linear',display:true,position:'left',ticks:{font:{size:10}},title:{display:true,text:'Volume',font:{size:10}}},
+          y1:{type:'linear',display:true,position:'right',ticks:{font:{size:10}},title:{display:true,text:'Min',font:{size:10}},grid:{drawOnChartArea:false}}
+        }}
     });
     charts['chartDgEvolucao']=charts.dgEvolucao;
   }
