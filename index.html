@@ -1121,7 +1121,7 @@ function createHeatmap(data){
   let maxVal=0;
   dias.forEach(d=>horas.forEach(h=>{if(matrix[d][h]>maxVal)maxVal=matrix[d][h];}));
   if(maxVal===0)maxVal=1;
-  const cW=38,cH=34,lW=90,hH=30,pT=10;
+  const cW=46,cH=40,lW=100,hH=32,pT=10;
   const svgW=lW+cW*24+20;
   const svgH=pT+hH+cH*7+50;
   let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 ${svgW} ${svgH}" style="font-family:-apple-system,sans-serif">`;
@@ -2060,6 +2060,126 @@ function buildTVSlides(){
       }
     },
     {
+      id: 'sstr',
+      mainTitle: 'Chamados por Periodo - Origem do Chamado',
+      sec1Title: 'Qual modulo precisa de atencao?',
+      sec2Title: 'Onde direcionar energia?',
+      buildMain: (ctx) => {
+        const base=getTVBaseData();
+        const origens=[...new Set(base.map(d=>d.origemCanal).filter(Boolean))].sort();
+        const cores=getPaleta(origens.length);
+        // Agrupar por dia ou semana dependendo do periodo
+        const hoje=new Date();
+        let keys=[];
+        if(tvState.periodo===0){
+          // Mes atual - por dia
+          const now2=new Date();
+          const y=now2.getFullYear(),m=String(now2.getMonth()+1).padStart(2,'0');
+          const lastDay=new Date(y,now2.getMonth()+1,0).getDate();
+          for(let d=1;d<=lastDay;d++) keys.push(`${y}-${m}-${String(d).padStart(2,'0')}`);
+        } else {
+          // 60/90 dias - por semana (grupos de 7 dias)
+          const nDias=tvState.periodo===1?60:90;
+          for(let i=nDias-1;i>=0;i--){const d=new Date(hoje);d.setDate(d.getDate()-i);keys.push(d.toISOString().split('T')[0]);}
+          // Reduzir para semanas
+          const semanas={};
+          keys.forEach(k=>{const d=new Date(k);const sem=Math.floor((new Date(hoje)-d)/(7*24*3600*1000));const label='S-'+sem;semanas[label]=(semanas[label]||[]);semanas[label].push(k);});
+          keys=Object.keys(semanas).reverse();
+          // Usar keys diarios mas limitar a 30 pontos
+          const nDias2=tvState.periodo===1?60:90;
+          keys=[];
+          for(let i=nDias2-1;i>=0;i-=Math.ceil(nDias2/30)){const d=new Date(hoje);d.setDate(d.getDate()-i);keys.push(d.toISOString().split('T')[0]);}
+        }
+        const datasets=origens.map((orig,i)=>{
+          const byKey={};
+          base.filter(d=>d.origemCanal===orig).forEach(d=>{
+            const dt=parseDateStr(d.dataCriacao);
+            if(!dt)return;
+            // Achar key mais proxima
+            const key=keys.reduce((a,b)=>Math.abs(new Date(b)-new Date(dt))<Math.abs(new Date(a)-new Date(dt))?b:a,keys[0]);
+            byKey[key]=(byKey[key]||0)+1;
+          });
+          return {label:orig,data:keys.map(k=>byKey[k]||0),borderColor:cores[i],backgroundColor:'transparent',tension:0.4,borderWidth:2,pointRadius:tvState.periodo===0?3:2,pointHoverRadius:5};
+        });
+        const existing=Chart.getChart(ctx);if(existing)try{existing.destroy();}catch(e){}
+        if(tvState.charts['main'])try{tvState.charts['main'].destroy();}catch(e){}
+        const chart=new Chart(ctx.getContext('2d'),{
+          type:'line',
+          data:{labels:keys.map(k=>k.substring(5)),datasets},
+          options:{
+            responsive:true,maintainAspectRatio:false,
+            interaction:{mode:'index',intersect:false},
+            plugins:{legend:{display:true,position:'bottom',labels:{font:{size:10},boxWidth:10,color:'#6B778C',padding:8}}},
+            scales:{
+              x:{ticks:{font:{size:9},color:'#6B778C',maxTicksLimit:15},grid:{color:'#F4F5F7'}},
+              y:{ticks:{font:{size:10},color:'#6B778C'},grid:{color:'#F4F5F7'}}
+            }
+          }
+        });
+        tvState.charts['main']=chart;
+        return chart;
+      },
+      buildSec1: (ctx) => {
+        const base=getTVBaseData();
+        const topCats=Object.entries(countBy(base,'categoria')).sort((a,b)=>b[1]-a[1]).slice(0,8);
+        const tipos=[...new Set(base.map(d=>d.tipo).filter(Boolean))];
+        const cores=getPaleta(tipos.length);
+        const dsCT=tipos.map((t,i)=>({label:t,data:topCats.map(c=>base.filter(d=>d.categoria===c[0]&&d.tipo===t).length),backgroundColor:cores[i]}));
+        const topCatsFilt=topCats.filter(c=>dsCT.some(ds=>ds.data[topCats.indexOf(c)]>0));
+        const dsCTFilt=dsCT.map(ds=>({...ds,data:topCatsFilt.map(c=>ds.data[topCats.indexOf(c)])})).filter(ds=>ds.data.some(v=>v>0));
+        const existing=Chart.getChart(ctx);if(existing)try{existing.destroy();}catch(e){}
+        const id=ctx.id;if(tvState.charts[id])try{tvState.charts[id].destroy();}catch(e){}
+        const chart=new Chart(ctx.getContext('2d'),{
+          type:'bar',
+          data:{labels:topCatsFilt.map(c=>c[0].length>16?c[0].substring(0,16)+'...':c[0]),datasets:dsCTFilt},
+          options:{
+            responsive:true,maintainAspectRatio:false,indexAxis:'y',
+            plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:8,color:'#6B778C'}}},
+            scales:{x:{stacked:true,ticks:{font:{size:9},color:'#6B778C'}},y:{stacked:true,ticks:{font:{size:9},color:'#6B778C'}}}
+          }
+        });
+        tvState.charts[id]=chart;return chart;
+      },
+      buildSec2: (ctx) => {
+        const base=getTVBaseData();
+        const dev=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('defeito')).length;
+        const proc=base.filter(d=>d.tipo&&d.tipo.toLowerCase().includes('incidente')&&(!d.origemDemanda||!d.origemDemanda.toLowerCase().includes('defeito'))).length;
+        const train=base.filter(d=>d.origemDemanda&&(d.origemDemanda.toLowerCase().includes('gap')||d.origemDemanda.toLowerCase().includes('comportamento'))).length;
+        const ext=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('depend')).length;
+        const decisao=[
+          {l:'Dev: Defeito confirmado',v:dev,c:'#9B59B6'},
+          {l:'Processo/Usabilidade',v:proc,c:'#E74C3C'},
+          {l:'Treinamento: GAP',v:train,c:'#F8931D'},
+          {l:'Dep. externa',v:ext,c:'#3498DB'}
+        ].filter(d=>d.v>0);
+        if(decisao.length===0) return buildTVDoughnut(ctx,['Sem dados'],[1]);
+        const existing=Chart.getChart(ctx);if(existing)try{existing.destroy();}catch(e){}
+        const id=ctx.id;if(tvState.charts[id])try{tvState.charts[id].destroy();}catch(e){}
+        const barLabelPlugin2={id:'bLP2',afterDatasetsDraw(chart){
+          const c2=chart.ctx;
+          chart.data.datasets.forEach((ds,i)=>{
+            chart.getDatasetMeta(i).data.forEach((bar,j)=>{
+              const v=ds.data[j];if(!v||v===0)return;
+              c2.fillStyle='#172B4D';c2.font='bold 11px -apple-system,sans-serif';
+              c2.textAlign='left';c2.textBaseline='middle';
+              c2.fillText(v+' tickets',bar.x+4,bar.y);
+            });
+          });
+        }};
+        const chart=new Chart(ctx.getContext('2d'),{
+          type:'bar',
+          data:{labels:decisao.map(d=>d.l),datasets:[{data:decisao.map(d=>d.v),backgroundColor:decisao.map(d=>d.c),borderRadius:4}]},
+          plugins:[barLabelPlugin2],
+          options:{
+            responsive:true,maintainAspectRatio:false,indexAxis:'y',
+            plugins:{legend:{display:false}},
+            scales:{y:{ticks:{font:{size:10},color:'#6B778C'}},x:{ticks:{font:{size:9},color:'#6B778C',maxTicksLimit:5},grid:{color:'#F4F5F7'}}}
+          }
+        });
+        tvState.charts[id]=chart;return chart;
+      }
+    },
+    {
       id: 's4',
       mainTitle: 'Mapa de Calor  -  Dia da Semana  x  Hora',
       sec1Title: digisacData && digisacData.length > 0 ? 'Volume Digisac  -  Últimos dias' : 'Tickets por Origem',
@@ -2124,9 +2244,21 @@ function buildTVBarH(ctx, labels, data, color){
   if(existing) try{existing.destroy();}catch(e){}
   const id = ctx.id;
   if(tvState.charts[id]) try{tvState.charts[id].destroy();}catch(e){}
+  const barLabelPlugin={id:'barLabelH',afterDatasetsDraw(chart){
+    const c=chart.ctx;
+    chart.data.datasets.forEach((ds,i)=>{
+      chart.getDatasetMeta(i).data.forEach((bar,j)=>{
+        const v=ds.data[j];if(!v||v===0)return;
+        c.fillStyle='#172B4D';c.font='bold 10px -apple-system,sans-serif';
+        c.textAlign='left';c.textBaseline='middle';
+        c.fillText(v,bar.x+4,bar.y);
+      });
+    });
+  }};
   const chart = new Chart(ctx.getContext('2d'), {
     type:'bar',
     data:{labels, datasets:[{data, backgroundColor:color, borderRadius:3}]},
+    plugins:[barLabelPlugin],
     options:{
       responsive:true, maintainAspectRatio:false, indexAxis:'y',
       plugins:{legend:{display:false}},
