@@ -491,9 +491,9 @@ Gestao.Online &nbsp;|&nbsp; Painel Estrategico - Time de Operacoes
         <div id="tvRotacaoIndicador" style="display:flex;gap:5px;align-items:center;"></div>
       </div>
       <!-- Canvas container com posição relativa e tamanho fixo -->
-      <div style="flex:1;position:relative;min-height:0;padding:16px;">
-        <canvas id="tvChartMain" style="position:absolute;inset:16px;"></canvas>
-        <div id="tvHeatmapMain" style="display:none;position:absolute;inset:8px;overflow:hidden;"></div>
+      <div style="flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;">
+        <canvas id="tvChartMain" style="display:block;width:100%!important;height:100%!important;"></canvas>
+        <div id="tvHeatmapMain" style="display:none;width:100%;flex:1;overflow:hidden;"></div>
       </div>
     </div>
 
@@ -504,8 +504,8 @@ Gestao.Online &nbsp;|&nbsp; Painel Estrategico - Time de Operacoes
         <div style="padding:12px 16px 8px;border-bottom:1px solid #F4F5F7;flex-shrink:0;">
           <div id="tvChartSec1Title" style="font-size:12px;font-weight:600;color:#172B4D;"></div>
         </div>
-        <div style="flex:1;position:relative;min-height:0;padding:12px;">
-          <canvas id="tvChartSec1" style="position:absolute;inset:12px;"></canvas>
+        <div style="flex:1;min-height:0;padding:12px;display:flex;flex-direction:column;">
+          <canvas id="tvChartSec1" style="display:block;width:100%!important;height:100%!important;"></canvas>
         </div>
       </div>
       <!-- Sec 2 -->
@@ -514,7 +514,7 @@ Gestao.Online &nbsp;|&nbsp; Painel Estrategico - Time de Operacoes
           <div id="tvChartSec2Title" style="font-size:12px;font-weight:600;color:#172B4D;"></div>
         </div>
         <div id="tvSec2Body" style="flex:1;position:relative;min-height:0;padding:12px;">
-          <canvas id="tvChartSec2" style="position:absolute;inset:12px;"></canvas>
+          <canvas id="tvChartSec2" style="display:block;width:100%!important;height:100%!important;"></canvas>
         </div>
       </div>
     </div>
@@ -1992,11 +1992,7 @@ function startTVRotation(){
 // ─── Builders de gráficos ─────────────────────────────────────────
 function tvMakeBar(canvas, labels, datasets, opts){
   if(!canvas) return null;
-  const rect = canvas.parentElement ? canvas.parentElement.getBoundingClientRect() : null;
-  if(rect && rect.width > 0){
-    canvas.width = rect.width - 32;
-    canvas.height = rect.height - 32;
-  }
+
   const existing = Chart.getChart(canvas); if(existing) try{ existing.destroy(); }catch(e){}
   const id = canvas.id; if(tvState.charts[id]) try{ tvState.charts[id].destroy(); }catch(e){}
   const chart = new Chart(canvas.getContext('2d'), {
@@ -2018,12 +2014,7 @@ function tvMakeBar(canvas, labels, datasets, opts){
 
 function tvMakeBarH(canvas, labels, data, color){
   if(!canvas) return null;
-  // Garantir dimensões antes de criar o chart
-  const rect = canvas.parentElement ? canvas.parentElement.getBoundingClientRect() : null;
-  if(rect && rect.width > 0){
-    canvas.width = rect.width - 24;
-    canvas.height = rect.height - 24;
-  }
+
   const existing = Chart.getChart(canvas); if(existing) try{ existing.destroy(); }catch(e){}
   const id = canvas.id; if(tvState.charts[id]) try{ tvState.charts[id].destroy(); }catch(e){}
 
@@ -2067,11 +2058,7 @@ function tvMakeBarH(canvas, labels, data, color){
 
 function tvMakeDoughnut(canvas, labels, data){
   if(!canvas) return null;
-  const rect = canvas.parentElement ? canvas.parentElement.getBoundingClientRect() : null;
-  if(rect && rect.width > 0){
-    canvas.width = rect.width - 24;
-    canvas.height = rect.height - 24;
-  }
+
   const existing = Chart.getChart(canvas); if(existing) try{ existing.destroy(); }catch(e){}
   const id = canvas.id; if(tvState.charts[id]) try{ tvState.charts[id].destroy(); }catch(e){}
   const chart = new Chart(canvas.getContext('2d'), {
@@ -2089,11 +2076,7 @@ function tvMakeDoughnut(canvas, labels, data){
 
 function tvMakeLine(canvas, labels, datasets){
   if(!canvas) return null;
-  const rect = canvas.parentElement ? canvas.parentElement.getBoundingClientRect() : null;
-  if(rect && rect.width > 0){
-    canvas.width = rect.width - 24;
-    canvas.height = rect.height - 24;
-  }
+
   const existing = Chart.getChart(canvas); if(existing) try{ existing.destroy(); }catch(e){}
   const id = canvas.id; if(tvState.charts[id]) try{ tvState.charts[id].destroy(); }catch(e){}
   const chart = new Chart(canvas.getContext('2d'), {
