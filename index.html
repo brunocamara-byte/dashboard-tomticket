@@ -49,6 +49,34 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .expand-btn{background:#9C27B0}.expand-btn:hover{background:#7B1FA2}
 .footer{background:#fff;padding:20px;text-align:center;font-size:12px;color:#999;margin-top:40px;border-top:1px solid #e0e0e0}
 .hidden{display:none!important}
+
+/* ── MODO TV RESPONSIVO ──────────────────────────────────────── */
+@media (max-width:768px){
+  #tvHeader{height:56px!important;padding:0 16px!important;}
+  #tvHeader img{height:36px!important;}
+  #tvHeader .tv-period-btns{display:none!important;}
+  #tvKpis{
+    height:auto!important;
+    padding:8px 16px!important;
+    grid-template-columns:repeat(2,1fr)!important;
+    gap:8px!important;
+  }
+  #tvKpis > div{padding:6px 10px!important;}
+  #tvKpis > div > div:last-child > div:first-child{font-size:7px!important;}
+  #tvKpis > div > div:last-child > div:nth-child(2){font-size:22px!important;}
+  #tvKpis > div > div:first-child{font-size:20px!important;}
+  .tv-main-grid{
+    grid-template-columns:1fr!important;
+    height:auto!important;
+    padding:0 12px 8px!important;
+  }
+  .tv-right-col{display:none!important;}
+  #tvProgressBar{display:none!important;}
+}
+@media (max-width:480px){
+  #tvKpis{grid-template-columns:1fr 1fr!important;}
+  #tvKpis > div > div:last-child > div:nth-child(2){font-size:18px!important;}
+}
 .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:2000;align-items:center;justify-content:center;overflow-y:auto;padding:20px}
 .modal.active{display:flex}
 .modal-content{background:#fff;border-radius:8px;padding:30px;max-width:1200px;max-height:90vh;overflow-y:auto;width:100%;margin:auto}
@@ -431,7 +459,7 @@ Gestao.Online &nbsp;|&nbsp; Painel Estrategico - Time de Operacoes
     </div>
     <div style="display:flex;align-items:center;gap:20px;">
       <!-- Seletor período -->
-      <div style="display:flex;gap:4px;background:#F4F5F7;border-radius:8px;padding:4px;">
+      <div class="tv-period-btns" style="display:flex;gap:4px;background:#F4F5F7;border-radius:8px;padding:4px;">
         <button id="tvPeriodBtn0" onclick="setTVPeriod(0)" style="padding:6px 14px;border-radius:6px;border:none;font-size:12px;font-weight:600;cursor:pointer;background:#F8931D;color:#fff;transition:all .2s;">Mês Atual</button>
         <button id="tvPeriodBtn1" onclick="setTVPeriod(1)" style="padding:6px 14px;border-radius:6px;border:none;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:#6B778C;transition:all .2s;">60 dias</button>
         <button id="tvPeriodBtn2" onclick="setTVPeriod(2)" style="padding:6px 14px;border-radius:6px;border:none;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:#6B778C;transition:all .2s;">90 dias</button>
@@ -451,11 +479,10 @@ Gestao.Online &nbsp;|&nbsp; Painel Estrategico - Time de Operacoes
   </div>
 
   <!-- ══ KPI BAR ════════════════════════════════════════════════ -->
-  <div id="tvKpis" style="height:88px;padding:10px 40px;display:grid;grid-template-columns:repeat(5,1fr);gap:12px;flex-shrink:0;"></div>
+  <div id="tvKpis" style="height:88px;padding:10px 40px;display:grid;grid-template-columns:repeat(5,1fr);gap:12px;flex-shrink:0;box-sizing:border-box;"></div>
 
   <!-- ══ CONTEÚDO PRINCIPAL ══════════════════════════════════════ -->
-  <!-- Altura = 100vh - header(72) - kpibar(88) - footer(36) = calc(100vh - 196px) -->
-  <div style="height:calc(100vh - 196px);padding:0 40px 8px;display:grid;grid-template-columns:1.55fr 1fr;gap:16px;box-sizing:border-box;">
+  <div class="tv-main-grid" style="height:calc(100vh - 196px);padding:0 40px 8px;display:grid;grid-template-columns:1.55fr 1fr;gap:16px;box-sizing:border-box;">
 
     <!-- GRÁFICO PRINCIPAL -->
     <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(9,30,66,.08);border:1px solid #EBECF0;display:flex;flex-direction:column;overflow:hidden;min-height:0;">
@@ -471,7 +498,7 @@ Gestao.Online &nbsp;|&nbsp; Painel Estrategico - Time de Operacoes
     </div>
 
     <!-- COLUNA DIREITA: 2 gráficos -->
-    <div style="display:flex;flex-direction:column;gap:14px;min-height:0;overflow:hidden;">
+    <div class="tv-right-col" style="display:flex;flex-direction:column;gap:14px;min-height:0;overflow:hidden;">
       <!-- Sec 1 -->
       <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(9,30,66,.08);border:1px solid #EBECF0;flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;">
         <div style="padding:12px 16px 8px;border-bottom:1px solid #F4F5F7;flex-shrink:0;">
@@ -1911,16 +1938,21 @@ function tvGoToSlide(idx){
   } else {
     if(mainCanvas) mainCanvas.style.display = 'block';
     if(heatDiv) heatDiv.style.display = 'none';
-    if(mainCanvas && slide.buildMain) setTimeout(() => slide.buildMain(mainCanvas), 20);
+    if(mainCanvas && slide.buildMain) requestAnimationFrame(() => slide.buildMain(mainCanvas));
   }
 
-  // Secundários
-  setTimeout(() => {
+  // Secundários - usar duplo requestAnimationFrame para garantir layout pronto
+  requestAnimationFrame(() => requestAnimationFrame(() => {
     const c1 = document.getElementById('tvChartSec1');
     const c2 = document.getElementById('tvChartSec2');
     if(c1 && slide.buildSec1) slide.buildSec1(c1);
-    if(c2 && slide.buildSec2) slide.buildSec2(c2);
-  }, 40);
+    if(c2 && slide.buildSec2) {
+      setTimeout(() => {
+        const c2b = document.getElementById('tvChartSec2');
+        if(c2b) slide.buildSec2(c2b);
+      }, 60);
+    }
+  }));
 }
 
 function tvNextSlide(){
@@ -1959,6 +1991,12 @@ function startTVRotation(){
 
 // ─── Builders de gráficos ─────────────────────────────────────────
 function tvMakeBar(canvas, labels, datasets, opts){
+  if(!canvas) return null;
+  const rect = canvas.parentElement ? canvas.parentElement.getBoundingClientRect() : null;
+  if(rect && rect.width > 0){
+    canvas.width = rect.width - 32;
+    canvas.height = rect.height - 32;
+  }
   const existing = Chart.getChart(canvas); if(existing) try{ existing.destroy(); }catch(e){}
   const id = canvas.id; if(tvState.charts[id]) try{ tvState.charts[id].destroy(); }catch(e){}
   const chart = new Chart(canvas.getContext('2d'), {
@@ -1979,6 +2017,13 @@ function tvMakeBar(canvas, labels, datasets, opts){
 }
 
 function tvMakeBarH(canvas, labels, data, color){
+  if(!canvas) return null;
+  // Garantir dimensões antes de criar o chart
+  const rect = canvas.parentElement ? canvas.parentElement.getBoundingClientRect() : null;
+  if(rect && rect.width > 0){
+    canvas.width = rect.width - 24;
+    canvas.height = rect.height - 24;
+  }
   const existing = Chart.getChart(canvas); if(existing) try{ existing.destroy(); }catch(e){}
   const id = canvas.id; if(tvState.charts[id]) try{ tvState.charts[id].destroy(); }catch(e){}
 
@@ -2021,6 +2066,12 @@ function tvMakeBarH(canvas, labels, data, color){
 }
 
 function tvMakeDoughnut(canvas, labels, data){
+  if(!canvas) return null;
+  const rect = canvas.parentElement ? canvas.parentElement.getBoundingClientRect() : null;
+  if(rect && rect.width > 0){
+    canvas.width = rect.width - 24;
+    canvas.height = rect.height - 24;
+  }
   const existing = Chart.getChart(canvas); if(existing) try{ existing.destroy(); }catch(e){}
   const id = canvas.id; if(tvState.charts[id]) try{ tvState.charts[id].destroy(); }catch(e){}
   const chart = new Chart(canvas.getContext('2d'), {
@@ -2037,6 +2088,12 @@ function tvMakeDoughnut(canvas, labels, data){
 }
 
 function tvMakeLine(canvas, labels, datasets){
+  if(!canvas) return null;
+  const rect = canvas.parentElement ? canvas.parentElement.getBoundingClientRect() : null;
+  if(rect && rect.width > 0){
+    canvas.width = rect.width - 24;
+    canvas.height = rect.height - 24;
+  }
   const existing = Chart.getChart(canvas); if(existing) try{ existing.destroy(); }catch(e){}
   const id = canvas.id; if(tvState.charts[id]) try{ tvState.charts[id].destroy(); }catch(e){}
   const chart = new Chart(canvas.getContext('2d'), {
