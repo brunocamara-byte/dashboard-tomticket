@@ -417,85 +417,92 @@ Gestao.Online &nbsp;|&nbsp; Painel Estrategico - Time de Operacoes
 </div>
 
 
-<div id="tvMode" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;overflow:hidden;background:#F4F5F7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+<div id="tvMode" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:9999;background:#F4F5F7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;overflow:hidden;">
 
-  <!-- HEADER -->
-  <div style="background:#fff;border-bottom:3px solid #F8931D;padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 4px rgba(0,0,0,.06);">
-    <div style="display:flex;align-items:center;gap:24px;">
-      <img src="https://raw.githubusercontent.com/brunocamara-byte/dashboard-tomticket/main/logo-preto.png" alt="GO" style="height:64px;object-fit:contain;" onerror="this.style.display='none'">
-      <div style="width:1px;height:44px;background:#E8ECF0;"></div>
+  <!-- ══ HEADER ══════════════════════════════════════════════════ -->
+  <div id="tvHeader" style="height:72px;background:#fff;border-bottom:3px solid #F8931D;padding:0 40px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 4px rgba(0,0,0,.07);flex-shrink:0;">
+    <div style="display:flex;align-items:center;gap:20px;">
+      <img src="https://raw.githubusercontent.com/brunocamara-byte/dashboard-tomticket/main/logo-preto.png" alt="GO" style="height:48px;width:auto;object-fit:contain;" onerror="this.style.display='none'">
+      <div style="width:1px;height:36px;background:#E8ECF0;"></div>
       <div>
-        <div style="font-size:14px;font-weight:700;color:#172B4D;letter-spacing:.5px;text-transform:uppercase;">Painel Estratégico</div>
-        <div style="font-size:12px;color:#6B778C;letter-spacing:.3px;">Time de Operações</div>
+        <div style="font-size:15px;font-weight:700;color:#172B4D;letter-spacing:.3px;">PAINEL ESTRATÉGICO</div>
+        <div style="font-size:12px;color:#6B778C;margin-top:1px;">Time de Operações</div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:24px;">
+    <div style="display:flex;align-items:center;gap:20px;">
+      <!-- Seletor período -->
+      <div style="display:flex;gap:4px;background:#F4F5F7;border-radius:8px;padding:4px;">
+        <button id="tvPeriodBtn0" onclick="setTVPeriod(0)" style="padding:6px 14px;border-radius:6px;border:none;font-size:12px;font-weight:600;cursor:pointer;background:#F8931D;color:#fff;transition:all .2s;">Mês Atual</button>
+        <button id="tvPeriodBtn1" onclick="setTVPeriod(1)" style="padding:6px 14px;border-radius:6px;border:none;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:#6B778C;transition:all .2s;">60 dias</button>
+        <button id="tvPeriodBtn2" onclick="setTVPeriod(2)" style="padding:6px 14px;border-radius:6px;border:none;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:#6B778C;transition:all .2s;">90 dias</button>
+      </div>
+      <!-- Relógio -->
       <div style="text-align:right;">
-        <div id="tvClock" style="font-size:26px;font-weight:700;color:#172B4D;font-variant-numeric:tabular-nums;line-height:1;"></div>
-        <div id="tvDate" style="font-size:11px;color:#6B778C;margin-top:2px;"></div>
+        <div id="tvClock" style="font-size:28px;font-weight:700;color:#172B4D;font-variant-numeric:tabular-nums;line-height:1;"></div>
+        <div id="tvDate" style="font-size:11px;color:#97A0AF;margin-top:2px;"></div>
       </div>
-      <div style="text-align:right;border-left:1px solid #E8ECF0;padding-left:20px;">
-        <div id="tvNextUpdate" style="font-size:11px;color:#6B778C;"></div>
-        <div id="tvLastUpdate" style="font-size:10px;color:#97A0AF;margin-top:2px;"></div>
+      <!-- Atualização -->
+      <div style="text-align:right;padding-left:16px;border-left:1px solid #E8ECF0;">
+        <div id="tvLastUpdate" style="font-size:11px;color:#97A0AF;"></div>
+        <div id="tvNextUpdate" style="font-size:11px;color:#97A0AF;margin-top:1px;"></div>
       </div>
-      <div style="display:flex;gap:6px;background:#F4F5F7;border-radius:8px;padding:4px;">
-        <button id="tvPeriodBtn0" onclick="setTVPeriod(0)" style="padding:5px 12px;border-radius:6px;border:none;font-size:11px;font-weight:600;cursor:pointer;background:#F8931D;color:#fff;">Mês Atual</button>
-        <button id="tvPeriodBtn1" onclick="setTVPeriod(1)" style="padding:5px 12px;border-radius:6px;border:none;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:#6B778C;">60 dias</button>
-        <button id="tvPeriodBtn2" onclick="setTVPeriod(2)" style="padding:5px 12px;border-radius:6px;border:none;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:#6B778C;">90 dias</button>
-      </div>
-      <button onclick="toggleTVMode()" style="background:#F4F5F7;border:1px solid #DFE1E6;color:#6B778C;padding:7px 16px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;" onmouseover="this.style.background='#EBECF0'" onmouseout="this.style.background='#F4F5F7'">Sair</button>
+      <button onclick="toggleTVMode()" style="padding:7px 18px;background:#F4F5F7;border:1px solid #DFE1E6;color:#6B778C;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;">Sair</button>
     </div>
   </div>
 
-  <!-- KPI BAR -->
-  <div id="tvKpis" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:14px 32px;background:#fff;border-bottom:1px solid #E8ECF0;"></div>
+  <!-- ══ KPI BAR ════════════════════════════════════════════════ -->
+  <div id="tvKpis" style="height:88px;padding:10px 40px;display:grid;grid-template-columns:repeat(5,1fr);gap:12px;flex-shrink:0;"></div>
 
-  <!-- GRAFICOS ROTATIVOS -->
-  <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:16px;padding:16px 32px;height:calc(100vh - 230px);max-height:calc(100vh - 230px);">
+  <!-- ══ CONTEÚDO PRINCIPAL ══════════════════════════════════════ -->
+  <!-- Altura = 100vh - header(72) - kpibar(88) - footer(36) = calc(100vh - 196px) -->
+  <div style="height:calc(100vh - 196px);padding:0 40px 8px;display:grid;grid-template-columns:1.55fr 1fr;gap:16px;box-sizing:border-box;">
 
-    <!-- Destaque esquerda -->
-    <div style="background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);border:1px solid #E8ECF0;display:flex;flex-direction:column;min-height:0;overflow:hidden;">
-      <div style="padding:14px 20px 10px;border-bottom:1px solid #F4F5F7;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;">
+    <!-- GRÁFICO PRINCIPAL -->
+    <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(9,30,66,.08);border:1px solid #EBECF0;display:flex;flex-direction:column;overflow:hidden;min-height:0;">
+      <div style="padding:14px 20px 10px;border-bottom:1px solid #F4F5F7;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
         <div id="tvChartMainTitle" style="font-size:13px;font-weight:600;color:#172B4D;"></div>
-        <div id="tvRotacaoIndicador" style="display:flex;gap:6px;"></div>
+        <div id="tvRotacaoIndicador" style="display:flex;gap:5px;align-items:center;"></div>
       </div>
-      <div style="flex:1;padding:16px 20px;position:relative;min-height:0;overflow:hidden;">
-        <canvas id="tvChartMain" style="position:absolute;top:16px;left:20px;right:20px;bottom:16px;width:calc(100% - 40px) !important;height:calc(100% - 32px) !important;"></canvas>
-        <div id="tvHeatmapMain" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden;"></div>
+      <!-- Canvas container com posição relativa e tamanho fixo -->
+      <div style="flex:1;position:relative;min-height:0;padding:16px;">
+        <canvas id="tvChartMain" style="position:absolute;inset:16px;"></canvas>
+        <div id="tvHeatmapMain" style="display:none;position:absolute;inset:8px;overflow:hidden;"></div>
       </div>
     </div>
 
-    <!-- Dois menores direita -->
-    <div style="display:flex;flex-direction:column;gap:16px;min-height:0;overflow:hidden;">
-      <div style="background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);border:1px solid #E8ECF0;flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;">
-        <div style="padding:10px 16px 8px;border-bottom:1px solid #F4F5F7;flex-shrink:0;">
+    <!-- COLUNA DIREITA: 2 gráficos -->
+    <div style="display:flex;flex-direction:column;gap:14px;min-height:0;overflow:hidden;">
+      <!-- Sec 1 -->
+      <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(9,30,66,.08);border:1px solid #EBECF0;flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;">
+        <div style="padding:12px 16px 8px;border-bottom:1px solid #F4F5F7;flex-shrink:0;">
           <div id="tvChartSec1Title" style="font-size:12px;font-weight:600;color:#172B4D;"></div>
         </div>
-        <div style="flex:1;padding:10px 16px;position:relative;min-height:0;overflow:hidden;">
-          <canvas id="tvChartSec1" style="position:absolute;top:10px;left:16px;right:16px;bottom:10px;width:calc(100% - 32px) !important;height:calc(100% - 20px) !important;"></canvas>
+        <div style="flex:1;position:relative;min-height:0;padding:12px;">
+          <canvas id="tvChartSec1" style="position:absolute;inset:12px;"></canvas>
         </div>
       </div>
-      <div style="background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.08);border:1px solid #E8ECF0;flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;">
-        <div style="padding:10px 16px 8px;border-bottom:1px solid #F4F5F7;flex-shrink:0;">
+      <!-- Sec 2 -->
+      <div id="tvSec2Card" style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(9,30,66,.08);border:1px solid #EBECF0;flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;">
+        <div style="padding:12px 16px 8px;border-bottom:1px solid #F4F5F7;flex-shrink:0;">
           <div id="tvChartSec2Title" style="font-size:12px;font-weight:600;color:#172B4D;"></div>
         </div>
-        <div style="flex:1;padding:10px 16px;position:relative;min-height:0;overflow:hidden;">
-          <canvas id="tvChartSec2" style="position:absolute;top:10px;left:16px;right:16px;bottom:10px;width:calc(100% - 32px) !important;height:calc(100% - 20px) !important;"></canvas>
+        <div id="tvSec2Body" style="flex:1;position:relative;min-height:0;padding:12px;">
+          <canvas id="tvChartSec2" style="position:absolute;inset:12px;"></canvas>
         </div>
       </div>
     </div>
 
   </div>
 
-  <!-- PROGRESS BAR rotacao -->
-  <div style="position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #E8ECF0;padding:6px 32px;display:flex;align-items:center;gap:16px;">
-    <button onclick="tvPrevSlide()" style="background:#F4F5F7;border:1px solid #DFE1E6;color:#6B778C;padding:4px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:600;" title="Slide anterior">&larr;</button>
-    <div style="font-size:11px;color:#6B778C;white-space:nowrap;">Rotação automática</div>
-    <div style="flex:1;background:#E8ECF0;border-radius:4px;height:4px;overflow:hidden;">
-      <div id="tvProgressBar" style="height:100%;background:linear-gradient(90deg,#F8931D,#e07a10);border-radius:4px;transition:width .1s linear;width:0%;"></div>
+  <!-- ══ FOOTER / PROGRESSO ══════════════════════════════════════ -->
+  <div style="height:36px;background:#fff;border-top:1px solid #EBECF0;padding:0 40px;display:flex;align-items:center;gap:16px;flex-shrink:0;">
+    <button onclick="tvPrevSlide()" style="background:#F4F5F7;border:1px solid #DFE1E6;color:#6B778C;width:26px;height:26px;border-radius:6px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;">&#8592;</button>
+    <div style="font-size:11px;color:#97A0AF;white-space:nowrap;">Rotação automática</div>
+    <div style="flex:1;background:#EBECF0;border-radius:4px;height:3px;overflow:hidden;">
+      <div id="tvProgressBar" style="height:100%;background:#F8931D;border-radius:4px;width:0%;transition:width .1s linear;"></div>
     </div>
-    <div id="tvRotacaoTexto" style="font-size:11px;color:#6B778C;white-space:nowrap;"></div>
-    <button onclick="tvNextSlide()" style="background:#F8931D;border:none;color:#fff;padding:4px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:600;" title="Próximo slide">&rarr;</button>
+    <div id="tvRotacaoTexto" style="font-size:11px;color:#97A0AF;white-space:nowrap;min-width:90px;text-align:right;"></div>
+    <button onclick="tvNextSlide()" style="background:#F8931D;border:none;color:#fff;width:26px;height:26px;border-radius:6px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;">&#8594;</button>
   </div>
 
 </div>
@@ -1725,92 +1732,28 @@ function createDigisacCharts(){
 }
 
 // ================================================================
-// MODO TV - PAINEL ESTRATÉGICO
-// Visual Freshdesk/Zendesk - fundo claro, profissional
+// MODO TV - REESCRITA COMPLETA
+// Target: 1920x1080 Full HD | Visual Freshdesk/Zendesk
 // ================================================================
 
 var tvState = {
   interval: null,
   progressInterval: null,
-  countdown: 180,
   totalTime: 180,
   currentSlide: 0,
   charts: {},
   slides: [],
-  periodo: 0  // 0=mes atual, 1=60 dias, 2=90 dias
+  periodo: 0
 };
 
-function setTVPeriod(p){
-  tvState.periodo = p;
-  // Atualizar botões
-  [0,1,2].forEach(i=>{
-    const btn=document.getElementById('tvPeriodBtn'+i);
-    if(!btn)return;
-    if(i===p){btn.style.background='#F8931D';btn.style.color='#fff';}
-    else{btn.style.background='transparent';btn.style.color='#6B778C';}
-  });
-  // Destruir todos os charts antes de rebuildar
-  Object.values(tvState.charts).forEach(c=>{try{c.destroy();}catch(e){}});
-  tvState.charts = {};
-  // Rebuildar KPIs e slides com novos dados
-  renderTVKpis();
-  buildTVSlides();
-  tvState.currentSlide = 0;
-  renderTVSlide(0);
-  // Resetar barra de progresso
-  startTVRotation();
-}
-
-function getTVBaseData(){
-  // Retorna dados filtrados pelo período selecionado
-  const now = new Date();
-  if(tvState.periodo === 0){
-    // Mês atual
-    const mesAtual = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
-    return allData.filter(d => d.dataCriacao && d.dataCriacao.substring(0,7) === mesAtual);
-  } else {
-    const dias = tvState.periodo === 1 ? 60 : 90;
-    const limite = new Date(now);
-    limite.setDate(limite.getDate() - dias);
-    const limiteStr = limite.toISOString().split('T')[0];
-    return allData.filter(d => {
-      const dt = parseDateStr(d.dataCriacao)||d.dataCriacao;
-      return dt && dt >= limiteStr;
-    });
-  }
-}
-
-function getTVPeriodLabel(){
-  if(tvState.periodo === 0) return 'Mês Atual';
-  if(tvState.periodo === 1) return 'Últimos 60 dias';
-  return 'Últimos 90 dias';
-}
-
-function getTVDigisacBase(){
-  if(!digisacData || digisacData.length === 0) return [];
-  const now = new Date();
-  if(tvState.periodo === 0){
-    const mesAtual = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
-    return digisacData.filter(d => {const dt=parseDateStr(d.dataInicio); return dt && dt.substring(0,7) === mesAtual;});
-  } else {
-    const dias = tvState.periodo === 1 ? 60 : 90;
-    const limite = new Date(now);
-    limite.setDate(limite.getDate() - dias);
-    const limiteStr = limite.toISOString().split('T')[0];
-    return digisacData.filter(d => {
-      const dt=parseDateStr(d.dataInicio);
-      return dt && dt >= limiteStr;
-    });
-  }
-}
-
+// ─── Toggle ──────────────────────────────────────────────────────
 function toggleTVMode(){
   const tv = document.getElementById('tvMode');
   const isTV = tv.style.display !== 'none';
   if(isTV){
+    stopTV();
     tv.style.display = 'none';
     document.getElementById('btnTV').innerHTML = '&#128250; Modo TV';
-    stopTV();
   } else {
     tv.style.display = 'block';
     document.getElementById('btnTV').innerHTML = 'Sair TV';
@@ -1821,600 +1764,606 @@ function toggleTVMode(){
 function stopTV(){
   if(tvState.interval) clearInterval(tvState.interval);
   if(tvState.progressInterval) clearInterval(tvState.progressInterval);
-  Object.values(tvState.charts).forEach(c=>{try{c.destroy();}catch(e){}});
-  tvState.charts = {};
+  tvDestroyAllCharts();
 }
 
 function startTV(){
   stopTV();
   updateTVClock();
-  setInterval(updateTVClock, 1000);
+  if(!tvState._clockInterval) tvState._clockInterval = setInterval(updateTVClock, 1000);
   renderTVKpis();
   buildTVSlides();
-  renderTVSlide(0);
+  tvGoToSlide(0);
   startTVRotation();
-  const now = new Date();
   const el = document.getElementById('tvLastUpdate');
+  const now = new Date();
   if(el) el.textContent = 'Atualizado às ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
 }
 
+// ─── Período ─────────────────────────────────────────────────────
+function setTVPeriod(p){
+  tvState.periodo = p;
+  [0,1,2].forEach(i => {
+    const b = document.getElementById('tvPeriodBtn' + i);
+    if(!b) return;
+    b.style.background = i === p ? '#F8931D' : 'transparent';
+    b.style.color = i === p ? '#fff' : '#6B778C';
+  });
+  stopTV();
+  renderTVKpis();
+  buildTVSlides();
+  tvGoToSlide(0);
+  startTVRotation();
+}
+
+function getTVBaseData(){
+  const now = new Date();
+  if(tvState.periodo === 0){
+    const m = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+    return allData.filter(d => d.dataCriacao && d.dataCriacao.substring(0,7) === m);
+  }
+  const dias = tvState.periodo === 1 ? 60 : 90;
+  const lim = new Date(now); lim.setDate(lim.getDate() - dias);
+  const limStr = lim.toISOString().split('T')[0];
+  return allData.filter(d => { const dt = d.dataCriacao; return dt && dt >= limStr; });
+}
+
+function getTVDigisacBase(){
+  if(!digisacData || digisacData.length === 0) return [];
+  const now = new Date();
+  if(tvState.periodo === 0){
+    const m = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+    return digisacData.filter(d => { const dt = parseDateStr(d.dataInicio); return dt && dt.substring(0,7) === m; });
+  }
+  const dias = tvState.periodo === 1 ? 60 : 90;
+  const lim = new Date(now); lim.setDate(lim.getDate() - dias);
+  const limStr = lim.toISOString().split('T')[0];
+  return digisacData.filter(d => { const dt = parseDateStr(d.dataInicio); return dt && dt >= limStr; });
+}
+
+function getTVPeriodLabel(){
+  return ['Mês Atual','Últimos 60 dias','Últimos 90 dias'][tvState.periodo];
+}
+
+// ─── Relógio ─────────────────────────────────────────────────────
 function updateTVClock(){
   const now = new Date();
-  const h = String(now.getHours()).padStart(2,'0');
-  const m = String(now.getMinutes()).padStart(2,'0');
-  const s = String(now.getSeconds()).padStart(2,'0');
+  const pad = n => String(n).padStart(2,'0');
   const el = document.getElementById('tvClock');
-  if(el) el.textContent = h + ':' + m + ':' + s;
+  if(el) el.textContent = pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
   const dias = ['Domingo','Segunda','Terca','Quarta','Quinta','Sexta','Sabado'];
   const meses = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const d = document.getElementById('tvDate');
   if(d) d.textContent = dias[now.getDay()] + ', ' + now.getDate() + ' de ' + meses[now.getMonth()] + ' de ' + now.getFullYear();
 }
 
-// ================================================================
-// KPIs do topo
-// ================================================================
+// ─── KPIs ─────────────────────────────────────────────────────────
 function renderTVKpis(){
-  if(!allData || allData.length === 0) return;
-  const doMes = getTVBaseData();
-  const periodLabel = getTVPeriodLabel();
+  const base = getTVBaseData();
+  const label = getTVPeriodLabel();
   const naoIniciados = allData.filter(d => d.ultimaSituacao && d.ultimaSituacao.toLowerCase().includes('iniciada'));
   const aguardCliente = allData.filter(d => d.ultimaSituacao && d.ultimaSituacao.toLowerCase().includes('aguardando resposta do cliente'));
-  const fechMes = doMes.filter(d => d.ultimaSituacao && d.ultimaSituacao.toLowerCase().includes('finaliz'));
-  const reabMes = doMes.filter(d => d.reaberto === 'Sim').length;
-  const taxaReab = doMes.length > 0 ? (reabMes/doMes.length*100).toFixed(1) : 0;
-  const abertosMes = doMes.filter(d => !d.ultimaSituacao || !d.ultimaSituacao.toLowerCase().includes('finaliz'));
+  const fechados = base.filter(d => d.ultimaSituacao && d.ultimaSituacao.toLowerCase().includes('finaliz'));
+  const reab = base.filter(d => d.reaberto === 'Sim').length;
+  const taxa = base.length > 0 ? (reab / base.length * 100).toFixed(1) : 0;
+  const abertos = base.filter(d => !d.ultimaSituacao || !d.ultimaSituacao.toLowerCase().includes('finaliz'));
 
   const kpis = [
-    {icon:'📋', label:'Abertos no Mês', value: abertosMes.length, sub: doMes.length + ' total | ' + periodLabel, color:'#F8931D'},
-    {icon:'&#9203;', label:'Aguard. Atendimento', value: naoIniciados.length, sub: 'Não iniciados', color:'#E74C3C'},
-    {icon:'💬', label:'Aguard. Cliente', value: aguardCliente.length, sub: 'Aguardando retorno', color:'#F39C12'},
-    {icon:'✅', label:'Fechados no Mês', value: fechMes.length, sub: 'Finalizados', color:'#27AE60'},
-    {icon:'🔄', label:'Taxa Reabertura', value: taxaReab + '%', sub: reabMes + ' reabertos', color:'#9B59B6'}
+    { icon:'&#128203;', label:'Abertos', value: abertos.length, sub: base.length + ' total | ' + label, color:'#F8931D' },
+    { icon:'&#9203;', label:'Aguard. Atendimento', value: naoIniciados.length, sub: 'Não iniciados', color:'#E74C3C' },
+    { icon:'&#128172;', label:'Aguard. Cliente', value: aguardCliente.length, sub: 'Aguardando retorno', color:'#F39C12' },
+    { icon:'&#9989;', label:'Fechados', value: fechados.length, sub: 'Finalizados no período', color:'#27AE60' },
+    { icon:'&#128260;', label:'Taxa Reabertura', value: taxa + '%', sub: reab + ' reabertos', color:'#9B59B6' }
   ];
 
   const el = document.getElementById('tvKpis');
   if(!el) return;
   el.innerHTML = kpis.map(k => `
-    <div style="display:flex;align-items:center;gap:12px;padding:8px 16px;background:#fff;border-radius:8px;border-left:3px solid ${k.color};box-shadow:0 1px 3px rgba(0,0,0,.06);">
-      <div style="font-size:22px;">${k.icon}</div>
+    <div style="background:#fff;border-radius:10px;border:1px solid #EBECF0;border-left:4px solid ${k.color};padding:8px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 3px rgba(9,30,66,.06);">
+      <div style="font-size:26px;line-height:1;">${k.icon}</div>
       <div>
-        <div style="font-size:9px;font-weight:600;color:#6B778C;text-transform:uppercase;letter-spacing:.8px;margin-bottom:1px;">${k.label}</div>
-        <div style="font-size:28px;font-weight:700;color:${k.color};line-height:1;">${k.value}</div>
-        <div style="font-size:10px;color:#97A0AF;margin-top:1px;">${k.sub}</div>
+        <div style="font-size:9px;font-weight:700;color:#97A0AF;text-transform:uppercase;letter-spacing:.8px;margin-bottom:1px;">${k.label}</div>
+        <div style="font-size:30px;font-weight:700;color:${k.color};line-height:1;">${k.value}</div>
+        <div style="font-size:10px;color:#97A0AF;margin-top:2px;">${k.sub}</div>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-// ================================================================
-// SLIDES - definição dos 8 gráficos rotativos
-// ================================================================
-function buildTVSlides(){
-  const doMes = getTVBaseData();
-  const periodLabel = getTVPeriodLabel();
-
-  // Últimos 14 dias
-  const hoje = new Date();
-  const dias14 = Array.from({length:14}, (_,i) => {
-    const d = new Date(hoje); d.setDate(d.getDate()-(13-i));
-    return d.toISOString().split('T')[0];
+// ─── Destruir charts ──────────────────────────────────────────────
+function tvDestroyAllCharts(){
+  ['tvChartMain','tvChartSec1','tvChartSec2'].forEach(id => {
+    const canvas = document.getElementById(id);
+    if(canvas){ const c = Chart.getChart(canvas); if(c) try{ c.destroy(); }catch(e){} }
   });
-
-  tvState.slides = [
-    {
-      id: 's1',
-      mainTitle: 'Abertos vs Fechados  -  ' + periodLabel + ' (14 dias recentes)',
-      sec1Title: 'Aguardando por Atendente',
-      sec2Title: 'Situação Atual dos Tickets',
-      buildMain: (ctx) => buildTVBar(ctx,
-        dias14.map(d => d.substring(5)),
-        [
-          {label:'Abertos', data: dias14.map(d => allData.filter(x => parseDateStr(x.dataCriacao) === d).length), backgroundColor:'#F8931D', borderRadius:4},
-          {label:'Fechados', data: dias14.map(d => allData.filter(x => parseDateStr(x.dataFinalizacao) === d).length), backgroundColor:'#27AE60', borderRadius:4}
-        ], false
-      ),
-      buildSec1: (ctx) => {
-        const byAtend = {};
-        allData.filter(d => d.ultimaSituacao && (d.ultimaSituacao.toLowerCase().includes('iniciada') || d.ultimaSituacao.toLowerCase().includes('aguardando'))).forEach(d => {if(d.atendente) byAtend[d.atendente] = (byAtend[d.atendente]||0)+1;});
-        const sorted = Object.entries(byAtend).sort((a,b) => b[1]-a[1]).slice(0,6);
-        return buildTVBarH(ctx, sorted.map(s=>s[0].split(' ')[0]), sorted.map(s=>s[1]), '#E74C3C');
-      },
-      buildSec2: (ctx) => {
-        const sit = {};
-        allData.filter(d => d.ultimaSituacao && !d.ultimaSituacao.toLowerCase().includes('finaliz') && !d.ultimaSituacao.toLowerCase().includes('cancelad')).forEach(d => {sit[d.ultimaSituacao]=(sit[d.ultimaSituacao]||0)+1;});
-        const sorted = Object.entries(sit).sort((a,b) => b[1]-a[1]);
-        return buildTVDoughnut(ctx, sorted.map(s=>s[0].substring(0,22)), sorted.map(s=>s[1]));
-      }
-    },
-    {
-      id: 'sd',
-      mainTitle: 'Chat Digisac - Volume de Atendimentos',
-      sec1Title: 'Tempo Medio por Atendente (min)',
-      sec2Title: 'Resumo do Mes - Chat',
-      buildMain: (ctx) => {
-        const existing=Chart.getChart(ctx);if(existing)try{existing.destroy();}catch(e){}
-        if(tvState.charts['main'])try{tvState.charts['main'].destroy();}catch(e){}
-        if(!digisacData||digisacData.length===0){
-          const chart=new Chart(ctx.getContext('2d'),{type:'bar',data:{labels:['Sem dados Digisac'],datasets:[{data:[0],backgroundColor:'#DFE1E6'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
-          tvState.charts['main']=chart;return chart;
-        }
-        const baseDgMain=getTVDigisacBase();
-        const hoje=new Date();
-        const nDias=tvState.periodo===0?30:tvState.periodo===1?60:90;
-        const dias30=Array.from({length:nDias},(_,i)=>{const d=new Date(hoje);d.setDate(d.getDate()-(nDias-1-i));return d.toISOString().split('T')[0];});
-        const byDia={};
-        baseDgMain.forEach(d=>{const dt=parseDateStr(d.dataInicio);if(dt)byDia[dt]=(byDia[dt]||0)+1;});
-        const chart=new Chart(ctx.getContext('2d'),{
-          type:'bar',
-          data:{labels:dias30.map(d=>d.substring(5)),datasets:[{label:'Atendimentos',data:dias30.map(d=>byDia[d]||0),backgroundColor:dias30.map(d=>{const dow=new Date(d+'T12:00:00').getDay();return dow===0||dow===6?'#DFE1E6':'#1ABC9C';}),borderRadius:3}]},
-          plugins:[{id:'barLabels',afterDatasetsDraw(chart){
-            const ctx2=chart.ctx;
-            chart.data.datasets.forEach((dataset,i)=>{
-              const meta=chart.getDatasetMeta(i);
-              meta.data.forEach((bar,j)=>{
-                const val=dataset.data[j];
-                if(!val||val===0)return;
-                ctx2.fillStyle='#172B4D';
-                ctx2.font='bold 11px -apple-system,sans-serif';
-                ctx2.textAlign='center';
-                ctx2.textBaseline='bottom';
-                ctx2.fillText(val,bar.x,bar.y-3);
-              });
-            });
-          }}],
-          options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9},color:'#6B778C',maxTicksLimit:15},grid:{color:'#F4F5F7'}},y:{ticks:{font:{size:10},color:'#6B778C'},grid:{color:'#F4F5F7'}}}}
-        });
-        tvState.charts['main']=chart;return chart;
-      },
-      buildSec1: (ctx) => {
-        if(!digisacData||digisacData.length===0) return buildTVBarH(ctx,['Sem dados'],[0],'#DFE1E6');
-        const baseDgSec=getTVDigisacBase();
-        const atends=[...new Set(baseDgSec.map(d=>d.atendente).filter(Boolean))];
-        const tempoAt=atends.map(a=>{const rows=baseDgSec.filter(d=>d.atendente===a&&d.tempoTotalSeg>0);return {n:a.split(' ')[0],v:rows.length?Math.round(rows.reduce((s,d)=>s+d.tempoTotalSeg,0)/rows.length/60):0};}).filter(a=>a.v>0).sort((a,b)=>b.v-a.v).slice(0,6);
-        return buildTVBarH(ctx,tempoAt.map(a=>a.n),tempoAt.map(a=>a.v),'#F8931D');
-      },
-      buildSec2: (ctx) => {
-        const baseDg=getTVDigisacBase();
-        const oldOverlay=document.getElementById('tvDgOverlay');
-        if(oldOverlay) oldOverlay.remove();
-        const ctxParent=ctx.parentElement;
-        if(ctxParent){ctxParent.style.display='grid';ctxParent.style.gridTemplateColumns='1fr 1fr';ctxParent.style.gap='12px';ctxParent.style.alignItems='center';}
-
-        const sec2Title=document.getElementById('tvChartSec2Title');
-        if(sec2Title) sec2Title.textContent='Resumo - '+getTVPeriodLabel();
-
-        if(baseDg.length===0){
-          const tipos={'Sem dados':1};
-          return buildTVDoughnut(ctx,['Sem dados'],[1]);
-        }
-
-        const comTempo=baseDg.filter(d=>d.tempoTotalSeg>0);
-        const tempoMed=comTempo.length?Math.round(comTempo.reduce((s,d)=>s+d.tempoTotalSeg,0)/comTempo.length/60):0;
-        const diasUnicos=new Set(baseDg.map(d=>parseDateStr(d.dataInicio)).filter(Boolean));
-        const mediaDia=diasUnicos.size>0?Math.round(baseDg.length/diasUnicos.size):0;
-        const comEspera=baseDg.filter(d=>d.primeiroTempoEsperaSeg>0);
-        const esperaMed=comEspera.length?Math.round(comEspera.reduce((s,d)=>s+d.primeiroTempoEsperaSeg,0)/comEspera.length/60):0;
-        const enc=baseDg.filter(d=>d.dataEncerramento&&d.dataEncerramento.trim()!=='').length;
-        const pctEnc=baseDg.length>0?Math.round(enc/baseDg.length*100):0;
-        const recep=baseDg.filter(d=>d.tipo==='Receptivo').length;
-        const pctRecep=baseDg.length>0?Math.round(recep/baseDg.length*100):0;
-
-        ctx.style.maxHeight='180px';
-
-        const overlay=document.createElement('div');
-        overlay.id='tvDgOverlay';
-        overlay.style.cssText='display:flex;flex-direction:column;gap:7px;';
-        const cards=[
-          {l:'Total Atend.',v:baseDg.length,c:'#172B4D',i:'&#128172;'},
-          {l:'Media/dia',v:mediaDia,c:'#1ABC9C',i:'&#128197;'},
-          {l:'TMA',v:tempoMed+'min',c:'#F8931D',i:'&#9203;'},
-          {l:'1a Espera',v:esperaMed+'min',c:'#E74C3C',i:'&#8987;'},
-          {l:'Encerrados',v:pctEnc+'%',c:'#27AE60',i:'&#9989;'},
-          {l:'Receptivo',v:pctRecep+'%',c:'#3498DB',i:'&#128242;'}
-        ];
-        overlay.innerHTML=cards.map(m=>`<div style="display:flex;align-items:center;gap:8px;background:#F8F9FA;border-radius:7px;padding:6px 10px;border-left:3px solid ${m.c};"><span style="font-size:14px;">${m.i}</span><div><div style="font-size:9px;color:#6B778C;text-transform:uppercase;letter-spacing:.5px;font-weight:600;">${m.l}</div><div style="font-size:17px;font-weight:700;color:${m.c};line-height:1.1;">${m.v}</div></div></div>`).join('');
-        if(ctxParent) ctxParent.appendChild(overlay);
-
-        const tipos=countBy(baseDg,'tipo');
-        return buildTVDoughnut(ctx,Object.keys(tipos).length?Object.keys(tipos):['Total'],Object.values(tipos).length?Object.values(tipos):[baseDg.length]);
-      }
-    },
-    {
-      id: 's2',
-      mainTitle: 'Top Categorias  -  ' + periodLabel,
-      sec1Title: 'Distribuição por Tipo',
-      sec2Title: 'Top Origens de Demanda',
-      buildMain: (ctx) => {
-        const cats = Object.entries(countBy(doMes,'categoria')).sort((a,b)=>b[1]-a[1]).slice(0,10);
-        return buildTVBarH(ctx, cats.map(c=>c[0].length>22?c[0].substring(0,22)+'...':c[0]), cats.map(c=>c[1]), '#F8931D');
-      },
-      buildSec1: (ctx) => {
-        const tipos = countBy(doMes,'tipo');
-        return buildTVDoughnut(ctx, Object.keys(tipos), Object.values(tipos));
-      },
-      buildSec2: (ctx) => {
-        const orig = Object.entries(countBy(doMes,'origemDemanda')).filter(x=>x[0]).sort((a,b)=>b[1]-a[1]).slice(0,6);
-        return buildTVBarH(ctx, orig.map(o=>o[0].length>20?o[0].substring(0,20)+'...':o[0]), orig.map(o=>o[1]), '#9B59B6');
-      }
-    },
-    {
-      id: 's3',
-      mainTitle: 'Top 10 Clientes  -  ' + periodLabel,
-      sec1Title: 'Canal de Entrada',
-      sec2Title: 'Top Atendentes',
-      buildMain: (ctx) => {
-        const byOrg = countBy(doMes,'organizacao');
-        const clientes = Object.entries(byOrg).filter(x=>x[0]&&x[0].trim()).sort((a,b)=>b[1]-a[1]).slice(0,10);
-        const media = clientes.length > 0 ? clientes.reduce((s,c)=>s+c[1],0)/clientes.length : 0;
-        if(tvState.charts['main']) try{tvState.charts['main'].destroy();}catch(e){}
-        const chart = new Chart(ctx.getContext('2d'),{
-          type:'bar',
-          data:{
-            labels: clientes.map(c=>c[0].length>22?c[0].substring(0,22)+'...':c[0]),
-            datasets:[{
-              label:'Chamados',
-              data: clientes.map(c=>c[1]),
-              backgroundColor: clientes.map(c=>c[1]>media?'#E74C3C':'#F8931D'),
-              borderRadius:4
-            }]
-          },
-          options:{
-            responsive:true,maintainAspectRatio:false,indexAxis:'y',
-            plugins:{legend:{display:false}},
-            scales:{
-              y:{ticks:{font:{size:11},color:'#6B778C'}},
-              x:{ticks:{font:{size:10},color:'#6B778C',maxTicksLimit:6},grid:{color:'#F4F5F7'}}
-            }
-          }
-        });
-        tvState.charts['main']=chart;
-        return chart;
-      },
-      buildSec1: (ctx) => {
-        const canais = countBy(doMes,'origemCanal');
-        return buildTVDoughnut(ctx, Object.keys(canais), Object.values(canais));
-      },
-      buildSec2: (ctx) => {
-        const atend = Object.entries(countBy(doMes,'atendente')).sort((a,b)=>b[1]-a[1]).slice(0,6);
-        return buildTVBarH(ctx, atend.map(a=>a[0].split(' ')[0]), atend.map(a=>a[1]), '#3498DB');
-      }
-    },
-    {
-      id: 'sstr',
-      mainTitle: 'Chamados por Periodo - Origem do Chamado',
-      sec1Title: 'Qual modulo precisa de atencao?',
-      sec2Title: 'Onde direcionar energia?',
-      buildMain: (ctx) => {
-        const base=getTVBaseData();
-        const origens=[...new Set(base.map(d=>d.origemCanal).filter(Boolean))].sort();
-        const cores=getPaleta(origens.length);
-        // Agrupar por dia ou semana dependendo do periodo
-        const hoje=new Date();
-        let keys=[];
-        if(tvState.periodo===0){
-          // Mes atual - por dia
-          const now2=new Date();
-          const y=now2.getFullYear(),m=String(now2.getMonth()+1).padStart(2,'0');
-          const lastDay=new Date(y,now2.getMonth()+1,0).getDate();
-          for(let d=1;d<=lastDay;d++) keys.push(`${y}-${m}-${String(d).padStart(2,'0')}`);
-        } else {
-          // 60/90 dias - por semana (grupos de 7 dias)
-          const nDias=tvState.periodo===1?60:90;
-          for(let i=nDias-1;i>=0;i--){const d=new Date(hoje);d.setDate(d.getDate()-i);keys.push(d.toISOString().split('T')[0]);}
-          // Reduzir para semanas
-          const semanas={};
-          keys.forEach(k=>{const d=new Date(k);const sem=Math.floor((new Date(hoje)-d)/(7*24*3600*1000));const label='S-'+sem;semanas[label]=(semanas[label]||[]);semanas[label].push(k);});
-          keys=Object.keys(semanas).reverse();
-          // Usar keys diarios mas limitar a 30 pontos
-          const nDias2=tvState.periodo===1?60:90;
-          keys=[];
-          for(let i=nDias2-1;i>=0;i-=Math.ceil(nDias2/30)){const d=new Date(hoje);d.setDate(d.getDate()-i);keys.push(d.toISOString().split('T')[0]);}
-        }
-        const datasets=origens.map((orig,i)=>{
-          const byKey={};
-          base.filter(d=>d.origemCanal===orig).forEach(d=>{
-            const dt=parseDateStr(d.dataCriacao);
-            if(!dt)return;
-            // Achar key mais proxima
-            const key=keys.reduce((a,b)=>Math.abs(new Date(b)-new Date(dt))<Math.abs(new Date(a)-new Date(dt))?b:a,keys[0]);
-            byKey[key]=(byKey[key]||0)+1;
-          });
-          return {label:orig,data:keys.map(k=>byKey[k]||0),borderColor:cores[i],backgroundColor:'transparent',tension:0.4,borderWidth:2,pointRadius:tvState.periodo===0?3:2,pointHoverRadius:5};
-        });
-        const existing=Chart.getChart(ctx);if(existing)try{existing.destroy();}catch(e){}
-        if(tvState.charts['main'])try{tvState.charts['main'].destroy();}catch(e){}
-        const chart=new Chart(ctx.getContext('2d'),{
-          type:'line',
-          data:{labels:keys.map(k=>k.substring(5)),datasets},
-          options:{
-            responsive:true,maintainAspectRatio:false,
-            interaction:{mode:'index',intersect:false},
-            plugins:{legend:{display:true,position:'bottom',labels:{font:{size:10},boxWidth:10,color:'#6B778C',padding:8}}},
-            scales:{
-              x:{ticks:{font:{size:9},color:'#6B778C',maxTicksLimit:15},grid:{color:'#F4F5F7'}},
-              y:{ticks:{font:{size:10},color:'#6B778C'},grid:{color:'#F4F5F7'}}
-            }
-          }
-        });
-        tvState.charts['main']=chart;
-        return chart;
-      },
-      buildSec1: (ctx) => {
-        const base=getTVBaseData();
-        const topCats=Object.entries(countBy(base,'categoria')).sort((a,b)=>b[1]-a[1]).slice(0,8);
-        const tipos=[...new Set(base.map(d=>d.tipo).filter(Boolean))];
-        const cores=getPaleta(tipos.length);
-        const dsCT=tipos.map((t,i)=>({label:t,data:topCats.map(c=>base.filter(d=>d.categoria===c[0]&&d.tipo===t).length),backgroundColor:cores[i]}));
-        const topCatsFilt=topCats.filter(c=>dsCT.some(ds=>ds.data[topCats.indexOf(c)]>0));
-        const dsCTFilt=dsCT.map(ds=>({...ds,data:topCatsFilt.map(c=>ds.data[topCats.indexOf(c)])})).filter(ds=>ds.data.some(v=>v>0));
-        const existing=Chart.getChart(ctx);if(existing)try{existing.destroy();}catch(e){}
-        const id=ctx.id;if(tvState.charts[id])try{tvState.charts[id].destroy();}catch(e){}
-        const chart=new Chart(ctx.getContext('2d'),{
-          type:'bar',
-          data:{labels:topCatsFilt.map(c=>c[0].length>16?c[0].substring(0,16)+'...':c[0]),datasets:dsCTFilt},
-          options:{
-            responsive:true,maintainAspectRatio:false,indexAxis:'y',
-            plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:8,color:'#6B778C'}}},
-            scales:{x:{stacked:true,ticks:{font:{size:9},color:'#6B778C'}},y:{stacked:true,ticks:{font:{size:9},color:'#6B778C'}}}
-          }
-        });
-        tvState.charts[id]=chart;return chart;
-      },
-      buildSec2: (ctx) => {
-        const base=getTVBaseData();
-        const dev=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('defeito')).length;
-        const proc=base.filter(d=>d.tipo&&d.tipo.toLowerCase().includes('incidente')&&(!d.origemDemanda||!d.origemDemanda.toLowerCase().includes('defeito'))).length;
-        const train=base.filter(d=>d.origemDemanda&&(d.origemDemanda.toLowerCase().includes('gap')||d.origemDemanda.toLowerCase().includes('comportamento'))).length;
-        const ext=base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('depend')).length;
-        const decisao=[
-          {l:'Dev: Defeito confirmado',v:dev,c:'#9B59B6'},
-          {l:'Processo/Usabilidade',v:proc,c:'#E74C3C'},
-          {l:'Treinamento: GAP',v:train,c:'#F8931D'},
-          {l:'Dep. externa',v:ext,c:'#3498DB'}
-        ].filter(d=>d.v>0);
-        if(decisao.length===0) return buildTVDoughnut(ctx,['Sem dados'],[1]);
-        const existing=Chart.getChart(ctx);if(existing)try{existing.destroy();}catch(e){}
-        const id=ctx.id;if(tvState.charts[id])try{tvState.charts[id].destroy();}catch(e){}
-        const barLabelPlugin2={id:'bLP2',afterDatasetsDraw(chart){
-          const c2=chart.ctx;
-          chart.data.datasets.forEach((ds,i)=>{
-            chart.getDatasetMeta(i).data.forEach((bar,j)=>{
-              const v=ds.data[j];if(!v||v===0)return;
-              c2.fillStyle='#172B4D';c2.font='bold 11px -apple-system,sans-serif';
-              c2.textAlign='left';c2.textBaseline='middle';
-              c2.fillText(v+' tickets',bar.x+4,bar.y);
-            });
-          });
-        }};
-        const chart=new Chart(ctx.getContext('2d'),{
-          type:'bar',
-          data:{labels:decisao.map(d=>d.l),datasets:[{data:decisao.map(d=>d.v),backgroundColor:decisao.map(d=>d.c),borderRadius:4}]},
-          plugins:[barLabelPlugin2],
-          options:{
-            responsive:true,maintainAspectRatio:false,indexAxis:'y',
-            plugins:{legend:{display:false}},
-            scales:{y:{ticks:{font:{size:10},color:'#6B778C'}},x:{ticks:{font:{size:9},color:'#6B778C',maxTicksLimit:5},grid:{color:'#F4F5F7'}}}
-          }
-        });
-        tvState.charts[id]=chart;return chart;
-      }
-    },
-    {
-      id: 's4',
-      mainTitle: 'Mapa de Calor  -  Dia da Semana  x  Hora',
-      sec1Title: digisacData && digisacData.length > 0 ? 'Volume Digisac  -  Últimos dias' : 'Tickets por Origem',
-      sec2Title: digisacData && digisacData.length > 0 ? 'Tempo Médio Digisac por Atendente' : 'Falso Bug por Categoria',
-      isHeatmap: true,
-      buildMain: null,
-      buildSec1: (ctx) => {
-        if(digisacData && digisacData.length > 0){
-          const byDia = {};
-          digisacData.slice(-300).forEach(d => {const dt=parseDateStr(d.dataInicio);if(dt)byDia[dt]=(byDia[dt]||0)+1;});
-          const dias = Object.keys(byDia).sort().slice(-14);
-          return buildTVBar(ctx, dias.map(d=>d.substring(5)), [{label:'Atendimentos', data: dias.map(d=>byDia[d]), backgroundColor:'#1ABC9C', borderRadius:3}], false);
-        } else {
-          const canais = Object.entries(countBy(doMes,'origemCanal')).sort((a,b)=>b[1]-a[1]).slice(0,6);
-          return buildTVDoughnut(ctx, canais.map(c=>c[0]), canais.map(c=>c[1]));
-        }
-      },
-      buildSec2: (ctx) => {
-        if(digisacData && digisacData.length > 0){
-          const atends = [...new Set(digisacData.map(d=>d.atendente).filter(Boolean))];
-          const tempoAt = atends.map(a => {
-            const rows = digisacData.filter(d=>d.atendente===a&&d.tempoTotalSeg>0);
-            return {n:a.split(' ')[0], v:rows.length?Math.round(rows.reduce((s,d)=>s+d.tempoTotalSeg,0)/rows.length/60):0};
-          }).filter(a=>a.v>0).sort((a,b)=>b.v-a.v).slice(0,6);
-          return buildTVBarH(ctx, tempoAt.map(a=>a.n), tempoAt.map(a=>a.v), '#F8931D');
-        } else {
-          const bugs = doMes.filter(d=>d.tipo&&d.tipo.toLowerCase().includes('incidente'));
-          const falsoBug = Object.entries(countBy(bugs.filter(d=>!d.origemDemanda||!d.origemDemanda.toLowerCase().includes('defeito')),'categoria')).sort((a,b)=>b[1]-a[1]).slice(0,5);
-          return buildTVBarH(ctx, falsoBug.map(f=>f[0].substring(0,15)), falsoBug.map(f=>f[1]), '#E74C3C');
-        }
-      }
-    }
-  ];
+  Object.values(tvState.charts).forEach(c => { try{ c.destroy(); }catch(e){} });
+  tvState.charts = {};
+  // Limpar overlay Digisac se existir
+  const ov = document.getElementById('tvDgMetrics');
+  if(ov) ov.remove();
 }
 
-// ================================================================
-// BUILDERS DE GRÁFICOS TV
-// ================================================================
-function buildTVBar(ctx, labels, datasets, stacked, indexAxisY){
-  const existing=Chart.getChart(ctx);if(existing)try{existing.destroy();}catch(e){}
-  if(tvState.charts['main']) try{tvState.charts['main'].destroy();}catch(e){}
-  const chart = new Chart(ctx.getContext('2d'), {
-    type:'bar',
-    data:{labels, datasets},
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      indexAxis: indexAxisY ? 'y' : 'x',
-      plugins:{legend:{display:datasets.length>1, position:'bottom', labels:{font:{size:11}, boxWidth:12, color:'#6B778C'}}},
-      scales:{
-        x:{stacked:!!stacked, ticks:{font:{size:10}, color:'#6B778C'}, grid:{color:'#F4F5F7'}},
-        y:{stacked:!!stacked, ticks:{font:{size:10}, color:'#6B778C'}, grid:{color:'#F4F5F7'}}
-      }
-    }
-  });
-  tvState.charts['main'] = chart;
-  return chart;
-}
-
-function buildTVBarH(ctx, labels, data, color){
-  // Destruir qualquer chart existente no canvas
-  const existing = Chart.getChart(ctx);
-  if(existing) try{existing.destroy();}catch(e){}
-  const id = ctx.id;
-  if(tvState.charts[id]) try{tvState.charts[id].destroy();}catch(e){}
-  const barLabelPlugin={id:'barLabelH',afterDatasetsDraw(chart){
-    const c=chart.ctx;
-    chart.data.datasets.forEach((ds,i)=>{
-      chart.getDatasetMeta(i).data.forEach((bar,j)=>{
-        const v=ds.data[j];if(!v||v===0)return;
-        c.fillStyle='#172B4D';c.font='bold 10px -apple-system,sans-serif';
-        c.textAlign='left';c.textBaseline='middle';
-        c.fillText(v,bar.x+4,bar.y);
-      });
-    });
-  }};
-  const chart = new Chart(ctx.getContext('2d'), {
-    type:'bar',
-    data:{labels, datasets:[{data, backgroundColor:color, borderRadius:3}]},
-    plugins:[barLabelPlugin],
-    options:{
-      responsive:true, maintainAspectRatio:false, indexAxis:'y',
-      plugins:{legend:{display:false}},
-      scales:{
-        y:{ticks:{font:{size:10}, color:'#6B778C'}, grid:{color:'#F4F5F7'}},
-        x:{ticks:{font:{size:10}, color:'#6B778C', maxTicksLimit:6}, grid:{color:'#F4F5F7'}}
-      }
-    }
-  });
-  tvState.charts[id] = chart;
-  return chart;
-}
-
-function buildTVDoughnut(ctx, labels, data){
-  const existing = Chart.getChart(ctx);
-  if(existing) try{existing.destroy();}catch(e){}
-  const id = ctx.id;
-  if(tvState.charts[id]) try{tvState.charts[id].destroy();}catch(e){}
-  const chart = new Chart(ctx.getContext('2d'), {
-    type:'doughnut',
-    data:{labels, datasets:[{data, backgroundColor:getPaleta(data.length), borderWidth:1}]},
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{position:'bottom', labels:{font:{size:10}, boxWidth:10, color:'#6B778C', padding:8}}}
-    }
-  });
-  tvState.charts[id] = chart;
-  return chart;
-}
-
-// ================================================================
-// RENDERIZAR SLIDE
-// ================================================================
-function renderTVSlide(idx){
+// ─── Navegação ────────────────────────────────────────────────────
+function tvGoToSlide(idx){
+  if(!tvState.slides || tvState.slides.length === 0) return;
+  tvDestroyAllCharts();
+  tvState.currentSlide = idx;
   const slide = tvState.slides[idx];
   if(!slide) return;
 
   // Títulos
-  const mainTitle = document.getElementById('tvChartMainTitle');
-  const sec1Title = document.getElementById('tvChartSec1Title');
-  const sec2Title = document.getElementById('tvChartSec2Title');
-  if(mainTitle) mainTitle.textContent = slide.mainTitle;
-  if(sec1Title) sec1Title.textContent = slide.sec1Title;
-  if(sec2Title) sec2Title.textContent = slide.sec2Title;
+  const setT = (id, t) => { const e = document.getElementById(id); if(e) e.textContent = t; };
+  setT('tvChartMainTitle', slide.mainTitle);
+  setT('tvChartSec1Title', slide.sec1Title);
+  setT('tvChartSec2Title', slide.sec2Title);
 
-  // Destruir charts anteriores - usar Chart.getChart para garantir
-  ['tvChartMain','tvChartSec1','tvChartSec2'].forEach(id=>{
-    const canvas = document.getElementById(id);
-    if(canvas){const existing=Chart.getChart(canvas);if(existing)try{existing.destroy();}catch(e){}}
-    if(tvState.charts[id]){try{tvState.charts[id].destroy();}catch(e){} delete tvState.charts[id];}
-    if(tvState.charts['main']&&id==='tvChartMain'){try{tvState.charts['main'].destroy();}catch(e){} delete tvState.charts['main'];}
-  });
+  // Indicadores
+  const ind = document.getElementById('tvRotacaoIndicador');
+  if(ind) ind.innerHTML = tvState.slides.map((_,i) =>
+    `<div style="width:${i===idx?18:6}px;height:6px;border-radius:3px;background:${i===idx?'#F8931D':'#DFE1E6'};transition:all .3s;"></div>`
+  ).join('');
 
-  // Main - heatmap ou gráfico
-  const heatDiv = document.getElementById('tvHeatmapMain');
+  // Heatmap ou canvas
   const mainCanvas = document.getElementById('tvChartMain');
-
+  const heatDiv = document.getElementById('tvHeatmapMain');
   if(slide.isHeatmap){
-    mainCanvas.style.display = 'none';
-    heatDiv.style.display = 'block';
-    // Recriar heatmap inline com cores quentes
-    createHeatmap(allData);
-    const svgEl = document.getElementById('heatmapContainer');
-    if(svgEl && window._heatmapSVG) heatDiv.innerHTML = window._heatmapSVG;
+    if(mainCanvas) mainCanvas.style.display = 'none';
+    if(heatDiv){ heatDiv.style.display = 'block'; createHeatmap(allData); heatDiv.innerHTML = window._heatmapSVG || ''; }
   } else {
-    mainCanvas.style.display = 'block';
-    heatDiv.style.display = 'none';
-    if(slide.buildMain) slide.buildMain(mainCanvas);
+    if(mainCanvas) mainCanvas.style.display = 'block';
+    if(heatDiv) heatDiv.style.display = 'none';
+    if(mainCanvas && slide.buildMain) setTimeout(() => slide.buildMain(mainCanvas), 20);
   }
 
   // Secundários
-  setTimeout(()=>{
-    const ctx1 = document.getElementById('tvChartSec1');
-    const ctx2 = document.getElementById('tvChartSec2');
-    if(ctx1 && slide.buildSec1) slide.buildSec1(ctx1);
-    if(ctx2 && slide.buildSec2) slide.buildSec2(ctx2);
-  }, 50);
-
-  // Indicador de slide
-  const ind = document.getElementById('tvRotacaoIndicador');
-  if(ind) ind.innerHTML = tvState.slides.map((_,i)=>
-    `<div style="width:${i===idx?20:6}px;height:6px;border-radius:3px;background:${i===idx?'#F8931D':'#DFE1E6'};transition:all .3s;"></div>`
-  ).join('');
-
-  tvState.currentSlide = idx;
+  setTimeout(() => {
+    const c1 = document.getElementById('tvChartSec1');
+    const c2 = document.getElementById('tvChartSec2');
+    if(c1 && slide.buildSec1) slide.buildSec1(c1);
+    if(c2 && slide.buildSec2) slide.buildSec2(c2);
+  }, 40);
 }
 
-// ================================================================
-// ROTAÇÃO AUTOMÁTICA
-// ================================================================
 function tvNextSlide(){
-  if(!tvState.slides||tvState.slides.length===0)return;
-  const next=(tvState.currentSlide+1)%tvState.slides.length;
-  renderTVSlide(next);
-  // Resetar countdown
-  const bar=document.getElementById('tvProgressBar');
-  if(bar) bar.style.width='0%';
+  const n = (tvState.currentSlide + 1) % tvState.slides.length;
+  tvGoToSlide(n);
   startTVRotation();
 }
 
 function tvPrevSlide(){
-  if(!tvState.slides||tvState.slides.length===0)return;
-  const prev=(tvState.currentSlide-1+tvState.slides.length)%tvState.slides.length;
-  renderTVSlide(prev);
-  const bar=document.getElementById('tvProgressBar');
-  if(bar) bar.style.width='0%';
+  const n = (tvState.currentSlide - 1 + tvState.slides.length) % tvState.slides.length;
+  tvGoToSlide(n);
   startTVRotation();
 }
 
+// ─── Rotação ──────────────────────────────────────────────────────
 function startTVRotation(){
-  tvState.countdown = tvState.totalTime;
-
-  if(tvState.progressInterval) clearInterval(tvState.progressInterval);
   if(tvState.interval) clearInterval(tvState.interval);
-
-  const tickMs = 100;
-  const totalTicks = tvState.totalTime * 1000 / tickMs;
+  if(tvState.progressInterval) clearInterval(tvState.progressInterval);
+  const total = tvState.totalTime * 10;
   let ticks = 0;
-
-  tvState.progressInterval = setInterval(()=>{
+  tvState.progressInterval = setInterval(() => {
     ticks++;
-    const pct = (ticks / totalTicks) * 100;
+    const pct = (ticks / total) * 100;
     const bar = document.getElementById('tvProgressBar');
     if(bar) bar.style.width = Math.min(pct, 100) + '%';
-    const seg = Math.ceil((totalTicks - ticks) * tickMs / 1000);
+    const seg = Math.ceil((total - ticks) / 10);
     const txt = document.getElementById('tvRotacaoTexto');
     if(txt) txt.textContent = 'Próximo em ' + seg + 's';
-    if(ticks >= totalTicks){
+    if(ticks >= total){
       ticks = 0;
-      const next = (tvState.currentSlide + 1) % tvState.slides.length;
-      renderTVSlide(next);
-      const bar = document.getElementById('tvProgressBar');
       if(bar) bar.style.width = '0%';
+      tvNextSlide();
     }
-  }, tickMs);
+  }, 100);
+}
+
+// ─── Builders de gráficos ─────────────────────────────────────────
+function tvMakeBar(canvas, labels, datasets, opts){
+  const existing = Chart.getChart(canvas); if(existing) try{ existing.destroy(); }catch(e){}
+  const id = canvas.id; if(tvState.charts[id]) try{ tvState.charts[id].destroy(); }catch(e){}
+  const chart = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: { labels, datasets },
+    options: Object.assign({
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 400 },
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { font: { size: 10 }, color: '#6B778C' }, grid: { color: '#F4F5F7' } },
+        y: { ticks: { font: { size: 10 }, color: '#6B778C' }, grid: { color: '#F4F5F7' } }
+      }
+    }, opts || {})
+  });
+  tvState.charts[id] = chart;
+  return chart;
+}
+
+function tvMakeBarH(canvas, labels, data, color){
+  const existing = Chart.getChart(canvas); if(existing) try{ existing.destroy(); }catch(e){}
+  const id = canvas.id; if(tvState.charts[id]) try{ tvState.charts[id].destroy(); }catch(e){}
+
+  const labelPlugin = {
+    id: 'tvLabelH_' + id,
+    afterDatasetsDraw(chart){
+      const ctx = chart.ctx;
+      chart.data.datasets.forEach((ds, i) => {
+        chart.getDatasetMeta(i).data.forEach((bar, j) => {
+          const v = ds.data[j];
+          if(!v) return;
+          ctx.save();
+          ctx.fillStyle = '#172B4D';
+          ctx.font = 'bold 10px -apple-system,sans-serif';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(v, bar.x + 4, bar.y);
+          ctx.restore();
+        });
+      });
+    }
+  };
+
+  const chart = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: { labels, datasets: [{ data, backgroundColor: color, borderRadius: 4 }] },
+    plugins: [labelPlugin],
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      animation: { duration: 400 },
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { ticks: { font: { size: 11 }, color: '#6B778C' }, grid: { color: '#F4F5F7' } },
+        x: { ticks: { font: { size: 10 }, color: '#6B778C', maxTicksLimit: 6 }, grid: { color: '#F4F5F7' } }
+      }
+    }
+  });
+  tvState.charts[id] = chart;
+  return chart;
+}
+
+function tvMakeDoughnut(canvas, labels, data){
+  const existing = Chart.getChart(canvas); if(existing) try{ existing.destroy(); }catch(e){}
+  const id = canvas.id; if(tvState.charts[id]) try{ tvState.charts[id].destroy(); }catch(e){}
+  const chart = new Chart(canvas.getContext('2d'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: getPaleta(data.length), borderWidth: 1 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 400 },
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 10, color: '#6B778C', padding: 8 } } }
+    }
+  });
+  tvState.charts[id] = chart;
+  return chart;
+}
+
+function tvMakeLine(canvas, labels, datasets){
+  const existing = Chart.getChart(canvas); if(existing) try{ existing.destroy(); }catch(e){}
+  const id = canvas.id; if(tvState.charts[id]) try{ tvState.charts[id].destroy(); }catch(e){}
+  const chart = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 400 },
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, boxWidth: 10, color: '#6B778C', padding: 8 } } },
+      scales: {
+        x: { ticks: { font: { size: 9 }, color: '#6B778C', maxTicksLimit: 15 }, grid: { color: '#F4F5F7' } },
+        y: { ticks: { font: { size: 10 }, color: '#6B778C' }, grid: { color: '#F4F5F7' } }
+      }
+    }
+  });
+  tvState.charts[id] = chart;
+  return chart;
+}
+
+// ─── Slides ───────────────────────────────────────────────────────
+function buildTVSlides(){
+  const base = getTVBaseData();
+  const label = getTVPeriodLabel();
+  const hoje = new Date();
+
+  // Dias para gráfico de barras
+  const dias14 = Array.from({length:14}, (_,i) => {
+    const d = new Date(hoje); d.setDate(d.getDate() - (13-i));
+    return d.toISOString().split('T')[0];
+  });
+
+  tvState.slides = [
+
+    // ── SLIDE 1: Abertos vs Fechados ──────────────────────────────
+    {
+      mainTitle: 'Abertos vs Fechados - Últimos 14 dias',
+      sec1Title: 'Aguardando por Atendente',
+      sec2Title: 'Situação Atual',
+      buildMain: (ctx) => {
+        return tvMakeBar(ctx,
+          dias14.map(d => d.substring(5)),
+          [
+            { label:'Abertos', data: dias14.map(d => allData.filter(x => x.dataCriacao === d).length), backgroundColor:'#F8931D', borderRadius:4 },
+            { label:'Fechados', data: dias14.map(d => allData.filter(x => x.dataFinalizacao === d).length), backgroundColor:'#27AE60', borderRadius:4 }
+          ],
+          { plugins: { legend: { display: true, position:'bottom', labels:{ font:{size:11}, boxWidth:12, color:'#6B778C', padding:10 } } } }
+        );
+      },
+      buildSec1: (ctx) => {
+        const byA = {};
+        allData.filter(d => d.ultimaSituacao && (d.ultimaSituacao.toLowerCase().includes('iniciada') || d.ultimaSituacao.toLowerCase().includes('aguardando'))).forEach(d => { if(d.atendente) byA[d.atendente] = (byA[d.atendente]||0)+1; });
+        const s = Object.entries(byA).sort((a,b)=>b[1]-a[1]).slice(0,7);
+        return tvMakeBarH(ctx, s.map(x=>x[0].split(' ')[0]), s.map(x=>x[1]), '#E74C3C');
+      },
+      buildSec2: (ctx) => {
+        const sit = {};
+        allData.filter(d => d.ultimaSituacao && !d.ultimaSituacao.toLowerCase().includes('finaliz') && !d.ultimaSituacao.toLowerCase().includes('cancelad')).forEach(d => { sit[d.ultimaSituacao]=(sit[d.ultimaSituacao]||0)+1; });
+        const s = Object.entries(sit).sort((a,b)=>b[1]-a[1]);
+        if(!s.length) return;
+        return tvMakeDoughnut(ctx, s.map(x=>x[0].substring(0,24)), s.map(x=>x[1]));
+      }
+    },
+
+    // ── SLIDE 2: Digisac Chat ────────────────────────────────────
+    {
+      mainTitle: 'Chat Digisac - Volume de Atendimentos | ' + label,
+      sec1Title: 'Tempo Médio por Atendente (min)',
+      sec2Title: 'Resumo do Chat - ' + label,
+      buildMain: (ctx) => {
+        const dg = getTVDigisacBase();
+        if(!dg.length){
+          return tvMakeBar(ctx, ['Sem dados'], [{ data:[0], backgroundColor:'#EBECF0' }], {});
+        }
+        const nDias = tvState.periodo === 0 ? 30 : tvState.periodo === 1 ? 60 : 90;
+        const diasDg = Array.from({length:nDias}, (_,i) => {
+          const d = new Date(hoje); d.setDate(d.getDate() - (nDias-1-i));
+          return d.toISOString().split('T')[0];
+        });
+        const byDia = {};
+        dg.forEach(d => { const dt = parseDateStr(d.dataInicio); if(dt) byDia[dt]=(byDia[dt]||0)+1; });
+        const labelPlugin = {
+          id: 'tvDgLabels',
+          afterDatasetsDraw(chart){
+            const c = chart.ctx;
+            chart.data.datasets.forEach((ds,i) => {
+              chart.getDatasetMeta(i).data.forEach((bar,j) => {
+                const v = ds.data[j]; if(!v) return;
+                c.save(); c.fillStyle='#172B4D'; c.font='bold 10px -apple-system,sans-serif';
+                c.textAlign='center'; c.textBaseline='bottom';
+                c.fillText(v, bar.x, bar.y - 2); c.restore();
+              });
+            });
+          }
+        };
+        const existing = Chart.getChart(ctx); if(existing) try{ existing.destroy(); }catch(e){}
+        if(tvState.charts[ctx.id]) try{ tvState.charts[ctx.id].destroy(); }catch(e){}
+        const chart = new Chart(ctx.getContext('2d'), {
+          type:'bar',
+          data:{
+            labels: diasDg.map(d=>d.substring(5)),
+            datasets:[{ data: diasDg.map(d=>byDia[d]||0), backgroundColor: diasDg.map(d=>{ const dow=new Date(d+'T12:00:00').getDay(); return dow===0||dow===6?'#EBECF0':'#1ABC9C'; }), borderRadius:3 }]
+          },
+          plugins:[labelPlugin],
+          options:{ responsive:true, maintainAspectRatio:false, animation:{duration:400}, plugins:{legend:{display:false}}, scales:{ x:{ticks:{font:{size:9},color:'#6B778C',maxTicksLimit:20},grid:{color:'#F4F5F7'}}, y:{ticks:{font:{size:10},color:'#6B778C'},grid:{color:'#F4F5F7'}} } }
+        });
+        tvState.charts[ctx.id] = chart;
+        return chart;
+      },
+      buildSec1: (ctx) => {
+        const dg = getTVDigisacBase();
+        if(!dg.length) return tvMakeBarH(ctx, ['Sem dados'], [0], '#EBECF0');
+        const atends = [...new Set(dg.map(d=>d.atendente).filter(Boolean))];
+        const t = atends.map(a => {
+          const rows = dg.filter(d=>d.atendente===a&&d.tempoTotalSeg>0);
+          return { n: a.split(' ')[0], v: rows.length ? Math.round(rows.reduce((s,d)=>s+d.tempoTotalSeg,0)/rows.length/60) : 0 };
+        }).filter(x=>x.v>0).sort((a,b)=>b.v-a.v).slice(0,7);
+        return tvMakeBarH(ctx, t.map(x=>x.n), t.map(x=>x.v), '#F8931D');
+      },
+      buildSec2: (ctx) => {
+        const dg = getTVDigisacBase();
+        // Limpar overlay anterior
+        const old = document.getElementById('tvDgMetrics'); if(old) old.remove();
+        ctx.style.display = 'none';
+
+        if(!dg.length){
+          ctx.style.display = 'block';
+          return tvMakeDoughnut(ctx, ['Sem dados'], [1]);
+        }
+
+        const comTempo = dg.filter(d=>d.tempoTotalSeg>0);
+        const tma = comTempo.length ? Math.round(comTempo.reduce((s,d)=>s+d.tempoTotalSeg,0)/comTempo.length/60) : 0;
+        const dias2 = new Set(dg.map(d=>parseDateStr(d.dataInicio)).filter(Boolean));
+        const med = dias2.size > 0 ? Math.round(dg.length/dias2.size) : 0;
+        const comEspera = dg.filter(d=>d.primeiroTempoEsperaSeg>0);
+        const esp = comEspera.length ? Math.round(comEspera.reduce((s,d)=>s+d.primeiroTempoEsperaSeg,0)/comEspera.length/60) : 0;
+        const enc = dg.filter(d=>d.dataEncerramento&&d.dataEncerramento.trim()!=='').length;
+        const pEnc = dg.length ? Math.round(enc/dg.length*100) : 0;
+        const recep = dg.filter(d=>d.tipo==='Receptivo').length;
+        const pRecep = dg.length ? Math.round(recep/dg.length*100) : 0;
+
+        const body = document.getElementById('tvSec2Body');
+        if(!body) return;
+
+        const overlay = document.createElement('div');
+        overlay.id = 'tvDgMetrics';
+        overlay.style.cssText = 'position:absolute;inset:8px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,1fr);gap:8px;';
+
+        const cards = [
+          { l:'Total', v: dg.length, c:'#172B4D', i:'&#128172;' },
+          { l:'Média/dia', v: med, c:'#1ABC9C', i:'&#128197;' },
+          { l:'TMA', v: tma+'min', c:'#F8931D', i:'&#9203;' },
+          { l:'1ª Espera', v: esp+'min', c:'#E74C3C', i:'&#8987;' },
+          { l:'Encerrados', v: pEnc+'%', c:'#27AE60', i:'&#9989;' },
+          { l:'Receptivo', v: pRecep+'%', c:'#3498DB', i:'&#128242;' }
+        ];
+
+        overlay.innerHTML = cards.map(m => `
+          <div style="background:#F8F9FA;border-radius:8px;border-left:3px solid ${m.c};padding:8px 12px;display:flex;align-items:center;gap:10px;overflow:hidden;">
+            <span style="font-size:18px;flex-shrink:0;">${m.i}</span>
+            <div style="min-width:0;">
+              <div style="font-size:9px;font-weight:700;color:#97A0AF;text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;">${m.l}</div>
+              <div style="font-size:22px;font-weight:700;color:${m.c};line-height:1.1;">${m.v}</div>
+            </div>
+          </div>`).join('');
+
+        body.appendChild(overlay);
+      }
+    },
+
+    // ── SLIDE 3: Top Categorias ───────────────────────────────────
+    {
+      mainTitle: 'Top Categorias - ' + label,
+      sec1Title: 'Distribuição por Tipo',
+      sec2Title: 'Top Origens de Demanda',
+      buildMain: (ctx) => {
+        const cats = Object.entries(countBy(base,'categoria')).sort((a,b)=>b[1]-a[1]).slice(0,10);
+        return tvMakeBarH(ctx, cats.map(c=>c[0].length>22?c[0].substring(0,22)+'...':c[0]), cats.map(c=>c[1]), '#F8931D');
+      },
+      buildSec1: (ctx) => {
+        const tipos = countBy(base,'tipo');
+        return tvMakeDoughnut(ctx, Object.keys(tipos), Object.values(tipos));
+      },
+      buildSec2: (ctx) => {
+        const orig = Object.entries(countBy(base,'origemDemanda')).filter(x=>x[0]).sort((a,b)=>b[1]-a[1]).slice(0,6);
+        return tvMakeBarH(ctx, orig.map(o=>o[0].length>20?o[0].substring(0,20)+'...':o[0]), orig.map(o=>o[1]), '#9B59B6');
+      }
+    },
+
+    // ── SLIDE 4: Top Clientes ─────────────────────────────────────
+    {
+      mainTitle: 'Top 10 Clientes - ' + label,
+      sec1Title: 'Canal de Entrada',
+      sec2Title: 'Top Atendentes',
+      buildMain: (ctx) => {
+        const byOrg = countBy(base,'organizacao');
+        const clientes = Object.entries(byOrg).filter(x=>x[0]&&x[0].trim()).sort((a,b)=>b[1]-a[1]).slice(0,10);
+        const media = clientes.length ? clientes.reduce((s,c)=>s+c[1],0)/clientes.length : 0;
+        const labelPlugin = {
+          id: 'tvClienteLabels',
+          afterDatasetsDraw(chart){
+            const c = chart.ctx;
+            chart.data.datasets.forEach((ds,i) => {
+              chart.getDatasetMeta(i).data.forEach((bar,j) => {
+                const v = ds.data[j]; if(!v) return;
+                c.save(); c.fillStyle='#172B4D'; c.font='bold 10px -apple-system,sans-serif';
+                c.textAlign='left'; c.textBaseline='middle';
+                c.fillText(v, bar.x + 4, bar.y); c.restore();
+              });
+            });
+          }
+        };
+        const existing = Chart.getChart(ctx); if(existing) try{ existing.destroy(); }catch(e){}
+        if(tvState.charts[ctx.id]) try{ tvState.charts[ctx.id].destroy(); }catch(e){}
+        const chart = new Chart(ctx.getContext('2d'), {
+          type:'bar',
+          data:{ labels: clientes.map(c=>c[0].length>24?c[0].substring(0,24)+'...':c[0]), datasets:[{ data: clientes.map(c=>c[1]), backgroundColor: clientes.map(c=>c[1]>media?'#E74C3C':'#F8931D'), borderRadius:4 }] },
+          plugins:[labelPlugin],
+          options:{ responsive:true, maintainAspectRatio:false, indexAxis:'y', animation:{duration:400}, plugins:{legend:{display:false}}, scales:{ y:{ticks:{font:{size:11},color:'#6B778C'}}, x:{ticks:{font:{size:10},color:'#6B778C',maxTicksLimit:6},grid:{color:'#F4F5F7'}} } }
+        });
+        tvState.charts[ctx.id] = chart;
+        return chart;
+      },
+      buildSec1: (ctx) => {
+        const canais = countBy(base,'origemCanal');
+        return tvMakeDoughnut(ctx, Object.keys(canais), Object.values(canais));
+      },
+      buildSec2: (ctx) => {
+        const atend = Object.entries(countBy(base,'atendente')).sort((a,b)=>b[1]-a[1]).slice(0,7);
+        return tvMakeBarH(ctx, atend.map(a=>a[0].split(' ')[0]), atend.map(a=>a[1]), '#3498DB');
+      }
+    },
+
+    // ── SLIDE 5: Estratégico ──────────────────────────────────────
+    {
+      mainTitle: 'Chamados por Origem - ' + label,
+      sec1Title: 'Qual módulo precisa de atenção?',
+      sec2Title: 'Onde direcionar energia?',
+      buildMain: (ctx) => {
+        const origens = [...new Set(base.map(d=>d.origemCanal).filter(Boolean))].sort();
+        const cores = getPaleta(origens.length);
+        const nDias = tvState.periodo === 0 ? 30 : tvState.periodo === 1 ? 60 : 90;
+        const step = Math.max(1, Math.ceil(nDias/28));
+        const keys = [];
+        for(let i=nDias-1;i>=0;i-=step){ const d=new Date(hoje);d.setDate(d.getDate()-i);keys.push(d.toISOString().split('T')[0]); }
+        const datasets = origens.map((orig,i) => {
+          const byKey = {};
+          base.filter(d=>d.origemCanal===orig).forEach(d=>{ const dt=d.dataCriacao;if(dt){const k=keys.reduce((a,b)=>Math.abs(new Date(b)-new Date(dt))<Math.abs(new Date(a)-new Date(dt))?b:a,keys[0]);byKey[k]=(byKey[k]||0)+1;}});
+          return { label:orig, data:keys.map(k=>byKey[k]||0), borderColor:cores[i], backgroundColor:'transparent', tension:0.4, borderWidth:2, pointRadius:2, pointHoverRadius:5 };
+        });
+        return tvMakeLine(ctx, keys.map(k=>k.substring(5)), datasets);
+      },
+      buildSec1: (ctx) => {
+        const topCats = Object.entries(countBy(base,'categoria')).sort((a,b)=>b[1]-a[1]).slice(0,8).map(x=>x[0]);
+        const tipos = [...new Set(base.map(d=>d.tipo).filter(Boolean))];
+        const cores = getPaleta(tipos.length);
+        const dsCT = tipos.map((t,i)=>({ label:t, data:topCats.map(c=>base.filter(d=>d.categoria===c&&d.tipo===t).length), backgroundColor:cores[i] }));
+        const filt = topCats.filter(c=>dsCT.some(ds=>ds.data[topCats.indexOf(c)]>0));
+        const dsFilt = dsCT.map(ds=>({...ds,data:filt.map(c=>ds.data[topCats.indexOf(c)])})).filter(ds=>ds.data.some(v=>v>0));
+        const existing = Chart.getChart(ctx); if(existing) try{ existing.destroy(); }catch(e){}
+        if(tvState.charts[ctx.id]) try{ tvState.charts[ctx.id].destroy(); }catch(e){}
+        const chart = new Chart(ctx.getContext('2d'), {
+          type:'bar',
+          data:{ labels:filt.map(c=>c.length>16?c.substring(0,16)+'...':c), datasets:dsFilt },
+          options:{ responsive:true,maintainAspectRatio:false,indexAxis:'y',animation:{duration:400}, plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:8,color:'#6B778C',padding:6}}}, scales:{x:{stacked:true,ticks:{font:{size:9},color:'#6B778C'}},y:{stacked:true,ticks:{font:{size:9},color:'#6B778C'}}} }
+        });
+        tvState.charts[ctx.id] = chart;
+        return chart;
+      },
+      buildSec2: (ctx) => {
+        const dev = base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('defeito')).length;
+        const proc = base.filter(d=>d.tipo&&d.tipo.toLowerCase().includes('incidente')&&(!d.origemDemanda||!d.origemDemanda.toLowerCase().includes('defeito'))).length;
+        const train = base.filter(d=>d.origemDemanda&&(d.origemDemanda.toLowerCase().includes('gap')||d.origemDemanda.toLowerCase().includes('comportamento'))).length;
+        const ext = base.filter(d=>d.origemDemanda&&d.origemDemanda.toLowerCase().includes('depend')).length;
+        const dec = [{l:'Dev: Defeito confirmado',v:dev,c:'#9B59B6'},{l:'Processo/Usabilidade',v:proc,c:'#E74C3C'},{l:'Treinamento: GAP',v:train,c:'#F8931D'},{l:'Dep. externa',v:ext,c:'#3498DB'}].filter(x=>x.v>0);
+        const labelPlugin = {
+          id: 'tvDecisaoLabels',
+          afterDatasetsDraw(chart){
+            const c = chart.ctx;
+            chart.data.datasets.forEach((ds,i) => {
+              chart.getDatasetMeta(i).data.forEach((bar,j) => {
+                const v = ds.data[j]; if(!v) return;
+                c.save(); c.fillStyle='#172B4D'; c.font='bold 10px -apple-system,sans-serif';
+                c.textAlign='left'; c.textBaseline='middle';
+                c.fillText(v+' tickets', bar.x+4, bar.y); c.restore();
+              });
+            });
+          }
+        };
+        const existing = Chart.getChart(ctx); if(existing) try{ existing.destroy(); }catch(e){}
+        if(tvState.charts[ctx.id]) try{ tvState.charts[ctx.id].destroy(); }catch(e){}
+        const chart = new Chart(ctx.getContext('2d'), {
+          type:'bar',
+          data:{ labels:dec.map(d=>d.l), datasets:[{ data:dec.map(d=>d.v), backgroundColor:dec.map(d=>d.c), borderRadius:4 }] },
+          plugins:[labelPlugin],
+          options:{ responsive:true,maintainAspectRatio:false,indexAxis:'y',animation:{duration:400}, plugins:{legend:{display:false}}, scales:{y:{ticks:{font:{size:10},color:'#6B778C'}},x:{ticks:{font:{size:9},color:'#6B778C',maxTicksLimit:5},grid:{color:'#F4F5F7'}}} }
+        });
+        tvState.charts[ctx.id] = chart;
+        return chart;
+      }
+    },
+
+    // ── SLIDE 6: Heatmap + Digisac ────────────────────────────────
+    {
+      mainTitle: 'Mapa de Calor - Dia da Semana x Hora',
+      sec1Title: 'Volume Digisac - Últimos 14 dias',
+      sec2Title: 'Tempo Médio Digisac por Atendente',
+      isHeatmap: true,
+      buildMain: null,
+      buildSec1: (ctx) => {
+        const dg = getTVDigisacBase();
+        if(!dg.length) return tvMakeBarH(ctx, ['Sem dados'], [0], '#EBECF0');
+        const byDia = {};
+        dg.forEach(d=>{ const dt=parseDateStr(d.dataInicio);if(dt)byDia[dt]=(byDia[dt]||0)+1; });
+        const d14 = Array.from({length:14},(_,i)=>{ const d=new Date(hoje);d.setDate(d.getDate()-(13-i));return d.toISOString().split('T')[0]; });
+        return tvMakeBarH(ctx, d14.map(d=>d.substring(5)), d14.map(d=>byDia[d]||0), '#1ABC9C');
+      },
+      buildSec2: (ctx) => {
+        const dg = getTVDigisacBase();
+        if(!dg.length) return tvMakeBarH(ctx, ['Sem dados'], [0], '#EBECF0');
+        const atends = [...new Set(dg.map(d=>d.atendente).filter(Boolean))];
+        const t = atends.map(a=>{ const rows=dg.filter(d=>d.atendente===a&&d.tempoTotalSeg>0);return{n:a.split(' ')[0],v:rows.length?Math.round(rows.reduce((s,d)=>s+d.tempoTotalSeg,0)/rows.length/60):0};}).filter(x=>x.v>0).sort((a,b)=>b.v-a.v).slice(0,7);
+        return tvMakeBarH(ctx, t.map(x=>x.n), t.map(x=>x.v), '#F8931D');
+      }
+    }
+
+  ];
 }
 
 
