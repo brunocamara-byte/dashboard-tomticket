@@ -1938,21 +1938,34 @@ function tvGoToSlide(idx){
   } else {
     if(mainCanvas) mainCanvas.style.display = 'block';
     if(heatDiv) heatDiv.style.display = 'none';
-    if(mainCanvas && slide.buildMain) requestAnimationFrame(() => slide.buildMain(mainCanvas));
+    if(mainCanvas && slide.buildMain) tvRenderWhenReady('tvChartMain', slide.buildMain);
   }
 
-  // Secundários - usar duplo requestAnimationFrame para garantir layout pronto
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    const c1 = document.getElementById('tvChartSec1');
-    const c2 = document.getElementById('tvChartSec2');
-    if(c1 && slide.buildSec1) slide.buildSec1(c1);
-    if(c2 && slide.buildSec2) {
-      setTimeout(() => {
-        const c2b = document.getElementById('tvChartSec2');
-        if(c2b) slide.buildSec2(c2b);
-      }, 60);
+  // Renderizar secundários com retry até canvas ter dimensões
+  function tvRenderWhenReady(canvasId, builder, maxTries){
+    if(!builder) return;
+    var tries = 0;
+    var max = maxTries || 20;
+    function attempt(){
+      var canvas = document.getElementById(canvasId);
+      if(!canvas) return;
+      var parent = canvas.parentElement;
+      var rect = parent ? parent.getBoundingClientRect() : null;
+      if(rect && rect.width > 10 && rect.height > 10){
+        // Canvas tem tamanho - pode renderizar
+        canvas.width = Math.floor(rect.width) - 4;
+        canvas.height = Math.floor(rect.height) - 4;
+        builder(canvas);
+      } else if(tries < max){
+        tries++;
+        setTimeout(attempt, 50);
+      }
     }
-  }));
+    requestAnimationFrame(attempt);
+  }
+
+  tvRenderWhenReady('tvChartSec1', slide.buildSec1);
+  tvRenderWhenReady('tvChartSec2', slide.buildSec2);
 }
 
 function tvNextSlide(){
