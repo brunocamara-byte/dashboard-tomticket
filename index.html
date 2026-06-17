@@ -125,8 +125,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 <div class="nav">
 <button class="nav-btn active" onclick="showView('dashboard')">Dashboard Geral</button>
-<button class="nav-btn" onclick="showView('qualidade')">Qualidade & Origem</button>
-<button class="nav-btn" onclick="showView('produto')">Produto & Funcionalidades</button>
 <button class="nav-btn" onclick="showView('tendencia')">Tendencia Temporal</button>
 <button class="nav-btn" onclick="showView('cliente')">Analise do Cliente</button>
 <button class="nav-btn" onclick="showView('digisac')">Digisac</button>
@@ -163,102 +161,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <div class="chart-card"><div class="chart-title">Canal de Entrada <button class="btn expand-btn btn-small" onclick="expandChart('chartOrigemCanal')">Expandir</button></div><div class="chart-container"><canvas id="chartOrigemCanal" class="clickable-canvas"></canvas></div></div>
 <div class="chart-card"><div class="chart-title">Volume por Atendente <button class="btn expand-btn btn-small" onclick="expandChart('chartAtendentes')">Expandir</button></div><div class="chart-container"><canvas id="chartAtendentes" class="clickable-canvas"></canvas></div></div>
 <div class="chart-card"><div class="chart-title">Top Atendentes com Reabertura <button class="btn expand-btn btn-small" onclick="expandChart('chartReabertura')">Expandir</button></div><div class="chart-container"><canvas id="chartReabertura" class="clickable-canvas"></canvas></div></div>
-</div>
-</div>
-
-<div id="qualidade" class="view">
-
-<div class="section">
-<div class="section-title">Filtros</div>
-<div class="filters-grid">
-<div class="filter-group"><label class="filter-label">Data Inicio</label><input type="date" class="filter-input" id="qualDataInicio"></div>
-<div class="filter-group"><label class="filter-label">Data Fim</label><input type="date" class="filter-input" id="qualDataFim"></div>
-<div class="filter-group"><label class="filter-label">Categoria</label><select class="filter-select" id="qualCategoria"><option value="">Todas</option></select></div>
-<div class="filter-group" style="align-self:end">
-  <button class="btn" onclick="applyQualidadeFilters()">Aplicar</button>
-  <button class="btn btn-secondary" onclick="clearQualidadeFilters()">Limpar</button>
-</div>
-</div>
-</div>
-
-<div class="kpis" id="kpisQualidadeContainer"></div>
-
-<div style="display:grid;grid-template-columns:1fr 2fr;gap:20px;margin-bottom:20px;">
-
-<div class="chart-card" style="min-height:480px">
-  <div class="chart-title">Por que os chamados acontecem? <button class="btn expand-btn btn-small" onclick="expandChart('chartQualOrigem')">Expandir</button></div>
-  <div class="chart-container"><canvas id="chartQualOrigem" class="clickable-canvas"></canvas></div>
-</div>
-
-</div>
-
-<div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:20px;">
-
-<div class="chart-card" style="min-height:460px">
-  <div class="chart-title" style="flex-direction:column;align-items:flex-start;gap:4px">
-    <span>Falso Bug <span style="font-size:12px;font-weight:400;color:#666">— bugs percebidos que nao sao bugs reais</span></span>
-    <button class="btn expand-btn btn-small" onclick="expandChart('chartFalsoBug')">Expandir</button>
-  </div>
-  <div class="chart-container"><canvas id="chartFalsoBug" class="clickable-canvas"></canvas></div>
-</div>
-
-<div class="chart-card" style="min-height:460px">
-  <div class="chart-title">Onde esta o GAP de conhecimento? <button class="btn expand-btn btn-small" onclick="expandChart('chartQualGapCat')">Expandir</button></div>
-  <div class="chart-container"><canvas id="chartQualGapCat" class="clickable-canvas"></canvas></div>
-</div>
-
-</div>
-
-<div class="chart-card" style="min-height:420px">
-  <div class="chart-title">Tendencia das origens por mes <button class="btn expand-btn btn-small" onclick="expandChart('chartQualTendOrigem')">Expandir</button></div>
-  <div class="chart-container"><canvas id="chartQualTendOrigem" class="clickable-canvas"></canvas></div>
-</div>
-
-</div>
-</div>
-
-<div id="produto" class="view">
-
-<div class="section">
-<div class="section-title">Filtros</div>
-<div class="filters-grid">
-<div class="filter-group"><label class="filter-label">Data Inicio</label><input type="date" class="filter-input" id="prodDataInicio"></div>
-<div class="filter-group"><label class="filter-label">Data Fim</label><input type="date" class="filter-input" id="prodDataFim"></div>
-<div class="filter-group"><label class="filter-label">Tipo de Ticket</label><select class="filter-select" id="prodTipo"><option value="">Todos</option></select></div>
-<div class="filter-group" style="align-self:end">
-  <button class="btn" onclick="applyProdutoFilters()">Aplicar</button>
-  <button class="btn btn-secondary" onclick="clearProdutoFilters()">Limpar</button>
-</div>
-</div>
-</div>
-
-<div class="kpis" id="kpisProdutoContainer"></div>
-
-<div class="charts-grid">
-
-<div class="chart-card">
-  <div class="chart-title" style="flex-direction:column;align-items:flex-start;gap:4px">
-    <span>Top 10 Funcionalidades com causa real <span style="font-size:12px;font-weight:400;color:#666">— clique para ver lista</span></span>
-    <button class="btn expand-btn btn-small" onclick="expandChart('chartProdFuncOrigem')">Expandir</button>
-  </div>
-  <div style="position:relative;height:400px;"><canvas id="chartProdFuncOrigem" class="clickable-canvas"></canvas></div>
-</div>
-
-<div class="chart-card">
-  <div class="chart-title">Qual modulo precisa de atencao? <button class="btn expand-btn btn-small" onclick="expandChart('chartProdCatTipo')">Expandir</button></div>
-  <div class="chart-container"><canvas id="chartProdCatTipo" class="clickable-canvas"></canvas></div>
-</div>
-
-<div class="chart-card">
-  <div class="chart-title">Onde investir: Dev, UX ou Treinamento? <button class="btn expand-btn btn-small" onclick="expandChart('chartProdDecisao')">Expandir</button></div>
-  <div class="chart-container"><canvas id="chartProdDecisao" class="clickable-canvas"></canvas></div>
-</div>
-
-<div class="chart-card">
-  <div class="chart-title">Evolucao por categoria (mensal) <button class="btn expand-btn btn-small" onclick="expandChart('chartProdEvolCat')">Expandir</button></div>
-  <div style="position:relative;height:480px;width:100%;"><canvas id="chartProdEvolCat" class="clickable-canvas"></canvas></div>
-</div>
-
 </div>
 </div>
 
@@ -481,44 +383,27 @@ Gestao.Online &nbsp;|&nbsp; Painel Estrategico - Time de Operacoes
   <!-- ══ KPI BAR ════════════════════════════════════════════════ -->
   <div id="tvKpis" style="height:88px;padding:10px 40px;display:grid;grid-template-columns:repeat(5,1fr);gap:12px;flex-shrink:0;box-sizing:border-box;"></div>
 
-  <!-- ══ CONTEÚDO PRINCIPAL ══════════════════════════════════════ -->
-  <div class="tv-main-grid" style="height:calc(100vh - 196px);padding:0 40px 8px;display:grid;grid-template-columns:1.55fr 1fr;gap:16px;box-sizing:border-box;">
-
-    <!-- GRÁFICO PRINCIPAL -->
-    <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(9,30,66,.08);border:1px solid #EBECF0;display:flex;flex-direction:column;overflow:hidden;min-height:0;">
-      <div style="padding:14px 20px 10px;border-bottom:1px solid #F4F5F7;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
-        <div id="tvChartMainTitle" style="font-size:13px;font-weight:600;color:#172B4D;"></div>
-        <div id="tvRotacaoIndicador" style="display:flex;gap:5px;align-items:center;"></div>
+  <!-- ══ CONTEÚDO PRINCIPAL - TELA CHEIA ════════════════════════ -->
+  <div class="tv-main-grid" style="height:calc(100vh - 196px);padding:0 40px 8px;display:flex;flex-direction:column;box-sizing:border-box;">
+    <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(9,30,66,.08);border:1px solid #EBECF0;flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;">
+      <div style="padding:14px 24px 10px;border-bottom:1px solid #F4F5F7;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+        <div id="tvChartMainTitle" style="font-size:16px;font-weight:600;color:#172B4D;"></div>
+        <div id="tvRotacaoIndicador" style="display:flex;gap:6px;align-items:center;"></div>
       </div>
-      <!-- Canvas container com posição relativa e tamanho fixo -->
-      <div style="flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;">
+      <div style="flex:1;min-height:0;padding:24px;display:flex;flex-direction:column;">
         <canvas id="tvChartMain" style="display:block;width:100%!important;height:100%!important;"></canvas>
         <div id="tvHeatmapMain" style="display:none;width:100%;flex:1;overflow:hidden;"></div>
       </div>
     </div>
-
-    <!-- COLUNA DIREITA: 2 gráficos -->
-    <div class="tv-right-col" style="display:flex;flex-direction:column;gap:14px;min-height:0;overflow:hidden;">
-      <!-- Sec 1 -->
-      <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(9,30,66,.08);border:1px solid #EBECF0;flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;">
-        <div style="padding:12px 16px 8px;border-bottom:1px solid #F4F5F7;flex-shrink:0;">
-          <div id="tvChartSec1Title" style="font-size:12px;font-weight:600;color:#172B4D;"></div>
-        </div>
-        <div style="flex:1;min-height:0;padding:12px;display:flex;flex-direction:column;">
-          <canvas id="tvChartSec1" style="display:block;width:100%!important;height:100%!important;"></canvas>
-        </div>
-      </div>
-      <!-- Sec 2 -->
-      <div id="tvSec2Card" style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(9,30,66,.08);border:1px solid #EBECF0;flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;">
-        <div style="padding:12px 16px 8px;border-bottom:1px solid #F4F5F7;flex-shrink:0;">
-          <div id="tvChartSec2Title" style="font-size:12px;font-weight:600;color:#172B4D;"></div>
-        </div>
-        <div id="tvSec2Body" style="flex:1;position:relative;min-height:0;padding:12px;">
-          <canvas id="tvChartSec2" style="display:block;width:100%!important;height:100%!important;"></canvas>
-        </div>
-      </div>
+    <div style="display:none;">
+      <canvas id="tvChartSec1"></canvas>
+      <canvas id="tvChartSec2"></canvas>
+      <div id="tvSec2Card"></div>
+      <div id="tvSec2Body"></div>
+      <div id="tvChartSec1Title"></div>
+      <div id="tvChartSec2Title"></div>
+      <div id="tvDgMetrics"></div>
     </div>
-
   </div>
 
   <!-- ══ FOOTER / PROGRESSO ══════════════════════════════════════ -->
@@ -677,9 +562,17 @@ function normalizarTomTicket(d){
 
 function normalizarDigisac(d){
   function parseTempo(s){
-    if(!s||!s.trim())return 0;
-    const p=s.trim().split(':');
-    if(p.length===3)return parseInt(p[0])*3600+parseInt(p[1])*60+parseInt(p[2]);
+    if(!s||!String(s).trim()||String(s).trim()==='0'||String(s).trim()==='00:00:00')return 0;
+    const str=String(s).trim();
+    const p=str.split(':');
+    if(p.length===3){
+      const h=parseInt(p[0])||0;
+      const m=parseInt(p[1])||0;
+      const sec=parseInt(p[2])||0;
+      // Sanidade: atendimento > 12h e provavelmente dado corrompido
+      const total=h*3600+m*60+sec;
+      return total<43200?total:0;
+    }
     return 0;
   }
   const tipo=d['Tipo (Receptivo/Ativo)']||'';
@@ -726,21 +619,7 @@ function setMesAtual(iniId,fimId){
   if(elF) elF.value=r.fim;
 }
 
-function init(){
-  populateFilters();
-  // Setar mês atual em todas as telas ao abrir
-  setMesAtual('globalDataInicio','globalDataFim');
-  setMesAtual('qualDataInicio','qualDataFim');
-  setMesAtual('prodDataInicio','prodDataFim');
-  setMesAtual('dgDataInicio','dgDataFim');
-  initTendenciaFilters();
-  initQualidadeFilters();
-  initProdutoFilters();
-  initDigisacFilters();
-  // Aplicar filtro do mês atual no dashboard geral
-  applyFilters();
-  createTendenciaCharts();
-}
+function init(){populateFilters();initTendenciaFilters();initDigisacFilters();updateKPIs();createDashboardCharts();createTendenciaCharts();}
 
 function showView(v){
   document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
@@ -1875,12 +1754,16 @@ function renderTVKpis(){
   const taxa = base.length > 0 ? (reab / base.length * 100).toFixed(1) : 0;
   const abertos = base.filter(d => !d.ultimaSituacao || !d.ultimaSituacao.toLowerCase().includes('finaliz'));
 
+  const dgBase=getTVDigisacBase();
+  const dgTot=dgBase.length;
+  const dgTempo=dgBase.filter(d=>d.tempoTotalSeg>0);
+  const dgTma=dgTempo.length?Math.round(dgTempo.reduce((s,d)=>s+d.tempoTotalSeg,0)/dgTempo.length/60):0;
   const kpis = [
-    { icon:'&#128203;', label:'Abertos', value: abertos.length, sub: base.length + ' total | ' + label, color:'#F8931D' },
-    { icon:'&#9203;', label:'Aguard. Atendimento', value: naoIniciados.length, sub: 'Não iniciados', color:'#E74C3C' },
-    { icon:'&#128172;', label:'Aguard. Cliente', value: aguardCliente.length, sub: 'Aguardando retorno', color:'#F39C12' },
-    { icon:'&#9989;', label:'Fechados', value: fechados.length, sub: 'Finalizados no período', color:'#27AE60' },
-    { icon:'&#128260;', label:'Taxa Reabertura', value: taxa + '%', sub: reab + ' reabertos', color:'#9B59B6' }
+    { icon:'&#128203;', label:'Tickets no Período', value: base.length, sub: label, color:'#172B4D' },
+    { icon:'&#9989;', label:'Fechados', value: fechados.length, sub: Math.round(fechados.length/Math.max(base.length,1)*100)+'% do período', color:'#27AE60' },
+    { icon:'&#128260;', label:'Taxa Reabertura', value: taxa+'%', sub: reab+' reabertos', color:'#9B59B6' },
+    { icon:'&#128172;', label:'Digisac - Atendimentos', value: dgTot, sub: label, color:'#1ABC9C' },
+    { icon:'&#9203;', label:'Digisac - TMA', value: dgTma+'min', sub: 'Tempo médio', color:'#F8931D' }
   ];
 
   const el = document.getElementById('tvKpis');
