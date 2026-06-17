@@ -688,22 +688,18 @@ function normalizarDigisac(d){
     for(const k of Object.keys(obj)){if(k.toLowerCase().includes(substr.toLowerCase())&&obj[k]!==undefined)return String(obj[k]||'');}
     return '';
   }
-  // Chaves exatas da planilha Digisac
-  const tempoTotal=d['Tempo total de atendimento']||findKey(d,'tempo total')||'';
-  const primeiroEspera=d['1º tempo de espera']||findKey(d,'1º tempo')||findKey(d,'primeiro tempo')||'';
-  const tempoMedioEsp=d['Tempo médio de espera']||findKey(d,'médio de espera')||'';
   return {
-    protocolo: d['Protocolo']||findKey(d,'protocolo'),
-    nome: d['Nome']||findKey(d,'nome'),
-    atendente: d['Atendente']||findKey(d,'atendente'),
-    tags: d['Tags']||findKey(d,'tags'),
-    departamento: d['Departamento']||findKey(d,'departamento'),
-    dataInicio: d['Data de início']||findKey(d,'início')||findKey(d,'inicio'),
-    dataEncerramento: d['Data de encerramento']||findKey(d,'encerramento'),
-    assunto: d['Assunto(s)']||findKey(d,'assunto'),
-    tempoTotalSeg: parseTempo(tempoTotal),
-    primeiroTempoEsperaSeg: parseTempo(primeiroEspera),
-    tempoMedioEsperaSeg: parseTempo(tempoMedioEsp),
+    protocolo: findKey(d,'protocolo'),
+    nome: findKey(d,'nome'),
+    atendente: findKey(d,'atendente'),
+    tags: findKey(d,'tags'),
+    departamento: findKey(d,'departamento'),
+    dataInicio: findKey(d,'início')||findKey(d,'inicio'),
+    dataEncerramento: findKey(d,'encerramento'),
+    assunto: findKey(d,'assunto'),
+    tempoTotalSeg: parseTempo(findKey(d,'tempo total')),
+    primeiroTempoEsperaSeg: parseTempo(findKey(d,'1º tempo')||findKey(d,'primeiro tempo')||findKey(d,'1o tempo')),
+    tempoMedioEsperaSeg: parseTempo(findKey(d,'médio de espera')||findKey(d,'medio de espera')),
     tipo: tipoLimpo
   };
 }
@@ -732,12 +728,16 @@ function setMesAtual(iniId,fimId){
 
 function init(){
   populateFilters();
-  // Mês atual como default em todas as telas
+  // Setar mês atual em todas as telas ao abrir
   setMesAtual('globalDataInicio','globalDataFim');
+  setMesAtual('qualDataInicio','qualDataFim');
+  setMesAtual('prodDataInicio','prodDataFim');
   setMesAtual('dgDataInicio','dgDataFim');
   initTendenciaFilters();
+  initQualidadeFilters();
+  initProdutoFilters();
   initDigisacFilters();
-  // Aplicar filtro do mês no dashboard geral
+  // Aplicar filtro do mês atual no dashboard geral
   applyFilters();
   createTendenciaCharts();
 }
@@ -847,16 +847,12 @@ function updateKPIs(){
   const taxa=tot>0?(reab/tot*100).toFixed(1):0;
   const topC=getTopValue(filteredData,'categoria');
   const topA=getTopValue(filteredData,'atendente');
-  // Top funcionalidade dentro da top categoria
-  const doTopCat=filteredData.filter(d=>d.categoria===topC.value);
-  const topF=getTopValue(doTopCat,'funcionalidade');
   const el=document.getElementById('kpisContainer');
   if(el) el.innerHTML=`
     <div class="kpi"><div class="kpi-label">Total de Tickets</div><div class="kpi-value">${tot}</div></div>
     <div class="kpi success"><div class="kpi-label">Taxa de Reabertura</div><div class="kpi-value">${taxa}%</div><div class="kpi-subtitle">${reab} reabertos</div></div>
-    <div class="kpi"><div class="kpi-label">Top Categoria</div><div class="kpi-value" style="font-size:18px">${topC.value}</div><div class="kpi-subtitle">${topC.count} chamados</div></div>
-    <div class="kpi" style="border-left-color:#E74C3C"><div class="kpi-label">Funcionalidade em Destaque</div><div class="kpi-value" style="font-size:15px;color:#E74C3C">${topF.value||'N/A'}</div><div class="kpi-subtitle">${topF.count} em ${topC.value}</div></div>
-    <div class="kpi"><div class="kpi-label">Atendente Principal</div><div class="kpi-value" style="font-size:18px">${topA.value}</div><div class="kpi-subtitle">${topA.count} chamados</div></div>`;
+    <div class="kpi"><div class="kpi-label">Top Categoria</div><div class="kpi-value" style="font-size:20px">${topC.value}</div><div class="kpi-subtitle">${topC.count}</div></div>
+    <div class="kpi"><div class="kpi-label">Atendente Principal</div><div class="kpi-value" style="font-size:20px">${topA.value}</div><div class="kpi-subtitle">${topA.count}</div></div>`;
 }
 
 function createDashboardCharts(){
@@ -943,36 +939,6 @@ function openAuditModal(data,title){
       <td>${d.origemCanal||''}</td>
       <td>${d.atendente||''}</td>
     </tr>`).join('');
-  document.getElementById('auditModal').classList.add('active');
-}
-
-function openDrilldownDigisac(data, title){
-  currentAuditData=data.map(d=>({
-    protocolo: d.protocolo,
-    assunto: d.assunto||d.nome||'',
-    tipo: d.tipo,
-    categoria: d.departamento,
-    funcionalidade: d.tags||'',
-    origemDemanda: d.tempoTotalSeg>0?segsParaHHMM(d.tempoTotalSeg):'0min',
-    origemCanal: d.primeiroTempoEsperaSeg>0?segsParaHHMM(d.primeiroTempoEsperaSeg):'0min',
-    atendente: d.atendente
-  }));
-  document.getElementById('auditTitle').textContent=title;
-  document.getElementById('auditSubtitle').textContent='Total: '+data.length+' atendimentos';
-  // Atualizar cabecalho da tabela
-  const thead=document.querySelector('#auditModal thead tr');
-  if(thead) thead.innerHTML='<th>Protocolo</th><th>Nome/Assunto</th><th>Tipo</th><th>Departamento</th><th>Tags</th><th>TMA</th><th>1a Espera</th><th>Atendente</th>';
-  const tbody=document.getElementById('auditTableBody');
-  tbody.innerHTML=data.map(d=>`<tr>
-    <td>${d.protocolo||''}</td>
-    <td>${(d.assunto||d.nome||'').substring(0,50)}</td>
-    <td>${d.tipo||''}</td>
-    <td>${d.departamento||''}</td>
-    <td>${d.tags||''}</td>
-    <td>${d.tempoTotalSeg>0?segsParaHHMM(d.tempoTotalSeg):'0min'}</td>
-    <td>${d.primeiroTempoEsperaSeg>0?segsParaHHMM(d.primeiroTempoEsperaSeg):'0min'}</td>
-    <td>${d.atendente||''}</td>
-  </tr>`).join('');
   document.getElementById('auditModal').classList.add('active');
 }
 
@@ -1704,9 +1670,7 @@ function createDigisacCharts(){
     if(charts.dgVolume)try{charts.dgVolume.destroy();}catch(e){}
     charts.dgVolume=new Chart(ctx1.getContext('2d'),{type:'bar',
       data:{labels:dias.map(d=>d.substring(5)),datasets:[{data:dias.map(d=>byDia[d]),backgroundColor:'#F8931D',borderRadius:3}]},
-      options:{responsive:true,maintainAspectRatio:false,
-      onClick:(e,els)=>{if(els.length>0){const dia=diasSorted[els[0].index];const dados=base.filter(d=>{const dt=parseDateStr(d.dataInicio);return dt===dia;});openDrilldownDigisac(dados,'Digisac - '+dia);}},
-      plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:20,font:{size:10}}},y:{ticks:{font:{size:10}}}}}
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:20,font:{size:10}}},y:{ticks:{font:{size:10}}}}}
     });
     charts['chartDgVolume']=charts.dgVolume;
   }
@@ -1723,7 +1687,6 @@ function createDigisacCharts(){
     charts.dgTempoAtend=new Chart(ctx2.getContext('2d'),{type:'bar',
       data:{labels:tempoAt.map(a=>a.n),datasets:[{data:tempoAt.map(a=>a.v),backgroundColor:getPaleta(tempoAt.length),borderRadius:3}]},
       options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
-        onClick:(e,els)=>{if(els.length>0){const nome=tempoAt[els[0].index].n;const dados=base.filter(d=>d.atendente&&d.atendente.split(' ')[0]===nome);openDrilldownDigisac(dados,'Digisac - '+nome);}},
         plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.x} min`}}},
         scales:{y:{ticks:{font:{size:11}}},x:{ticks:{font:{size:10}}}}}
     });
@@ -1741,7 +1704,6 @@ function createDigisacCharts(){
     charts.dgEspera=new Chart(ctx3.getContext('2d'),{type:'bar',
       data:{labels:esperaAt.map(a=>a.n),datasets:[{data:esperaAt.map(a=>a.v),backgroundColor:getPaleta(esperaAt.length),borderRadius:3}]},
       options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
-        onClick:(e,els)=>{if(els.length>0){const nome=tempoAt[els[0].index].n;const dados=base.filter(d=>d.atendente&&d.atendente.split(' ')[0]===nome);openDrilldownDigisac(dados,'Digisac - '+nome);}},
         plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.x} min`}}},
         scales:{y:{ticks:{font:{size:11}}},x:{ticks:{font:{size:10}}}}}
     });
