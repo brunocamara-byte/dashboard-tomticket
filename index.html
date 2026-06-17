@@ -652,7 +652,7 @@ function normalizarTomTicket(d){
     categoria: String(d['Categoria']||'').trim(),
     funcionalidade: extrairFunc(d),
     atendente: String(d['Atendente']||'').trim(),
-    organizacao: String(d['Organização']||d['Organizacao']||d['Cliente']||'').trim(),
+    organizacao: String(d['Organização']||d['Organizacao']||'').trim(),
     dataCriacao: dataCriacao,
     horaCriacao: (function(){
       const s=String(d['Data de Criação']||d['Data de Criacao']||'').trim();
@@ -679,15 +679,11 @@ function normalizarDigisac(d){
   function parseTempo(s){
     if(!s||!String(s).trim())return 0;
     const str=String(s).trim();
-    if(str==='00:00:00'||str==='0')return 0;
+    if(str==='00:00:00')return 0;
     const p=str.split(':');
     if(p.length===3){
-      const h=parseInt(p[0])||0;
-      const m=parseInt(p[1])||0;
-      const sec=parseInt(p[2])||0;
-      const total=h*3600+m*60+sec;
-      // Sanidade: atendimento individual nao pode ser maior que 8h (28800s)
-      // Se for maior, e dado corrompido da exportacao do Digisac
+      const h=parseInt(p[0])||0,m2=parseInt(p[1])||0,sec=parseInt(p[2])||0;
+      const total=h*3600+m2*60+sec;
       return total<=28800?total:0;
     }
     return 0;
@@ -949,35 +945,16 @@ function openAuditModal(data,title){
   document.getElementById('auditModal').classList.add('active');
 }
 
-function openDrilldownDigisac(data, title){
-  currentAuditData=data.map(d=>({
-    protocolo:d.protocolo,
-    assunto:d.nome||d.assunto||'',
-    tipo:d.tipo||'',
-    categoria:d.departamento||'',
-    funcionalidade:d.tags||'',
-    origemDemanda:d.tempoTotalSeg>0?segsParaHHMM(d.tempoTotalSeg):'0min',
-    origemCanal:d.primeiroTempoEsperaSeg>0?segsParaHHMM(d.primeiroTempoEsperaSeg):'0min',
-    atendente:d.atendente||''
-  }));
+function openDrilldownDigisac(data,title){
+  currentAuditData=data.map(d=>({protocolo:d.protocolo,assunto:d.nome||d.assunto||'',tipo:d.tipo||'',categoria:d.departamento||'',funcionalidade:d.tags||'',origemDemanda:d.tempoTotalSeg>0?segsParaHHMM(d.tempoTotalSeg):'0min',origemCanal:d.primeiroTempoEsperaSeg>0?segsParaHHMM(d.primeiroTempoEsperaSeg):'0min',atendente:d.atendente||''}));
   document.getElementById('auditTitle').textContent=title;
   document.getElementById('auditSubtitle').textContent='Total: '+data.length+' atendimentos';
   const thead=document.querySelector('#auditModal thead tr');
-  if(thead) thead.innerHTML='<th>Protocolo</th><th>Nome</th><th>Tipo</th><th>Departamento</th><th>Tags</th><th>TMA</th><th>1a Espera</th><th>Atendente</th>';
+  if(thead)thead.innerHTML='<th>Protocolo</th><th>Nome</th><th>Tipo</th><th>Departamento</th><th>Tags</th><th>TMA</th><th>1a Espera</th><th>Atendente</th>';
   const tbody=document.getElementById('auditTableBody');
-  tbody.innerHTML=data.map(d=>`<tr>
-    <td>${d.protocolo||''}</td>
-    <td>${(d.nome||d.assunto||'').substring(0,45)}</td>
-    <td>${d.tipo||''}</td>
-    <td>${d.departamento||''}</td>
-    <td>${(d.tags||'').substring(0,30)}</td>
-    <td>${d.tempoTotalSeg>0?segsParaHHMM(d.tempoTotalSeg):'0min'}</td>
-    <td>${d.primeiroTempoEsperaSeg>0?segsParaHHMM(d.primeiroTempoEsperaSeg):'0min'}</td>
-    <td>${d.atendente||''}</td>
-  </tr>`).join('');
+  tbody.innerHTML=data.map(d=>`<tr><td>${d.protocolo||''}</td><td>${(d.nome||d.assunto||'').substring(0,45)}</td><td>${d.tipo||''}</td><td>${d.departamento||''}</td><td>${(d.tags||'').substring(0,30)}</td><td>${d.tempoTotalSeg>0?segsParaHHMM(d.tempoTotalSeg):'0min'}</td><td>${d.primeiroTempoEsperaSeg>0?segsParaHHMM(d.primeiroTempoEsperaSeg):'0min'}</td><td>${d.atendente||''}</td></tr>`).join('');
   document.getElementById('auditModal').classList.add('active');
 }
-
 function closeAudit(){document.getElementById('auditModal').classList.remove('active');}
 
 function exportToCSV(){
@@ -1692,8 +1669,8 @@ function createDigisacCharts(){
   if(el) el.innerHTML=`
     <div class="kpi"><div class="kpi-label">Total Atendimentos</div><div class="kpi-value">${tot}</div></div>
     <div class="kpi" style="border-left-color:#16A085"><div class="kpi-label">Media por Dia</div><div class="kpi-value" style="color:#16A085">${mediaDia}</div><div class="kpi-subtitle">${diasUnicos.size} dias no periodo</div></div>
-    <div class="kpi" style="border-left-color:#3498DB"><div class="kpi-label">Tempo Medio Atendimento</div><div class="kpi-value" style="color:#3498DB;font-size:22px;">${segsParaHHMM(tempoMedSeg)}</div><div class="kpi-subtitle">${comTempo.length} com registro</div></div>
-    <div class="kpi" style="border-left-color:#F8931D"><div class="kpi-label">1a Espera Media</div><div class="kpi-value" style="color:#F8931D;font-size:22px;">${segsParaHHMM(esperaMedSeg)}</div></div>
+    <div class="kpi" style="border-left-color:#3498DB"><div class="kpi-label">Tempo Medio Atendimento</div><div class="kpi-value" style="color:#3498DB;font-size:22px;">${comTempo.length>0?segsParaHHMM(tempoMedSeg):'N/D'}</div><div class="kpi-subtitle">${comTempo.length} com registro</div></div>
+    <div class="kpi" style="border-left-color:#F8931D"><div class="kpi-label">1a Espera Media</div><div class="kpi-value" style="color:#F8931D;font-size:22px;">${comEspera.length>0?segsParaHHMM(esperaMedSeg):'N/D'}</div><div class="kpi-subtitle">${comEspera.length} com registro</div></div>
     <div class="kpi" style="border-left-color:#2ECC71"><div class="kpi-label">Encerrados</div><div class="kpi-value" style="color:#2ECC71">${tot>0?Math.round(enc/tot*100):0}%</div><div class="kpi-subtitle">${enc} de ${tot}</div></div>
     <div class="kpi" style="border-left-color:#9B59B6"><div class="kpi-label">Receptivos</div><div class="kpi-value" style="color:#9B59B6">${recep}</div><div class="kpi-subtitle">${tot>0?Math.round(recep/tot*100):0}% do total</div></div>`;
 
@@ -1706,9 +1683,7 @@ function createDigisacCharts(){
     if(charts.dgVolume)try{charts.dgVolume.destroy();}catch(e){}
     charts.dgVolume=new Chart(ctx1.getContext('2d'),{type:'bar',
       data:{labels:dias.map(d=>d.substring(5)),datasets:[{data:dias.map(d=>byDia[d]),backgroundColor:'#F8931D',borderRadius:3}]},
-      options:{responsive:true,maintainAspectRatio:false,
-      onClick:(e,els)=>{if(els.length>0){const dia=diasSorted[els[0].index];const dados=base.filter(d=>{const dt=parseDateStr(d.dataInicio);return dt===dia;});openDrilldownDigisac(dados,'Digisac - '+dia);}},
-      plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:20,font:{size:10}}},y:{ticks:{font:{size:10}}}}}
+      options:{responsive:true,maintainAspectRatio:false,onClick:(e,els)=>{if(els.length>0){const dia=diasSorted[els[0].index];const dados=base.filter(d=>{const dt=parseDateStr(d.dataInicio);return dt===dia;});openDrilldownDigisac(dados,'Digisac - '+dia);}},plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:20,font:{size:10}}},y:{ticks:{font:{size:10}}}}}
     });
     charts['chartDgVolume']=charts.dgVolume;
   }
@@ -1725,7 +1700,6 @@ function createDigisacCharts(){
     charts.dgTempoAtend=new Chart(ctx2.getContext('2d'),{type:'bar',
       data:{labels:tempoAt.map(a=>a.n),datasets:[{data:tempoAt.map(a=>a.v),backgroundColor:getPaleta(tempoAt.length),borderRadius:3}]},
       options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
-        onClick:(e,els)=>{if(els.length>0){const nome=tempoAt[els[0].index].n;const dados=base.filter(d=>d.atendente&&d.atendente.split(' ')[0]===nome);openDrilldownDigisac(dados,'Digisac - '+nome);}},
         plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.x} min`}}},
         scales:{y:{ticks:{font:{size:11}}},x:{ticks:{font:{size:10}}}}}
     });
@@ -1743,7 +1717,6 @@ function createDigisacCharts(){
     charts.dgEspera=new Chart(ctx3.getContext('2d'),{type:'bar',
       data:{labels:esperaAt.map(a=>a.n),datasets:[{data:esperaAt.map(a=>a.v),backgroundColor:getPaleta(esperaAt.length),borderRadius:3}]},
       options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
-        onClick:(e,els)=>{if(els.length>0){const nome=tempoAt[els[0].index].n;const dados=base.filter(d=>d.atendente&&d.atendente.split(' ')[0]===nome);openDrilldownDigisac(dados,'Digisac - '+nome);}},
         plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.x} min`}}},
         scales:{y:{ticks:{font:{size:11}}},x:{ticks:{font:{size:10}}}}}
     });
