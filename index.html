@@ -677,10 +677,17 @@ function normalizarTomTicket(d){
 
 function normalizarDigisac(d){
   function parseTempo(s){
-    if(!s||!s.trim())return 0;
-    const p=s.trim().split(':');
-    if(p.length===3)return parseInt(p[0])*3600+parseInt(p[1])*60+parseInt(p[2]);
-    return 0;
+    if(!s||!String(s).trim())return 0;
+    const str=String(s).trim();
+    if(!str||str==='00:00:00')return 0;
+    const p=str.split(':');
+    if(p.length!==3)return 0;
+    // Cada parte deve ser numero puro (sem texto)
+    if(!/^\d+$/.test(p[0])||!/^\d+$/.test(p[1])||!/^\d+$/.test(p[2]))return 0;
+    const h=parseInt(p[0]),m=parseInt(p[1]),sec=parseInt(p[2]);
+    // Validar ranges: min e seg max 59, horas max 23 para atendimento valido
+    if(m>59||sec>59||h>23)return 0;
+    return h*3600+m*60+sec;
   }
   const tipo=d['Tipo (Receptivo/Ativo)']||'';
   const tipoLimpo=(tipo==='Receptivo'||tipo==='Ativo')?tipo:'Receptivo';
