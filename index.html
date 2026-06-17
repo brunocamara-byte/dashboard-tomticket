@@ -156,7 +156,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <div class="kpis" id="kpisContainer"></div>
 
 <div class="charts-grid">
-<div class="chart-card"><div class="chart-title">Distribuição por Tipo de Ticket <button class="btn expand-btn btn-small" onclick="expandChart('chartTipo')">Expandir</button></div><div class="chart-container"><canvas id="chartTipo" class="clickable-canvas"></canvas></div></div>
+<div class="chart-card"><div class="chart-title">Tipo do Ticket (Chamados Finalizados) <button class="btn expand-btn btn-small" onclick="expandChart('chartTipo')">Expandir</button></div><div class="chart-container"><canvas id="chartTipo" class="clickable-canvas"></canvas></div></div>
 <div class="chart-card"><div class="chart-title">Top 15 Categorias <button class="btn expand-btn btn-small" onclick="expandChart('chartCategorias')">Expandir</button></div><div class="chart-container"><canvas id="chartCategorias" class="clickable-canvas"></canvas></div></div>
 <div class="chart-card"><div class="chart-title">Top 10 Funcionalidades <button class="btn expand-btn btn-small" onclick="expandChart('chartFuncionalidades')">Expandir</button></div><div class="chart-container"><canvas id="chartFuncionalidades" class="clickable-canvas"></canvas></div></div>
 <div class="chart-card"><div class="chart-title">Origem da Demanda <button class="btn expand-btn btn-small" onclick="expandChart('chartOrigemDemanda')">Expandir</button></div><div class="chart-container"><canvas id="chartOrigemDemanda" class="clickable-canvas"></canvas></div></div>
@@ -679,12 +679,13 @@ function normalizarDigisac(d){
   function parseTempo(s){
     if(!s||!String(s).trim())return 0;
     const str=String(s).trim();
-    if(str==='00:00:00')return 0;
+    if(str==='00:00:00'||str==='0')return 0;
     const p=str.split(':');
     if(p.length===3){
       const h=parseInt(p[0])||0,m2=parseInt(p[1])||0,sec=parseInt(p[2])||0;
-      const total=h*3600+m2*60+sec;
-      return total<=28800?total:0;
+      // Retorna 0 apenas se nao for numero valido (texto corrompido)
+      if(isNaN(h)||isNaN(m2)||isNaN(sec))return 0;
+      return h*3600+m2*60+sec;
     }
     return 0;
   }
@@ -734,10 +735,16 @@ function setMesAtual(iniId,fimId){
 
 function init(){
   populateFilters();
+  // Setar mês atual em todas as telas ao abrir
   setMesAtual('globalDataInicio','globalDataFim');
+  setMesAtual('qualDataInicio','qualDataFim');
+  setMesAtual('prodDataInicio','prodDataFim');
   setMesAtual('dgDataInicio','dgDataFim');
   initTendenciaFilters();
+  initQualidadeFilters();
+  initProdutoFilters();
   initDigisacFilters();
+  // Aplicar filtro do mês atual no dashboard geral
   applyFilters();
   createTendenciaCharts();
 }
@@ -1669,8 +1676,8 @@ function createDigisacCharts(){
   if(el) el.innerHTML=`
     <div class="kpi"><div class="kpi-label">Total Atendimentos</div><div class="kpi-value">${tot}</div></div>
     <div class="kpi" style="border-left-color:#16A085"><div class="kpi-label">Media por Dia</div><div class="kpi-value" style="color:#16A085">${mediaDia}</div><div class="kpi-subtitle">${diasUnicos.size} dias no periodo</div></div>
-    <div class="kpi" style="border-left-color:#3498DB"><div class="kpi-label">Tempo Medio Atendimento</div><div class="kpi-value" style="color:#3498DB;font-size:22px;">${comTempo.length>0?segsParaHHMM(tempoMedSeg):'N/D'}</div><div class="kpi-subtitle">${comTempo.length} com registro</div></div>
-    <div class="kpi" style="border-left-color:#F8931D"><div class="kpi-label">1a Espera Media</div><div class="kpi-value" style="color:#F8931D;font-size:22px;">${comEspera.length>0?segsParaHHMM(esperaMedSeg):'N/D'}</div><div class="kpi-subtitle">${comEspera.length} com registro</div></div>
+    <div class="kpi" style="border-left-color:#3498DB"><div class="kpi-label">Tempo Medio Atendimento</div><div class="kpi-value" style="color:#3498DB;font-size:22px;">${comTempo.length>0?segsParaHHMM(tempoMedSeg):'--'}</div><div class="kpi-subtitle">${comTempo.length} de ${tot} com registro</div></div>
+    <div class="kpi" style="border-left-color:#F8931D"><div class="kpi-label">1a Espera Media</div><div class="kpi-value" style="color:#F8931D;font-size:22px;">${comEspera.length>0?segsParaHHMM(esperaMedSeg):'--'}</div><div class="kpi-subtitle">${comEspera.length} de ${tot} com registro</div></div>
     <div class="kpi" style="border-left-color:#2ECC71"><div class="kpi-label">Encerrados</div><div class="kpi-value" style="color:#2ECC71">${tot>0?Math.round(enc/tot*100):0}%</div><div class="kpi-subtitle">${enc} de ${tot}</div></div>
     <div class="kpi" style="border-left-color:#9B59B6"><div class="kpi-label">Receptivos</div><div class="kpi-value" style="color:#9B59B6">${recep}</div><div class="kpi-subtitle">${tot>0?Math.round(recep/tot*100):0}% do total</div></div>`;
 
@@ -1683,7 +1690,7 @@ function createDigisacCharts(){
     if(charts.dgVolume)try{charts.dgVolume.destroy();}catch(e){}
     charts.dgVolume=new Chart(ctx1.getContext('2d'),{type:'bar',
       data:{labels:dias.map(d=>d.substring(5)),datasets:[{data:dias.map(d=>byDia[d]),backgroundColor:'#F8931D',borderRadius:3}]},
-      options:{responsive:true,maintainAspectRatio:false,onClick:(e,els)=>{if(els.length>0){const dia=diasSorted[els[0].index];const dados=base.filter(d=>{const dt=parseDateStr(d.dataInicio);return dt===dia;});openDrilldownDigisac(dados,'Digisac - '+dia);}},plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:20,font:{size:10}}},y:{ticks:{font:{size:10}}}}}
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:20,font:{size:10}}},y:{ticks:{font:{size:10}}}}}
     });
     charts['chartDgVolume']=charts.dgVolume;
   }
