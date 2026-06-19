@@ -57,7 +57,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   #tvHeader .tv-period-btns{display:none!important;}
   #tvKpis{
     height:auto!important;
-    padding:8px 16px!important;
+    padding:8px 16px!important;a
     grid-template-columns:repeat(2,1fr)!important;
     gap:8px!important;
   }
@@ -585,7 +585,7 @@ function normalizarTomTicket(d){
   return {
     protocolo: String(d['Protocolo']||'').trim(),
     assunto: String(d['Assunto']||'').trim(),
-    tipo: String(d['Tipo do Ticket (Finalização - Chamado Externo)']||d['Tipo Chamado']||'').trim(),
+    tipo: String(d['Tipo do Ticket (Finalização - Chamado Externo)']||'').trim(),
     categoria: String(d['Categoria']||'').trim(),
     funcionalidade: extrairFunc(d),
     atendente: String(d['Atendente']||'').trim(),
@@ -785,12 +785,15 @@ function updateKPIs(){
   const taxa=tot>0?(reab/tot*100).toFixed(1):0;
   const topC=getTopValue(filteredData,'categoria');
   const topA=getTopValue(filteredData,'atendente');
+  const doTopCat=filteredData.filter(d=>d.categoria===topC.value);
+  const topF=getTopValue(doTopCat,'funcionalidade');
   const el=document.getElementById('kpisContainer');
   if(el) el.innerHTML=`
     <div class="kpi"><div class="kpi-label">Total de Tickets</div><div class="kpi-value">${tot}</div></div>
     <div class="kpi success"><div class="kpi-label">Taxa de Reabertura</div><div class="kpi-value">${taxa}%</div><div class="kpi-subtitle">${reab} reabertos</div></div>
-    <div class="kpi"><div class="kpi-label">Top Categoria</div><div class="kpi-value" style="font-size:20px">${topC.value}</div><div class="kpi-subtitle">${topC.count}</div></div>
-    <div class="kpi"><div class="kpi-label">Atendente Principal</div><div class="kpi-value" style="font-size:20px">${topA.value}</div><div class="kpi-subtitle">${topA.count}</div></div>`;
+    <div class="kpi"><div class="kpi-label">Categoria Mais Acionada</div><div class="kpi-value" style="font-size:18px">${topC.value}</div><div class="kpi-subtitle">${topC.count} chamados</div></div>
+    <div class="kpi" style="border-left-color:#E74C3C"><div class="kpi-label">Funcionalidade Mais Acionada</div><div class="kpi-value" style="font-size:16px;color:#E74C3C">${topF.value||'N/A'}</div><div class="kpi-subtitle">${topF.count} em ${topC.value}</div></div>
+    <div class="kpi"><div class="kpi-label">Atendente Mais Acionado</div><div class="kpi-value" style="font-size:18px">${topA.value}</div><div class="kpi-subtitle">${topA.count} chamados</div></div>`;
 }
 
 function createDashboardCharts(){
