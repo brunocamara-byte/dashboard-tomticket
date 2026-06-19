@@ -57,7 +57,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   #tvHeader .tv-period-btns{display:none!important;}
   #tvKpis{
     height:auto!important;
-    padding:8px 16px!important;a
+    padding:8px 16px!important;
     grid-template-columns:repeat(2,1fr)!important;
     gap:8px!important;
   }
@@ -589,7 +589,7 @@ function normalizarTomTicket(d){
     categoria: String(d['Categoria']||'').trim(),
     funcionalidade: extrairFunc(d),
     atendente: String(d['Atendente']||'').trim(),
-    organizacao: String(d['Organização']||d['Organizacao']||d['Cliente']||'').trim(),
+    organizacao: String(d['Organização']||d['Organizacao']||'').trim(),
     dataCriacao: dataCriacao,
     horaCriacao: (function(){
       const s=String(d['Data de Criação']||d['Data de Criacao']||'').trim();
