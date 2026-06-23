@@ -1843,13 +1843,29 @@ function renderTVKpis(){
 function tvDestroyAllCharts(){
   ['tvChartMain','tvChartSec1','tvChartSec2'].forEach(id => {
     const canvas = document.getElementById(id);
-    if(canvas){ const c = Chart.getChart(canvas); if(c) try{ c.destroy(); }catch(e){} }
+    if(canvas){
+      const c = Chart.getChart(canvas);
+      if(c) try{ c.destroy(); }catch(e){}
+      // Resetar estilos alterados pelo slide Digisac
+      canvas.style.display = 'block';
+      canvas.style.maxHeight = '';
+      const parent = canvas.parentElement;
+      if(parent){
+        parent.style.display = 'flex';
+        parent.style.flexDirection = 'column';
+        parent.style.gridTemplateColumns = '';
+      }
+    }
   });
   Object.values(tvState.charts).forEach(c => { try{ c.destroy(); }catch(e){} });
   tvState.charts = {};
-  // Limpar overlay Digisac se existir
+  // Limpar overlay Digisac
   const ov = document.getElementById('tvDgMetrics');
   if(ov) ov.remove();
+  // Restaurar coluna direita
+  const mainGrid = document.querySelector('#tvMode .tv-main-grid');
+  if(mainGrid) mainGrid.style.gridTemplateColumns = '1.55fr 1fr';
+  document.querySelectorAll('#tvMode [data-tv-right]').forEach(el => el.style.display = '');
 }
 
 // ─── Navegação ────────────────────────────────────────────────────
@@ -1883,10 +1899,6 @@ function tvGoToSlide(idx){
     if(mainGrid) mainGrid.style.gridTemplateColumns = '1fr';
     const hiddenCols = document.querySelectorAll('#tvMode [data-tv-right]');
     hiddenCols.forEach(el => el.style.display = 'none');
-  } else {
-    if(mainGrid) mainGrid.style.gridTemplateColumns = '1.55fr 1fr';
-    const hiddenCols = document.querySelectorAll('#tvMode [data-tv-right]');
-    hiddenCols.forEach(el => el.style.display = '');
   }
 
   if(slide.isHeatmap){
