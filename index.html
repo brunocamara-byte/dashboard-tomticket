@@ -435,7 +435,7 @@ Gestao.Online &nbsp;|&nbsp; Painel Estrategico - Time de Operacoes
     </div>
 
     <!-- COLUNA DIREITA: 2 gráficos -->
-    <div class="tv-right-col" style="display:flex;flex-direction:column;gap:14px;min-height:0;overflow:hidden;">
+    <div class="tv-right-col" data-tv-right="1" style="display:flex;flex-direction:column;gap:14px;min-height:0;overflow:hidden;">
       <!-- Sec 1 -->
       <div style="background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(9,30,66,.08);border:1px solid #EBECF0;flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;">
         <div style="padding:12px 16px 8px;border-bottom:1px solid #F4F5F7;flex-shrink:0;">
@@ -1834,6 +1834,7 @@ function renderTVKpis(){
         <div style="font-size:9px;font-weight:700;color:#97A0AF;text-transform:uppercase;letter-spacing:.8px;margin-bottom:1px;">${k.label}</div>
         <div style="font-size:30px;font-weight:700;color:${k.color};line-height:1;">${k.value}</div>
         <div style="font-size:10px;color:#97A0AF;margin-top:2px;">${k.sub}</div>
+        <div style="font-size:9px;color:#C1C7D0;margin-top:1px;">${label}</div>
       </div>
     </div>`).join('');
 }
@@ -1874,9 +1875,28 @@ function tvGoToSlide(idx){
   // Heatmap ou canvas
   const mainCanvas = document.getElementById('tvChartMain');
   const heatDiv = document.getElementById('tvHeatmapMain');
+  const rightCol = document.querySelector('#tvMode .tv-right-col-hidden');
+
+  // Fullscreen: esconder coluna direita e expandir principal
+  const mainGrid = document.querySelector('#tvMode .tv-main-grid');
+  if(slide.isFullscreen){
+    if(mainGrid) mainGrid.style.gridTemplateColumns = '1fr';
+    const hiddenCols = document.querySelectorAll('#tvMode [data-tv-right]');
+    hiddenCols.forEach(el => el.style.display = 'none');
+  } else {
+    if(mainGrid) mainGrid.style.gridTemplateColumns = '1.55fr 1fr';
+    const hiddenCols = document.querySelectorAll('#tvMode [data-tv-right]');
+    hiddenCols.forEach(el => el.style.display = '');
+  }
+
   if(slide.isHeatmap){
     if(mainCanvas) mainCanvas.style.display = 'none';
-    if(heatDiv){ heatDiv.style.display = 'block'; createHeatmap(allData); heatDiv.innerHTML = window._heatmapSVG || ''; }
+    if(heatDiv){
+      heatDiv.style.display = 'block';
+      // Heatmap dinâmico baseado no período
+      createHeatmap(getTVBaseData());
+      heatDiv.innerHTML = window._heatmapSVG || '';
+    }
   } else {
     if(mainCanvas) mainCanvas.style.display = 'block';
     if(heatDiv) heatDiv.style.display = 'none';
@@ -2334,28 +2354,16 @@ function buildTVSlides(){
       }
     },
 
-    // ── SLIDE 6: Heatmap + Digisac ────────────────────────────────
+    // ── SLIDE 6: Heatmap tela cheia + dinâmico ───────────────────
     {
-      mainTitle: 'Mapa de Calor - Dia da Semana x Hora',
-      sec1Title: 'Volume Digisac - Últimos 14 dias',
-      sec2Title: 'Tempo Médio Digisac por Atendente',
+      mainTitle: 'Mapa de Calor - Dia da Semana x Hora | ' + label,
+      sec1Title: '',
+      sec2Title: '',
       isHeatmap: true,
+      isFullscreen: true,
       buildMain: null,
-      buildSec1: (ctx) => {
-        const dg = getTVDigisacBase();
-        if(!dg.length) return tvMakeBarH(ctx, ['Sem dados'], [0], '#EBECF0');
-        const byDia = {};
-        dg.forEach(d=>{ const dt=parseDateStr(d.dataInicio);if(dt)byDia[dt]=(byDia[dt]||0)+1; });
-        const d14 = Array.from({length:14},(_,i)=>{ const d=new Date(hoje);d.setDate(d.getDate()-(13-i));return d.toISOString().split('T')[0]; });
-        return tvMakeBarH(ctx, d14.map(d=>d.substring(5)), d14.map(d=>byDia[d]||0), '#1ABC9C');
-      },
-      buildSec2: (ctx) => {
-        const dg = getTVDigisacBase();
-        if(!dg.length) return tvMakeBarH(ctx, ['Sem dados'], [0], '#EBECF0');
-        const atends = [...new Set(dg.map(d=>d.atendente).filter(Boolean))];
-        const t = atends.map(a=>{ const rows=dg.filter(d=>d.atendente===a&&d.tempoTotalSeg>0);return{n:a.split(' ')[0],v:rows.length?Math.round(rows.reduce((s,d)=>s+d.tempoTotalSeg,0)/rows.length/60):0};}).filter(x=>x.v>0).sort((a,b)=>b.v-a.v).slice(0,7);
-        return tvMakeBarH(ctx, t.map(x=>x.n), t.map(x=>x.v), '#F8931D');
-      }
+      buildSec1: null,
+      buildSec2: null
     }
 
   ];
