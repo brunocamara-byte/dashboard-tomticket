@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/brunocamara-byte/dashboard-tomticket/main/logo-preto.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard TomTicket - Gestão.Online</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -441,8 +442,8 @@ Gestao.Online &nbsp;|&nbsp; Painel Estrategico - Time de Operacoes
         <div style="padding:12px 16px 8px;border-bottom:1px solid #F4F5F7;flex-shrink:0;">
           <div id="tvChartSec1Title" style="font-size:12px;font-weight:600;color:#172B4D;"></div>
         </div>
-        <div style="flex:1;min-height:0;padding:12px;display:flex;flex-direction:column;">
-          <canvas id="tvChartSec1" style="display:block;width:100%!important;height:100%!important;"></canvas>
+        <div style="flex:1;min-height:0;padding:12px;position:relative;">
+          <canvas id="tvChartSec1" style="position:absolute;top:12px;left:12px;right:12px;bottom:12px;width:calc(100% - 24px)!important;height:calc(100% - 24px)!important;"></canvas>
         </div>
       </div>
       <!-- Sec 2 -->
@@ -451,7 +452,7 @@ Gestao.Online &nbsp;|&nbsp; Painel Estrategico - Time de Operacoes
           <div id="tvChartSec2Title" style="font-size:12px;font-weight:600;color:#172B4D;"></div>
         </div>
         <div id="tvSec2Body" style="flex:1;position:relative;min-height:0;padding:12px;">
-          <canvas id="tvChartSec2" style="display:block;width:100%!important;height:100%!important;"></canvas>
+          <canvas id="tvChartSec2" style="position:absolute;top:12px;left:12px;right:12px;bottom:12px;width:calc(100% - 24px)!important;height:calc(100% - 24px)!important;"></canvas>
         </div>
       </div>
     </div>
@@ -2006,7 +2007,14 @@ function tvMakeBar(canvas, labels, datasets, opts){
 
 function tvMakeBarH(canvas, labels, data, color){
   if(!canvas) return null;
-
+  const parent = canvas.parentElement;
+  if(parent){
+    const rect = parent.getBoundingClientRect();
+    if(rect.width > 10){
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = (rect.height > 20 ? rect.height : 200) + 'px';
+    }
+  }
   const existing = Chart.getChart(canvas); if(existing) try{ existing.destroy(); }catch(e){}
   const id = canvas.id; if(tvState.charts[id]) try{ tvState.charts[id].destroy(); }catch(e){}
 
@@ -2050,7 +2058,14 @@ function tvMakeBarH(canvas, labels, data, color){
 
 function tvMakeDoughnut(canvas, labels, data){
   if(!canvas) return null;
-
+  const parent = canvas.parentElement;
+  if(parent){
+    const rect = parent.getBoundingClientRect();
+    if(rect.width > 10){
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = (rect.height > 20 ? rect.height : rect.width * 0.85) + 'px';
+    }
+  }
   const existing = Chart.getChart(canvas); if(existing) try{ existing.destroy(); }catch(e){}
   const id = canvas.id; if(tvState.charts[id]) try{ tvState.charts[id].destroy(); }catch(e){}
   const chart = new Chart(canvas.getContext('2d'), {
@@ -2068,7 +2083,14 @@ function tvMakeDoughnut(canvas, labels, data){
 
 function tvMakeLine(canvas, labels, datasets){
   if(!canvas) return null;
-
+  const parent = canvas.parentElement;
+  if(parent){
+    const rect = parent.getBoundingClientRect();
+    if(rect.width > 10){
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = (rect.height > 20 ? rect.height : 200) + 'px';
+    }
+  }
   const existing = Chart.getChart(canvas); if(existing) try{ existing.destroy(); }catch(e){}
   const id = canvas.id; if(tvState.charts[id]) try{ tvState.charts[id].destroy(); }catch(e){}
   const chart = new Chart(canvas.getContext('2d'), {
